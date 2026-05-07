@@ -1,8 +1,12 @@
-<p align="center"><img src="Logo.png" alt="Logo" height="128px" /></p>
+<p align="center">
+
+<img src="Logo.png" alt="Logo" height="128px" />
 
 # ArrWarden
 
 Makes maintaining your Radarr and Sonarr libraries easy by automatically removing stuck downloads and searching for missing or upgradable content.
+
+</p>
 
 ## Queue Cleanup
 
