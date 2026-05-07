@@ -1,4 +1,4 @@
-<center><img src="Logo.png" alt="Logo" height="128px" /></center>
+<p align="center"><img src="Logo.png" alt="Logo" height="128px" /></p>
 
 # ArrWarden
 
