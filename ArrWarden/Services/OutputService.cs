@@ -4,47 +4,139 @@ namespace ArrWarden.Services;
 
 public class OutputService
 {
-    private const int BannerWidth = 54;
+    private const int BoxWidth = 58;
+    private const int LabelPad = 18;
 
     public static void WriteBanner(WardenOptions opts)
     {
-        var bar = new string('=', BannerWidth);
-
-        Console.WriteLine(bar);
-        Console.WriteLine(PadCenter("ArrWarden", BannerWidth));
-        Console.WriteLine(bar);
-
-        if (opts.HasSonarr)
-        {
-            Console.WriteLine($"  Sonarr URL          {opts.SonarrUrl}");
-            if (!string.IsNullOrWhiteSpace(opts.SonarrQueueCleanupCron))
-                Console.WriteLine($"    Queue Cleanup     {opts.SonarrQueueCleanupCron}");
-            if (!string.IsNullOrWhiteSpace(opts.SonarrMissingSearchCron))
-                Console.WriteLine($"    Missing Search    {opts.SonarrMissingSearchCron}");
-            if (!string.IsNullOrWhiteSpace(opts.SonarrUpgradeSearchCron))
-                Console.WriteLine($"    Upgrade Search    {opts.SonarrUpgradeSearchCron}");
-        }
-
-        if (opts.HasRadarr)
-        {
-            Console.WriteLine($"  Radarr URL          {opts.RadarrUrl}");
-            if (!string.IsNullOrWhiteSpace(opts.RadarrQueueCleanupCron))
-                Console.WriteLine($"    Queue Cleanup     {opts.RadarrQueueCleanupCron}");
-            if (!string.IsNullOrWhiteSpace(opts.RadarrMissingSearchCron))
-                Console.WriteLine($"    Missing Search    {opts.RadarrMissingSearchCron}");
-            if (!string.IsNullOrWhiteSpace(opts.RadarrUpgradeSearchCron))
-                Console.WriteLine($"    Upgrade Search    {opts.RadarrUpgradeSearchCron}");
-        }
-
-        Console.WriteLine($"  Dry Run             {opts.IsDryRun.ToString().ToLowerInvariant()}");
-        Console.WriteLine(bar);
+        var bar = new string('━', BoxWidth);
+        Console.WriteLine($"┏{bar}┓");
+        Console.WriteLine($"┃{PadCenter("ArrWarden", BoxWidth)}┃");
+        Console.WriteLine($"┗{bar}┛");
         Console.WriteLine();
+
+        var tz = ResolveTimezone(opts.Timezone);
+        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
+        var ts = FormatTimestamp(now);
+
+        Console.WriteLine($"[{ts} INF] [system.startup]");
+
+        var sections = new List<string>();
+        if (opts.HasSonarr) sections.Add("Sonarr");
+        if (opts.HasRadarr) sections.Add("Radarr");
+        sections.Add("Runtime");
+
+        for (int i = 0; i < sections.Count; i++)
+        {
+            var isLast = i == sections.Count - 1;
+            var rootPrefix = isLast ? " └─" : " ├─";
+            var childPrefix = isLast ? "    " : " │  ";
+
+            switch (sections[i])
+            {
+                case "Sonarr":
+                    WriteInstanceSection(rootPrefix, childPrefix, "Sonarr", opts.SonarrUrl!,
+                        opts.SonarrQueueCleanupCron, opts.SonarrMissingSearchCron, opts.SonarrUpgradeSearchCron);
+                    break;
+                case "Radarr":
+                    WriteInstanceSection(rootPrefix, childPrefix, "Radarr", opts.RadarrUrl!,
+                        opts.RadarrQueueCleanupCron, opts.RadarrMissingSearchCron, opts.RadarrUpgradeSearchCron);
+                    break;
+                case "Runtime":
+                    WriteRuntimeSection(rootPrefix, childPrefix, opts, tz, now);
+                    break;
+            }
+
+            if (!isLast)
+                Console.WriteLine(" │");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"[{ts} INF] [system.ready] ArrWarden initialized");
     }
+
+    private static void WriteInstanceSection(string rootPrefix, string childPrefix, string name, string url,
+        string? queueCron, string? missingCron, string? upgradeCron)
+    {
+        var children = new List<string>();
+        children.Add($"URL".PadRight(LabelPad) + url);
+        if (!string.IsNullOrWhiteSpace(queueCron))
+            children.Add($"Queue Cleanup".PadRight(LabelPad) + queueCron);
+        if (!string.IsNullOrWhiteSpace(missingCron))
+            children.Add($"Missing Search".PadRight(LabelPad) + missingCron);
+        if (!string.IsNullOrWhiteSpace(upgradeCron))
+            children.Add($"Upgrade Search".PadRight(LabelPad) + upgradeCron);
+
+        Console.WriteLine($"{rootPrefix} {name}");
+
+        for (int i = 0; i < children.Count; i++)
+        {
+            var isLastChild = i == children.Count - 1;
+            var prefix = isLastChild ? " └─" : " ├─";
+            Console.WriteLine($"{childPrefix}{prefix} {children[i]}");
+        }
+    }
+
+    private static void WriteRuntimeSection(string rootPrefix, string childPrefix, WardenOptions opts,
+        TimeZoneInfo tz, DateTime now)
+    {
+        Console.WriteLine($"{rootPrefix} Runtime");
+
+        var isDst = tz.IsDaylightSavingTime(now);
+        var tzDisplayName = isDst ? tz.DaylightName : tz.StandardName;
+        var abbr = GetTimeZoneAbbreviation(tzDisplayName);
+
+        var displayId = GetTimezoneDisplayId(tz, opts.Timezone);
+
+        var offset = tz.GetUtcOffset(now);
+        var sign = offset >= TimeSpan.Zero ? "+" : "-";
+        var offsetStr = $"{sign}{Math.Abs(offset.Hours):D2}:{Math.Abs(offset.Minutes):D2}";
+
+        var localTime = now.ToString("yyyy-MM-dd HH:mm:ss");
+
+        var dryRun = opts.IsDryRun.ToString().ToLowerInvariant();
+
+        Console.WriteLine($"{childPrefix} ├─ {"Timezone".PadRight(LabelPad)}{displayId} ({abbr})");
+        Console.WriteLine($"{childPrefix} ├─ {"Local Time".PadRight(LabelPad)}{localTime}");
+        Console.WriteLine($"{childPrefix} ├─ {"UTC Offset".PadRight(LabelPad)}{offsetStr}");
+        Console.WriteLine($"{childPrefix} └─ {"Dry Run".PadRight(LabelPad)}{dryRun}");
+    }
+
+    private static TimeZoneInfo ResolveTimezone(string? tzId)
+    {
+        if (!string.IsNullOrWhiteSpace(tzId))
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById(tzId); }
+            catch { }
+        }
+        return TimeZoneInfo.Local;
+    }
+
+    private static string GetTimezoneDisplayId(TimeZoneInfo tz, string? configuredId)
+    {
+        if (!string.IsNullOrWhiteSpace(configuredId))
+            return configuredId;
+
+        if (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out var ianaId))
+            return ianaId;
+
+        return tz.Id;
+    }
+
+    private static string GetTimeZoneAbbreviation(string displayName)
+    {
+        return new string(displayName
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(w => char.ToUpper(w[0]))
+            .ToArray());
+    }
+
+    private static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
 
     public void WriteQueueResult(DateTime timestamp, string instance, int totalQueue, int blocked, int matched,
         IReadOnlyList<(string Title, string Rule)> items, bool isDryRun)
     {
-        var ts = timestamp.ToString("HH:mm:ss");
+        var ts = FormatTimestamp(timestamp);
         var label = InstanceJobLabel(instance, "Queue Cleanup");
         Console.WriteLine($"[{ts} INF] [{label}]");
 
@@ -93,7 +185,7 @@ public class OutputService
 
         public virtual void WriteHeader()
         {
-            var ts = DateTime.Now.ToString("HH:mm:ss");
+            var ts = FormatTimestamp(DateTime.Now);
             var label = InstanceJobLabel(_instance, _job);
             Console.WriteLine($"[{ts} INF] [{label}]");
         }

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 var opts = new WardenOptions();
 
 opts.DryRun = GetEnv("DRY_RUN");
+opts.Timezone = GetEnv("TZ");
 opts.DatabasePath = GetEnv("DATABASE_PATH") ?? "data/warden.db";
 opts.SonarrUrl = GetEnv("SONARR_URL");
 opts.SonarrApiKey = GetEnv("SONARR_API_KEY");
