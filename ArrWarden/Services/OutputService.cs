@@ -160,6 +160,8 @@ public class OutputService
             if (items.Count < matched)
                 Console.WriteLine($"    +{matched - items.Count} more");
         }
+
+        Console.WriteLine();
     }
 
     public virtual async Task RunSearchWithOutput(string instance, string job, int maxResults,
