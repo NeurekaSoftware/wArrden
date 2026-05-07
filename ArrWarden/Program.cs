@@ -36,18 +36,6 @@ opts.RadarrUpgradeSearchCron = GetEnv("RADARR_UPGRADE_SEARCH_CRON");
 opts.RadarrUpgradeCooldownRaw = GetEnv("RADARR_UPGRADE_COOLDOWN") ?? "30d";
 opts.RadarrUpgradeMaxResults = int.TryParse(GetEnv("RADARR_UPGRADE_MAX_RESULTS"), out var rur) ? rur : 50;
 
-foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
-{
-    if (entry.Key is not string k) continue;
-    var val = (entry.Value as string) ?? string.Empty;
-
-    if (k.StartsWith("SONARR_BLACKLIST_", StringComparison.OrdinalIgnoreCase))
-        opts.SonarrBlacklistRules[k.ToUpperInvariant()] = string.Equals(val, "true", StringComparison.OrdinalIgnoreCase);
-
-    if (k.StartsWith("RADARR_BLACKLIST_", StringComparison.OrdinalIgnoreCase))
-        opts.RadarrBlacklistRules[k.ToUpperInvariant()] = string.Equals(val, "true", StringComparison.OrdinalIgnoreCase);
-}
-
 var errors = Validate(opts);
 if (errors.Count > 0)
 {

@@ -34,6 +34,12 @@ public class SonarrV3Client : IArrClient
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task DeleteQueueItemWithoutBlocklistAsync(int queueId, CancellationToken ct)
+    {
+        var response = await _http.DeleteAsync($"{_baseUrl}/api/v3/queue/{queueId}?blocklist=false&skipRedownload=false", ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<IReadOnlyList<WantedEpisodeResource>> GetWantedMissingEpisodesAsync(CancellationToken ct)
     {
         return await FetchAllWantedPagesAsync("missing", ct);

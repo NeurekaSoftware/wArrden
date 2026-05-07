@@ -34,9 +34,6 @@ public class WardenOptions
     public TimeSpan RadarrUpgradeCooldown => DurationParser.Parse(RadarrUpgradeCooldownRaw);
     public int RadarrUpgradeMaxResults { get; set; } = 50;
 
-    public Dictionary<string, bool> SonarrBlacklistRules { get; set; } = new();
-    public Dictionary<string, bool> RadarrBlacklistRules { get; set; } = new();
-
     public bool HasSonarr => !string.IsNullOrWhiteSpace(SonarrUrl) && !string.IsNullOrWhiteSpace(SonarrApiKey);
     public bool HasRadarr => !string.IsNullOrWhiteSpace(RadarrUrl) && !string.IsNullOrWhiteSpace(RadarrApiKey);
 }

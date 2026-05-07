@@ -8,6 +8,7 @@ public interface IArrClient
 
     Task<IReadOnlyList<QueueResource>> GetQueueAsync(CancellationToken ct);
     Task DeleteQueueItemAsync(int queueId, CancellationToken ct);
+    Task DeleteQueueItemWithoutBlocklistAsync(int queueId, CancellationToken ct);
     Task<IReadOnlyList<WantedEpisodeResource>> GetWantedMissingEpisodesAsync(CancellationToken ct);
     Task<IReadOnlyList<WantedEpisodeResource>> GetWantedCutoffEpisodesAsync(CancellationToken ct);
     Task<IReadOnlyList<WantedMovieResource>> GetWantedMissingMoviesAsync(CancellationToken ct);

@@ -34,6 +34,12 @@ public class RadarrV3Client : IArrClient
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task DeleteQueueItemWithoutBlocklistAsync(int queueId, CancellationToken ct)
+    {
+        var response = await _http.DeleteAsync($"{_baseUrl}/api/v3/queue/{queueId}?blocklist=false&skipRedownload=false", ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     public Task<IReadOnlyList<WantedEpisodeResource>> GetWantedMissingEpisodesAsync(CancellationToken ct)
         => throw new NotSupportedException("Radarr does not support episode wanted endpoints.");
 
