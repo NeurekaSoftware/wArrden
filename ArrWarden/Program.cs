@@ -58,9 +58,11 @@ builder.Logging.SetMinimumLevel(LogLevel.Warning);
 builder.Services.AddDbContext<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
 builder.Services.AddSingleton(opts);
 builder.Services.AddScheduler();
-builder.Services.AddSingleton<CooldownService>();
+builder.Services.AddSingleton<ICooldownService, CooldownService>();
 builder.Services.AddSingleton<OutputService>();
 builder.Services.AddSingleton<SearchService>();
+builder.Services.AddTransient<Func<IArrClient, string, QueueCleanupService>>(sp =>
+    (client, prefix) => new QueueCleanupService(client, sp.GetRequiredService<WardenOptions>(), prefix, sp.GetRequiredService<OutputService>()));
 
 if (opts.HasSonarr)
 {

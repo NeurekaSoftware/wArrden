@@ -70,43 +70,43 @@ public class OutputService
         }
     }
 
-    public async Task RunSearchWithProgress(string instance, string job, int maxResults,
-        Func<SearchProgress, Task> searchLogic)
+    public virtual async Task RunSearchWithOutput(string instance, string job, int maxResults,
+        Func<SearchOutputWriter, Task> searchLogic)
     {
-        var progress = new SearchProgress(instance, job, maxResults);
-        progress.Start();
-        await searchLogic(progress);
+        var output = new SearchOutputWriter(instance, job, maxResults);
+        output.WriteHeader();
+        await searchLogic(output);
     }
 
-    public class SearchProgress
+    public class SearchOutputWriter
     {
         private readonly string _instance;
         private readonly string _job;
         private readonly int _maxResults;
 
-        internal SearchProgress(string instance, string job, int maxResults)
+        internal SearchOutputWriter(string instance, string job, int maxResults)
         {
             _instance = instance;
             _job = job;
             _maxResults = maxResults;
         }
 
-        public void Start()
+        public virtual void WriteHeader()
         {
             var ts = DateTime.Now.ToString("HH:mm:ss");
             var label = InstanceJobLabel(_instance, _job);
             Console.WriteLine($"[{ts} INF] [{label}]");
         }
 
-        public void SetPhase(string phase)
+        public virtual void SetPhase(string phase)
         {
             Console.WriteLine($" ├─ {phase}");
         }
 
-        public void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool hasResults)
+        public virtual void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool isLast)
         {
-            var prefix = hasResults ? " ├─" : " └─";
-            var childPrefix = hasResults ? " │ " : "   ";
+            var prefix = isLast ? " └─" : " ├─";
+            var childPrefix = isLast ? "   " : " │ ";
 
             Console.WriteLine($"{prefix} Stats:");
             Console.WriteLine($"{childPrefix} • Total Items:   {totalCount}");
@@ -125,17 +125,17 @@ public class OutputService
             Console.WriteLine($"{childPrefix} • Result:        {result}");
         }
 
-        public void StartResults()
+        public virtual void StartResults()
         {
             Console.WriteLine(" └─ Results:");
         }
 
-        public void WriteItem(string title)
+        public virtual void WriteItem(string title)
         {
             Console.WriteLine($"    • {title}");
         }
 
-        public void Finish()
+        public virtual void WriteTrailer()
         {
             Console.WriteLine();
         }

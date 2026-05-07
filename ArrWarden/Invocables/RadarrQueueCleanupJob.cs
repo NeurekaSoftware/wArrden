@@ -7,15 +7,15 @@ namespace ArrWarden.Invocables;
 
 public class RadarrQueueCleanupJob : IInvocable
 {
+    private readonly Func<IArrClient, string, QueueCleanupService> _factory;
     private readonly RadarrV3Client _client;
     private readonly WardenOptions _options;
-    private readonly OutputService _output;
 
-    public RadarrQueueCleanupJob(RadarrV3Client client, WardenOptions options, OutputService output)
+    public RadarrQueueCleanupJob(Func<IArrClient, string, QueueCleanupService> factory, RadarrV3Client client, WardenOptions options)
     {
+        _factory = factory;
         _client = client;
         _options = options;
-        _output = output;
     }
 
     public Task Invoke()
@@ -23,7 +23,7 @@ public class RadarrQueueCleanupJob : IInvocable
         if (!_options.HasRadarr)
             return Task.CompletedTask;
 
-        var service = new QueueCleanupService(_client, _options, "RADARR", _output);
+        var service = _factory(_client, "RADARR");
         return service.CleanAsync(CancellationToken.None);
     }
 }

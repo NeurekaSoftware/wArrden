@@ -7,15 +7,15 @@ namespace ArrWarden.Invocables;
 
 public class SonarrQueueCleanupJob : IInvocable
 {
+    private readonly Func<IArrClient, string, QueueCleanupService> _factory;
     private readonly SonarrV3Client _client;
     private readonly WardenOptions _options;
-    private readonly OutputService _output;
 
-    public SonarrQueueCleanupJob(SonarrV3Client client, WardenOptions options, OutputService output)
+    public SonarrQueueCleanupJob(Func<IArrClient, string, QueueCleanupService> factory, SonarrV3Client client, WardenOptions options)
     {
+        _factory = factory;
         _client = client;
         _options = options;
-        _output = output;
     }
 
     public Task Invoke()
@@ -23,7 +23,7 @@ public class SonarrQueueCleanupJob : IInvocable
         if (!_options.HasSonarr)
             return Task.CompletedTask;
 
-        var service = new QueueCleanupService(_client, _options, "SONARR", _output);
+        var service = _factory(_client, "SONARR");
         return service.CleanAsync(CancellationToken.None);
     }
 }

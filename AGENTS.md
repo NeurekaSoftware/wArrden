@@ -131,10 +131,20 @@ Year is only appended when greater than zero.
 
 ## Implementation
 
-Log output is handled by `OutputService` and `SearchProgress` in `ArrWarden/Services/OutputService.cs`. Item title formatting is done in `SearchService.cs` and `QueueCleanupService.cs`. API models are in `ArrWarden/Clients/Models/`.
+Log output is handled by `OutputService` and `SearchOutputWriter` in `ArrWarden/Services/OutputService.cs`. Item title formatting is done in `SearchService.cs` and `QueueCleanupService.cs`. Queue cleanup rules are in `ArrWarden/Services/QueueCleanupRules.cs`. API models are in `ArrWarden/Clients/Models/`.
 
 ## Build / Quality Checks
 
 ```bash
 dotnet build ArrWarden
+dotnet test ArrWarden.Tests
 ```
+
+## Unit Tests
+
+- Tests live in `ArrWarden.Tests/` using **xUnit** and **Moq**.
+- After any code change to `ArrWarden/`, run `dotnet test ArrWarden.Tests` and verify all tests pass before committing.
+- EF Core tests targeting the real SQLite provider use `Microsoft.Data.Sqlite` in-memory mode (shared cache) — never the InMemory provider, which does not support `ExecuteDeleteAsync`.
+- Internal members are exposed to the test project via `InternalsVisibleTo` in `ArrWarden.csproj`.
+- New public/internal methods must have corresponding unit tests.
+- Integration points (HTTP clients, scheduling) are mocked; pure logic (parsing, rule matching, title formatting, cooldown filtering) is tested directly.

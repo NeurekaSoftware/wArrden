@@ -3,7 +3,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ArrWarden.Services;
 
-public class CooldownService
+public interface ICooldownService
+{
+    Task CleanExpiredAsync(string instance, string category, TimeSpan cooldown, CancellationToken ct);
+    Task<HashSet<int>> GetCooldownIdsAsync(string instance, string category, CancellationToken ct);
+    Task MarkSearchedAsync(string instance, string category, int[] itemIds, CancellationToken ct);
+}
+
+public class CooldownService : ICooldownService
 {
     private readonly WardenDbContext _db;
 

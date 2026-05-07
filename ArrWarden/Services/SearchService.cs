@@ -6,11 +6,11 @@ namespace ArrWarden.Services;
 
 public class SearchService
 {
-    private readonly CooldownService _cooldown;
+    private readonly ICooldownService _cooldown;
     private readonly WardenOptions _options;
     private readonly OutputService _output;
 
-    public SearchService(CooldownService cooldown, WardenOptions options, OutputService output)
+    public SearchService(ICooldownService cooldown, WardenOptions options, OutputService output)
     {
         _cooldown = cooldown;
         _options = options;
@@ -19,7 +19,7 @@ public class SearchService
 
     public async Task SearchMissingEpisodesAsync(IArrClient client, CancellationToken ct)
     {
-        await _output.RunSearchWithProgress(client.Instance, "Missing Search", _options.SonarrMissingMaxResults,
+        await _output.RunSearchWithOutput(client.Instance, "Missing Search", _options.SonarrMissingMaxResults,
             async progress =>
             {
                 await RunEpisodeSearch(client, "Missing", _options.SonarrMissingCooldown, _options.SonarrMissingMaxResults,
@@ -29,7 +29,7 @@ public class SearchService
 
     public async Task SearchUpgradeEpisodesAsync(IArrClient client, CancellationToken ct)
     {
-        await _output.RunSearchWithProgress(client.Instance, "Upgrade Search", _options.SonarrUpgradeMaxResults,
+        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", _options.SonarrUpgradeMaxResults,
             async progress =>
             {
                 await RunEpisodeSearch(client, "Upgrade", _options.SonarrUpgradeCooldown, _options.SonarrUpgradeMaxResults,
@@ -39,7 +39,7 @@ public class SearchService
 
     public async Task SearchMissingMoviesAsync(IArrClient client, CancellationToken ct)
     {
-        await _output.RunSearchWithProgress(client.Instance, "Missing Search", _options.RadarrMissingMaxResults,
+        await _output.RunSearchWithOutput(client.Instance, "Missing Search", _options.RadarrMissingMaxResults,
             async progress =>
             {
                 await RunMovieSearch(client, "Missing", _options.RadarrMissingCooldown, _options.RadarrMissingMaxResults,
@@ -49,7 +49,7 @@ public class SearchService
 
     public async Task SearchUpgradeMoviesAsync(IArrClient client, CancellationToken ct)
     {
-        await _output.RunSearchWithProgress(client.Instance, "Upgrade Search", _options.RadarrUpgradeMaxResults,
+        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", _options.RadarrUpgradeMaxResults,
             async progress =>
             {
                 await RunMovieSearch(client, "Upgrade", _options.RadarrUpgradeCooldown, _options.RadarrUpgradeMaxResults,
@@ -59,7 +59,7 @@ public class SearchService
 
     private async Task RunEpisodeSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults,
         Func<Task<IReadOnlyList<WantedEpisodeResource>>> getWanted, Func<int[], Task> triggerSearch,
-        OutputService.SearchProgress progress, CancellationToken ct)
+        OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
@@ -69,7 +69,7 @@ public class SearchService
 
         if (wanted.Count == 0)
         {
-            progress.WriteStats(0, 0, 0, 0, false);
+            progress.WriteStats(0, 0, 0, 0, true);
             return;
         }
 
@@ -84,12 +84,12 @@ public class SearchService
         if (selected.Count == 0 || _options.IsDryRun)
         {
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
-                _options.IsDryRun ? 0 : selected.Count, false);
+                _options.IsDryRun ? 0 : selected.Count, true);
             return;
         }
 
         progress.SetPhase($"Searching {selected.Count} items");
-        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, true);
+        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, false);
         progress.StartResults();
 
         foreach (var ep in selected)
@@ -105,12 +105,12 @@ public class SearchService
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(e => e.Id).ToArray(), ct);
-        progress.Finish();
+        progress.WriteTrailer();
     }
 
     private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults,
         Func<Task<IReadOnlyList<WantedMovieResource>>> getWanted, Func<int[], Task> triggerSearch,
-        OutputService.SearchProgress progress, CancellationToken ct)
+        OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
@@ -120,7 +120,7 @@ public class SearchService
 
         if (wanted.Count == 0)
         {
-            progress.WriteStats(0, 0, 0, 0, false);
+            progress.WriteStats(0, 0, 0, 0, true);
             return;
         }
 
@@ -135,12 +135,12 @@ public class SearchService
         if (selected.Count == 0 || _options.IsDryRun)
         {
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
-                _options.IsDryRun ? 0 : selected.Count, false);
+                _options.IsDryRun ? 0 : selected.Count, true);
             return;
         }
 
         progress.SetPhase($"Searching {selected.Count} items");
-        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, true);
+        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, false);
         progress.StartResults();
 
         foreach (var m in selected)
@@ -156,7 +156,7 @@ public class SearchService
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(m => m.Id).ToArray(), ct);
-        progress.Finish();
+        progress.WriteTrailer();
     }
 
     private static void Shuffle<T>(List<T> list)
