@@ -53,6 +53,7 @@ public class OutputService
 
         Console.WriteLine();
         Console.WriteLine($"[{ts} INF] [system.ready] ArrWarden initialized");
+        Console.WriteLine();
     }
 
     private static void WriteInstanceSection(string rootPrefix, string childPrefix, string name, string url,
