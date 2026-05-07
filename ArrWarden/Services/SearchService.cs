@@ -64,38 +64,48 @@ public class SearchService
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
 
-        progress.SetPhase("Fetching wanted items");
+        progress.SetPhase("Fetching wanted episodes");
         var wanted = await getWanted();
 
-        progress.SetPhase("Filtering by cooldown");
+        if (wanted.Count == 0)
+        {
+            progress.WriteStats(0, 0, 0, 0, false);
+            return;
+        }
+
+        progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, category, ct);
 
         var eligible = wanted.Where(e => !cooldownIds.Contains(e.Id)).ToList();
         Shuffle(eligible);
         var selected = eligible.Take(maxResults).ToList();
+        var onCooldown = wanted.Count - eligible.Count;
 
         if (selected.Count == 0 || _options.IsDryRun)
         {
-            progress.Complete(wanted.Count, wanted.Count - eligible.Count,
-                _options.IsDryRun ? 0 : selected.Count);
+            progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
+                _options.IsDryRun ? 0 : selected.Count, false);
             return;
         }
 
-        progress.SetPhase($"{selected.Count} items to search");
+        progress.SetPhase($"Searching {selected.Count} items");
+        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, true);
+        progress.StartResults();
+
         foreach (var ep in selected)
         {
             var title = ep.Title ?? $"Episode {ep.Id}";
             if (ep.Series is not null)
-                title = $"{ep.Series.Title} ({ep.Series.Year}) S{ep.SeasonNumber:D2}E{ep.EpisodeNumber:D2} - {title}";
+                title = $"{ep.Series.Title} ({ep.Series.Year}) - S{ep.SeasonNumber:D2}E{ep.EpisodeNumber:D2} - {title}";
 
-            progress.ItemSearched(title);
+            progress.WriteItem(title);
 
             try { await triggerSearch(new[] { ep.Id }); }
             catch { }
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(e => e.Id).ToArray(), ct);
-        progress.Complete(wanted.Count, wanted.Count - eligible.Count, selected.Count);
+        progress.Finish();
     }
 
     private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults,
@@ -105,38 +115,48 @@ public class SearchService
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
 
-        progress.SetPhase("Fetching wanted items");
+        progress.SetPhase("Fetching wanted movies");
         var wanted = await getWanted();
 
-        progress.SetPhase("Filtering by cooldown");
+        if (wanted.Count == 0)
+        {
+            progress.WriteStats(0, 0, 0, 0, false);
+            return;
+        }
+
+        progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, category, ct);
 
         var eligible = wanted.Where(m => !cooldownIds.Contains(m.Id)).ToList();
         Shuffle(eligible);
         var selected = eligible.Take(maxResults).ToList();
+        var onCooldown = wanted.Count - eligible.Count;
 
         if (selected.Count == 0 || _options.IsDryRun)
         {
-            progress.Complete(wanted.Count, wanted.Count - eligible.Count,
-                _options.IsDryRun ? 0 : selected.Count);
+            progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
+                _options.IsDryRun ? 0 : selected.Count, false);
             return;
         }
 
-        progress.SetPhase($"{selected.Count} items to search");
+        progress.SetPhase($"Searching {selected.Count} items");
+        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, true);
+        progress.StartResults();
+
         foreach (var m in selected)
         {
             var title = m.Title ?? $"Movie {m.Id}";
             if (m.Year > 0)
                 title = $"{title} ({m.Year})";
 
-            progress.ItemSearched(title);
+            progress.WriteItem(title);
 
             try { await triggerSearch(new[] { m.Id }); }
             catch { }
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(m => m.Id).ToArray(), ct);
-        progress.Complete(wanted.Count, wanted.Count - eligible.Count, selected.Count);
+        progress.Finish();
     }
 
     private static void Shuffle<T>(List<T> list)

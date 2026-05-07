@@ -41,89 +41,116 @@ public class OutputService
         Console.WriteLine();
     }
 
-    public void WriteQueueResult(DateTime timestamp, string instance, string job, int blocked, int matched,
+    public void WriteQueueResult(DateTime timestamp, string instance, int totalQueue, int blocked, int matched,
         IReadOnlyList<(string Title, string Rule)> items, bool isDryRun)
     {
         var ts = timestamp.ToString("HH:mm:ss");
-        var label = InstanceLabel(instance);
+        var label = InstanceJobLabel(instance, "Queue Cleanup");
+        Console.WriteLine($"[{ts} INF] [{label}]");
 
         if (matched == 0)
         {
-            Console.WriteLine($"{ts}  {label} {job}  =>  blocked: {blocked}  no rules activated");
+            Console.WriteLine(" └─ Stats:");
+            Console.WriteLine($"    • Total Queue:   {totalQueue}");
+            Console.WriteLine("    • Result:        No blocked queue items detected");
         }
         else
         {
-            var verb = isDryRun ? "would blocklist" : "blocklisted";
-            var prefix = isDryRun ? "[DRY RUN] " : "";
-            Console.WriteLine($"{ts}  {label} {job}  =>  blocked: {blocked}  matched: {matched}  {prefix}{verb}");
-
+            var verb = isDryRun ? "Would blocklist" : "Blocklisted";
+            Console.WriteLine(" ├─ Stats:");
+            Console.WriteLine($" │  • Total Queue:   {totalQueue}");
+            Console.WriteLine($" │  • Blocked:       {blocked}");
+            Console.WriteLine($" │  • Matched:       {matched}");
+            Console.WriteLine($" │  • Result:        {verb} {matched}");
+            Console.WriteLine(" └─ Results:");
             foreach (var (title, rule) in items)
-            {
-                var truncated = Truncate(title, 48);
-                Console.WriteLine($"  {truncated,-48}  {rule}");
-            }
-
+                Console.WriteLine($"    • {title}  {rule}");
             if (items.Count < matched)
-                Console.WriteLine($"  +{matched - items.Count} more");
+                Console.WriteLine($"    +{matched - items.Count} more");
         }
     }
 
     public async Task RunSearchWithProgress(string instance, string job, int maxResults,
         Func<SearchProgress, Task> searchLogic)
     {
-        var progress = new SearchProgress
-        {
-            Instance = instance,
-            Job = job,
-            MaxResults = maxResults,
-        };
-
-        progress.SetPhaseAction = (phase) =>
-        {
-            var ts = DateTime.Now.ToString("HH:mm:ss");
-            Console.WriteLine($"{ts}  {InstanceLabel(instance)} {job}  =>  {phase}");
-        };
-
-        progress.ItemSearchedAction = (title) =>
-        {
-            Console.WriteLine($"  {Truncate(title, 60)}");
-        };
-
-        progress.CompleteAction = (totalWanted, onCooldown, searched) =>
-        {
-            var ts = DateTime.Now.ToString("HH:mm:ss");
-            var label = InstanceLabel(instance);
-
-            if (totalWanted == 0)
-                Console.WriteLine($"{ts}  {label} {job}  =>  no wanted items found");
-            else if (searched == 0)
-                Console.WriteLine($"{ts}  {label} {job}  =>  total: {totalWanted}  on cooldown: {onCooldown}  eligible: {Math.Max(0, totalWanted - onCooldown)}  max: {maxResults}  nothing to search");
-            else
-                Console.WriteLine($"{ts}  {label} {job}  =>  total: {totalWanted}  on cooldown: {onCooldown}  eligible: {Math.Max(0, totalWanted - onCooldown)}  max: {maxResults}  searched: {searched}");
-            Console.WriteLine();
-        };
-
+        var progress = new SearchProgress(instance, job, maxResults);
+        progress.Start();
         await searchLogic(progress);
     }
 
     public class SearchProgress
     {
-        public string Instance { get; set; } = "";
-        public string Job { get; set; } = "";
-        public int MaxResults { get; set; }
+        private readonly string _instance;
+        private readonly string _job;
+        private readonly int _maxResults;
 
-        internal Action<string>? SetPhaseAction { get; set; }
-        internal Action<string>? ItemSearchedAction { get; set; }
-        internal Action<int, int, int>? CompleteAction { get; set; }
+        internal SearchProgress(string instance, string job, int maxResults)
+        {
+            _instance = instance;
+            _job = job;
+            _maxResults = maxResults;
+        }
 
-        public void SetPhase(string phase) => SetPhaseAction?.Invoke(phase);
-        public void ItemSearched(string title) => ItemSearchedAction?.Invoke(title);
-        public void Complete(int totalWanted, int onCooldown, int searched) => CompleteAction?.Invoke(totalWanted, onCooldown, searched);
+        public void Start()
+        {
+            var ts = DateTime.Now.ToString("HH:mm:ss");
+            var label = InstanceJobLabel(_instance, _job);
+            Console.WriteLine($"[{ts} INF] [{label}]");
+        }
+
+        public void SetPhase(string phase)
+        {
+            Console.WriteLine($" ├─ {phase}");
+        }
+
+        public void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool hasResults)
+        {
+            var prefix = hasResults ? " ├─" : " └─";
+            var childPrefix = hasResults ? " │ " : "   ";
+
+            Console.WriteLine($"{prefix} Stats:");
+            Console.WriteLine($"{childPrefix} • Total Items:   {totalCount}");
+            Console.WriteLine($"{childPrefix} • On Cooldown:   {onCooldown}");
+            Console.WriteLine($"{childPrefix} • Eligible:      {eligible}");
+            Console.WriteLine($"{childPrefix} • Search Limit:  {_maxResults}");
+
+            string result;
+            if (totalCount == 0)
+                result = "No wanted items found";
+            else if (searched == 0)
+                result = "No search performed";
+            else
+                result = $"Searched {searched}";
+
+            Console.WriteLine($"{childPrefix} • Result:        {result}");
+        }
+
+        public void StartResults()
+        {
+            Console.WriteLine(" └─ Results:");
+        }
+
+        public void WriteItem(string title)
+        {
+            Console.WriteLine($"    • {title}");
+        }
+
+        public void Finish()
+        {
+            Console.WriteLine();
+        }
     }
 
-    private static string InstanceLabel(string name)
+    private static string InstanceJobLabel(string instance, string job)
     {
-        return $"[{name.ToUpperInvariant()}]";
+        var jobKey = job.ToLowerInvariant() switch
+        {
+            "missing search" => "missing",
+            "upgrade search" => "upgrade",
+            "queue cleanup" => "queue",
+            _ => job.ToLowerInvariant()
+        };
+        return $"{instance.ToLowerInvariant()}.{jobKey}";
     }
 
     private static string PadCenter(string text, int width)
@@ -132,12 +159,5 @@ public class OutputService
         if (padding <= 0) return text;
         var left = padding / 2;
         return new string(' ', left) + text;
-    }
-
-    private static string Truncate(string value, int maxLength)
-    {
-        if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
-            return value ?? "";
-        return value[..(maxLength - 3)] + "...";
     }
 }

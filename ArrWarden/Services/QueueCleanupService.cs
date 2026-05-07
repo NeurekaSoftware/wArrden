@@ -30,7 +30,7 @@ public class QueueCleanupService
 
         if (blocked.Count == 0)
         {
-            _output.WriteQueueResult(DateTime.Now, _client.Instance, "Queue Cleanup", 0, 0,
+            _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
                 Array.Empty<(string, string)>(), _options.IsDryRun);
             return 0;
         }
@@ -54,7 +54,7 @@ public class QueueCleanupService
             matched.Add((item.Id, GetTitle(item), match.Value.Key));
         }
 
-        _output.WriteQueueResult(DateTime.Now, _client.Instance, "Queue Cleanup", blocked.Count, matched.Count,
+        _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, matched.Count,
             matched.Select(m => (m.Title, m.Rule)).ToList(), _options.IsDryRun);
         return matched.Count;
     }
@@ -89,10 +89,24 @@ public class QueueCleanupService
 
     private static string GetTitle(QueueResource item)
     {
-        return item.Title
-            ?? item.Episode?.Title
-            ?? item.Movie?.Title
-            ?? $"ID {item.Id}";
+        if (item.Episode is not null)
+        {
+            var ep = item.Episode;
+            var epTitle = ep.Title ?? $"Episode {ep.Id}";
+            if (ep.Series is not null)
+                return $"{ep.Series.Title} ({ep.Series.Year}) - S{ep.SeasonNumber:D2}E{ep.EpisodeNumber:D2} - {epTitle}";
+            return $"S{ep.SeasonNumber:D2}E{ep.EpisodeNumber:D2} - {epTitle}";
+        }
+
+        if (item.Movie is not null)
+        {
+            var movieTitle = item.Movie.Title ?? $"Movie {item.Movie.Id}";
+            if (item.Movie.Year > 0)
+                return $"{movieTitle} ({item.Movie.Year})";
+            return movieTitle;
+        }
+
+        return item.Title ?? $"ID {item.Id}";
     }
 
     private static readonly Dictionary<string, (string Match, bool Blocklist)> SonarrRules = new()

@@ -74,6 +74,15 @@ public class QueueStatusMessage
     public List<string>? Messages { get; set; }
 }
 
+public class QueueEpisodeSeriesResource
+{
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("year")]
+    public int Year { get; set; }
+}
+
 public class QueueEpisode
 {
     [JsonPropertyName("id")]
@@ -90,6 +99,9 @@ public class QueueEpisode
 
     [JsonPropertyName("seriesId")]
     public int SeriesId { get; set; }
+
+    [JsonPropertyName("series")]
+    public QueueEpisodeSeriesResource? Series { get; set; }
 }
 
 public class QueueMovie
@@ -99,4 +111,7 @@ public class QueueMovie
 
     [JsonPropertyName("title")]
     public string? Title { get; set; }
+
+    [JsonPropertyName("year")]
+    public int Year { get; set; }
 }
