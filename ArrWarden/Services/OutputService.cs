@@ -22,8 +22,8 @@ public class OutputService
         Console.WriteLine($"[{ts} INF] [system.startup]");
 
         var sections = new List<string>();
-        if (opts.HasSonarr) sections.Add("Sonarr");
         if (opts.HasRadarr) sections.Add("Radarr");
+        if (opts.HasSonarr) sections.Add("Sonarr");
         sections.Add("Runtime");
 
         for (int i = 0; i < sections.Count; i++)

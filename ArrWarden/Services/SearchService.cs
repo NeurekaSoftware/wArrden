@@ -78,7 +78,12 @@ public class SearchService
 
         var eligible = wanted.Where(e => !cooldownIds.Contains(e.Id)).ToList();
         Shuffle(eligible);
-        var selected = eligible.Take(maxResults).ToList();
+        var selected = eligible
+            .Take(maxResults)
+            .OrderBy(e => e.Series?.Title ?? "")
+            .ThenBy(e => e.SeasonNumber)
+            .ThenBy(e => e.EpisodeNumber)
+            .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
         if (selected.Count == 0 || _options.IsDryRun)
@@ -129,7 +134,10 @@ public class SearchService
 
         var eligible = wanted.Where(m => !cooldownIds.Contains(m.Id)).ToList();
         Shuffle(eligible);
-        var selected = eligible.Take(maxResults).ToList();
+        var selected = eligible
+            .Take(maxResults)
+            .OrderBy(m => m.Title ?? "")
+            .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
         if (selected.Count == 0 || _options.IsDryRun)

@@ -93,15 +93,6 @@ using (var scope = host.Services.CreateScope())
 
 host.Services.UseScheduler(scheduler =>
 {
-    if (opts.HasSonarr && !string.IsNullOrWhiteSpace(opts.SonarrQueueCleanupCron))
-        scheduler.Schedule<SonarrQueueCleanupJob>().Cron(opts.SonarrQueueCleanupCron).PreventOverlapping("sonarr_qc");
-
-    if (opts.HasSonarr && !string.IsNullOrWhiteSpace(opts.SonarrMissingSearchCron))
-        scheduler.Schedule<SonarrMissingSearchJob>().Cron(opts.SonarrMissingSearchCron).PreventOverlapping("sonarr_ms");
-
-    if (opts.HasSonarr && !string.IsNullOrWhiteSpace(opts.SonarrUpgradeSearchCron))
-        scheduler.Schedule<SonarrUpgradeSearchJob>().Cron(opts.SonarrUpgradeSearchCron).PreventOverlapping("sonarr_us");
-
     if (opts.HasRadarr && !string.IsNullOrWhiteSpace(opts.RadarrQueueCleanupCron))
         scheduler.Schedule<RadarrQueueCleanupJob>().Cron(opts.RadarrQueueCleanupCron).PreventOverlapping("radarr_qc");
 
@@ -110,6 +101,15 @@ host.Services.UseScheduler(scheduler =>
 
     if (opts.HasRadarr && !string.IsNullOrWhiteSpace(opts.RadarrUpgradeSearchCron))
         scheduler.Schedule<RadarrUpgradeSearchJob>().Cron(opts.RadarrUpgradeSearchCron).PreventOverlapping("radarr_us");
+
+    if (opts.HasSonarr && !string.IsNullOrWhiteSpace(opts.SonarrQueueCleanupCron))
+        scheduler.Schedule<SonarrQueueCleanupJob>().Cron(opts.SonarrQueueCleanupCron).PreventOverlapping("sonarr_qc");
+
+    if (opts.HasSonarr && !string.IsNullOrWhiteSpace(opts.SonarrMissingSearchCron))
+        scheduler.Schedule<SonarrMissingSearchJob>().Cron(opts.SonarrMissingSearchCron).PreventOverlapping("sonarr_ms");
+
+    if (opts.HasSonarr && !string.IsNullOrWhiteSpace(opts.SonarrUpgradeSearchCron))
+        scheduler.Schedule<SonarrUpgradeSearchJob>().Cron(opts.SonarrUpgradeSearchCron).PreventOverlapping("sonarr_us");
 });
 
 OutputService.WriteBanner(opts);

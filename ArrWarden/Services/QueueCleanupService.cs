@@ -54,8 +54,10 @@ public class QueueCleanupService
             matched.Add((item.Id, GetTitle(item), match.Value.Key));
         }
 
-        _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, matched.Count,
-            matched.Select(m => (m.Title, m.Rule)).ToList(), _options.IsDryRun);
+        var sorted = matched.OrderBy(m => m.Title, StringComparer.OrdinalIgnoreCase).ToList();
+
+        _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, sorted.Count,
+            sorted.Select(m => (m.Title, m.Rule)).ToList(), _options.IsDryRun);
         return matched.Count;
     }
 
