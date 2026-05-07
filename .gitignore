@@ -7,7 +7,6 @@ obj/
 *.db*
 *.db-shm
 *.db-wal
-data/
 .vscode/
 .idea/
 *.swp
