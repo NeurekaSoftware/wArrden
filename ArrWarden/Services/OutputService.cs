@@ -250,6 +250,7 @@ public class OutputService
         var padding = width - text.Length;
         if (padding <= 0) return text;
         var left = padding / 2;
-        return new string(' ', left) + text;
+        var right = width - left - text.Length;
+        return new string(' ', left) + text + new string(' ', right);
     }
 }

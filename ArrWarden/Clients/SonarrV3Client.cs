@@ -58,7 +58,7 @@ public class SonarrV3Client : IArrClient
 
         while (true)
         {
-            var url = $"{_baseUrl}/api/v3/wanted/{type}?includeSeries=false&monitored=true&page={page}&pageSize={pageSize}&sortKey=episodes.lastSearchTime&sortDirection=ascending";
+            var url = $"{_baseUrl}/api/v3/wanted/{type}?includeSeries=true&monitored=true&page={page}&pageSize={pageSize}&sortKey=episodes.lastSearchTime&sortDirection=ascending";
             var response = await _http.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
