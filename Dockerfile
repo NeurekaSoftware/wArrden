@@ -6,8 +6,6 @@ COPY ArrWarden/ .
 RUN dotnet publish -c Release -o /app/bin
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0
-RUN useradd -m appuser
-USER appuser
 WORKDIR /app/bin
 COPY --from=build /app/bin .
 ENTRYPOINT ["dotnet", "ArrWarden.dll"]
