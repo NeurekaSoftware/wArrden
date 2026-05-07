@@ -1,0 +1,15 @@
+bin/
+obj/
+*.user
+*.csproj.user
+*.sln.docstates
+.vs/
+*.db*
+*.db-shm
+*.db-wal
+data/
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store

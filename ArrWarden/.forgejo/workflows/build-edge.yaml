@@ -1,0 +1,16 @@
+name: build-edge
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  setup-build-edge:
+    name: "Setup Build: Edge"
+    uses: forgejo/workflows/.forgejo/workflows/build-edge.yaml@main
+    secrets:
+      REGISTRY: ${{ secrets.REGISTRY }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
