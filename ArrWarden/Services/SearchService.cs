@@ -76,7 +76,7 @@ public class SearchService
 
         if (selected.Count == 0 || _options.IsDryRun)
         {
-            progress.Complete(wanted.Count, wanted.Count - eligible.Count + (eligible.Count - selected.Count),
+            progress.Complete(wanted.Count, wanted.Count - eligible.Count,
                 _options.IsDryRun ? 0 : selected.Count);
             return;
         }
@@ -95,7 +95,7 @@ public class SearchService
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(e => e.Id).ToArray(), ct);
-        progress.Complete(wanted.Count, wanted.Count - eligible.Count + (eligible.Count - selected.Count), selected.Count);
+        progress.Complete(wanted.Count, wanted.Count - eligible.Count, selected.Count);
     }
 
     private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults,
@@ -117,7 +117,7 @@ public class SearchService
 
         if (selected.Count == 0 || _options.IsDryRun)
         {
-            progress.Complete(wanted.Count, wanted.Count - eligible.Count + (eligible.Count - selected.Count),
+            progress.Complete(wanted.Count, wanted.Count - eligible.Count,
                 _options.IsDryRun ? 0 : selected.Count);
             return;
         }
@@ -136,7 +136,7 @@ public class SearchService
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(m => m.Id).ToArray(), ct);
-        progress.Complete(wanted.Count, wanted.Count - eligible.Count + (eligible.Count - selected.Count), selected.Count);
+        progress.Complete(wanted.Count, wanted.Count - eligible.Count, selected.Count);
     }
 
     private static void Shuffle<T>(List<T> list)
