@@ -81,7 +81,7 @@ public class SearchService
             return;
         }
 
-        progress.SetPhase($"[white]{selected.Count}[/] items to search");
+        progress.SetPhase($"{selected.Count} items to search");
         foreach (var ep in selected)
         {
             var title = ep.Title ?? $"Episode {ep.Id}";
@@ -122,7 +122,7 @@ public class SearchService
             return;
         }
 
-        progress.SetPhase($"[white]{selected.Count}[/] items to search");
+        progress.SetPhase($"{selected.Count} items to search");
         foreach (var m in selected)
         {
             var title = m.Title ?? $"Movie {m.Id}";

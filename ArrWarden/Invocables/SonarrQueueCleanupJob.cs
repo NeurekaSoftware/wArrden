@@ -1,3 +1,4 @@
+using ArrWarden.Clients;
 using ArrWarden.Configuration;
 using ArrWarden.Services;
 using Coravel.Invocable;
@@ -6,13 +7,15 @@ namespace ArrWarden.Invocables;
 
 public class SonarrQueueCleanupJob : IInvocable
 {
-    private readonly QueueCleanupService _service;
+    private readonly SonarrV3Client _client;
     private readonly WardenOptions _options;
+    private readonly OutputService _output;
 
-    public SonarrQueueCleanupJob(QueueCleanupService service, WardenOptions options)
+    public SonarrQueueCleanupJob(SonarrV3Client client, WardenOptions options, OutputService output)
     {
-        _service = service;
+        _client = client;
         _options = options;
+        _output = output;
     }
 
     public Task Invoke()
@@ -20,6 +23,7 @@ public class SonarrQueueCleanupJob : IInvocable
         if (!_options.HasSonarr)
             return Task.CompletedTask;
 
-        return _service.CleanAsync(CancellationToken.None);
+        var service = new QueueCleanupService(_client, _options, "SONARR", _output);
+        return service.CleanAsync(CancellationToken.None);
     }
 }

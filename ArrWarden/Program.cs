@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Spectre.Console;
 
 var opts = new WardenOptions();
 
@@ -40,7 +39,7 @@ var errors = Validate(opts);
 if (errors.Count > 0)
 {
     foreach (var error in errors)
-        AnsiConsole.MarkupLine($"[red]Error:[/] {Markup.Escape(error)}");
+        Console.Error.WriteLine($"Error: {error}");
     Environment.Exit(1);
 }
 
@@ -67,7 +66,6 @@ if (opts.HasSonarr)
 {
     var sonarrClient = (SonarrV3Client)ArrClientFactory.CreateSonarr(opts.SonarrUrl!, opts.SonarrApiKey!, opts.SonarrApiVersion);
     builder.Services.AddSingleton(sonarrClient);
-    builder.Services.AddSingleton(sp => new QueueCleanupService(sonarrClient, opts, "SONARR", sp.GetRequiredService<OutputService>()));
     builder.Services.AddTransient<SonarrQueueCleanupJob>();
     builder.Services.AddTransient<SonarrMissingSearchJob>();
     builder.Services.AddTransient<SonarrUpgradeSearchJob>();
@@ -77,7 +75,6 @@ if (opts.HasRadarr)
 {
     var radarrClient = (RadarrV3Client)ArrClientFactory.CreateRadarr(opts.RadarrUrl!, opts.RadarrApiKey!, opts.RadarrApiVersion);
     builder.Services.AddSingleton(radarrClient);
-    builder.Services.AddSingleton(sp => new QueueCleanupService(radarrClient, opts, "RADARR", sp.GetRequiredService<OutputService>()));
     builder.Services.AddTransient<RadarrQueueCleanupJob>();
     builder.Services.AddTransient<RadarrMissingSearchJob>();
     builder.Services.AddTransient<RadarrUpgradeSearchJob>();

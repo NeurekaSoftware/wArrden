@@ -1,3 +1,4 @@
+using ArrWarden.Clients;
 using ArrWarden.Configuration;
 using ArrWarden.Services;
 using Coravel.Invocable;
@@ -6,13 +7,15 @@ namespace ArrWarden.Invocables;
 
 public class RadarrQueueCleanupJob : IInvocable
 {
-    private readonly QueueCleanupService _service;
+    private readonly RadarrV3Client _client;
     private readonly WardenOptions _options;
+    private readonly OutputService _output;
 
-    public RadarrQueueCleanupJob(QueueCleanupService service, WardenOptions options)
+    public RadarrQueueCleanupJob(RadarrV3Client client, WardenOptions options, OutputService output)
     {
-        _service = service;
+        _client = client;
         _options = options;
+        _output = output;
     }
 
     public Task Invoke()
@@ -20,6 +23,7 @@ public class RadarrQueueCleanupJob : IInvocable
         if (!_options.HasRadarr)
             return Task.CompletedTask;
 
-        return _service.CleanAsync(CancellationToken.None);
+        var service = new QueueCleanupService(_client, _options, "RADARR", _output);
+        return service.CleanAsync(CancellationToken.None);
     }
 }
