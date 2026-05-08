@@ -1,7 +1,7 @@
 services:
-  arrwarden:
-    image: ghcr.io/example/arrwarden:latest
-    container_name: arrwarden
+  warrden:
+    image: ghcr.io/example/warrden:latest
+    container_name: warrden
     restart: unless-stopped
     volumes:
       - ./data:/app/data

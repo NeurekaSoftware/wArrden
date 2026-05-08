@@ -2,7 +2,7 @@
 
 ## Purpose
 
-ArrWarden is a scheduled job runner that searches for missing/upgrade items and cleans stuck queue entries on Sonarr/Radarr instances. This file enforces output formatting standards for all log output shown in the console.
+wArrden is a scheduled job runner that searches for missing/upgrade items and cleans stuck queue entries on Sonarr/Radarr instances. This file enforces output formatting standards for all log output shown in the console.
 
 ## Log Format Rules
 
@@ -131,20 +131,20 @@ Year is only appended when greater than zero.
 
 ## Implementation
 
-Log output is handled by `OutputService` and `SearchOutputWriter` in `ArrWarden/Services/OutputService.cs`. Item title formatting is done in `SearchService.cs` and `QueueCleanupService.cs`. Queue cleanup rules are in `ArrWarden/Services/QueueCleanupRules.cs`. API models are in `ArrWarden/Clients/Models/`.
+Log output is handled by `OutputService` and `SearchOutputWriter` in `wArrden/Services/OutputService.cs`. Item title formatting is done in `SearchService.cs` and `QueueCleanupService.cs`. Queue cleanup rules are in `wArrden/Services/QueueCleanupRules.cs`. API models are in `wArrden/Clients/Models/`.
 
 ## Build / Quality Checks
 
 ```bash
-dotnet build ArrWarden
-dotnet test ArrWarden.Tests
+dotnet build wArrden
+dotnet test wArrden.Tests
 ```
 
 ## Unit Tests
 
-- Tests live in `ArrWarden.Tests/` using **xUnit** and **Moq**.
-- After any code change to `ArrWarden/`, run `dotnet test ArrWarden.Tests` and verify all tests pass before committing.
+- Tests live in `wArrden.Tests/` using **xUnit** and **Moq**.
+- After any code change to `wArrden/`, run `dotnet test wArrden.Tests` and verify all tests pass before committing.
 - EF Core tests targeting the real SQLite provider use `Microsoft.Data.Sqlite` in-memory mode (shared cache) — never the InMemory provider, which does not support `ExecuteDeleteAsync`.
-- Internal members are exposed to the test project via `InternalsVisibleTo` in `ArrWarden.csproj`.
+- Internal members are exposed to the test project via `InternalsVisibleTo` in `wArrden.csproj`.
 - New public/internal methods must have corresponding unit tests.
 - Integration points (HTTP clients, scheduling) are mocked; pure logic (parsing, rule matching, title formatting, cooldown filtering) is tested directly.

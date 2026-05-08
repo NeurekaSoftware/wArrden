@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path="ArrWarden/ArrWarden.csproj" />
-  <Project Path="ArrWarden.Tests/ArrWarden.Tests.csproj" />
-</Solution>
