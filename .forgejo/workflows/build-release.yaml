@@ -1,0 +1,15 @@
+name: build-release
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+jobs:
+  setup-build-release:
+    name: "Setup Build: Release"
+    uses: forgejo/workflows/.forgejo/workflows/build-release.yaml@main
+    secrets:
+      REGISTRY: ${{ secrets.REGISTRY }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}

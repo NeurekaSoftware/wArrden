@@ -1,0 +1,11 @@
+name: create-release
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+jobs:
+  setup-create-release:
+    name: "Setup Create: Release"
+    uses: forgejo/workflows/.forgejo/workflows/create-release.yaml@main
