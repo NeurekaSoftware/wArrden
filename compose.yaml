@@ -1,6 +1,6 @@
 services:
   warrden:
-    image: code.neureka.dev/warrden/arrwarden:edge
+    image: code.neureka.dev/warrden/warrden:edge
     container_name: warrden
     environment:
       - TZ=UTC
