@@ -1,10 +1,7 @@
 services:
   warrden:
-    image: ghcr.io/example/warrden:latest
+    image: code.neureka.dev/warrden/arrwarden:edge
     container_name: warrden
-    restart: unless-stopped
-    volumes:
-      - ./data:/app/data
     environment:
       - TZ=UTC
       - DRY_RUN=false
@@ -31,3 +28,6 @@ services:
       - RADARR_MISSING_COOLDOWN=30d
       - RADARR_UPGRADE_MAX_RESULTS=50
       - RADARR_UPGRADE_COOLDOWN=30d
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
