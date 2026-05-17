@@ -12,6 +12,23 @@ wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding mi
 
 </div>
 
+## Quickstart
+
+1. Download `compose.yaml`:
+   ```
+   curl -O https://code.neureka.dev/warrden/warrden/raw/branch/main/compose.yaml
+   ```
+
+2. Download the example config as `config.yaml`, then edit it with your Sonarr/Radarr URLs and API keys:
+   ```
+   curl -o config.yaml https://code.neureka.dev/warrden/warrden/raw/branch/main/config.example.yaml
+   ```
+
+3. Start the container:
+   ```
+   docker compose up -d
+   ```
+
 ## Missing Search
 
 Periodically searches for monitored content that has never been downloaded. Limits the number of searches per run and ensures the same item isn't re-searched too often.
@@ -37,20 +54,3 @@ This creates a few common gaps in automation:
 Over time, this can leave libraries with permanently missing content or media that no longer matches your preferred quality and scoring standards.
 
 wArrden fills those gaps by periodically rechecking your library and automating the cleanup work that would otherwise require manual intervention.
-
-## Quickstart
-
-1. Download `compose.yaml`:
-   ```
-   curl -O https://code.neureka.dev/warrden/warrden/raw/branch/main/compose.yaml
-   ```
-
-2. Download the example config as `config.yaml`, then edit it with your Sonarr/Radarr URLs and API keys:
-   ```
-   curl -o config.yaml https://code.neureka.dev/warrden/warrden/raw/branch/main/config.example.yaml
-   ```
-
-3. Start the container:
-   ```
-   docker compose up -d
-   ```
