@@ -7,19 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-05-16
+
 ### Added
-- Tree-style console log output with Unicode box-drawing characters and stats-before-results ordering
-- Database-backed cooldown system to prevent repeated searches for the same items
-- Search results sorted alphabetically
+- Scheduled missing item search for Sonarr episodes and Radarr movies
+- Scheduled upgrade search for finding better-quality versions of existing media
+- Automatic queue cleanup to remove stuck or blocked imports
+- Cooldown system to avoid re-searching the same items too frequently
+- Support for both Radarr and Sonarr instances with independent configuration per job type
+- Structured console output with item counts, cooldown status, and result summaries
 
-### Changed
-- Radarr jobs run before Sonarr jobs
-- Blocklist rules are now always active (environment variables no longer required)
-- Project renamed from ArrWarden to wArrden
-
-### Fixed
-- Cooldown counts in search stats report accurately
-- Sonarr queue cleanup using the wrong service due to a dependency injection conflict
-- SQLite permission error when running in Docker
-- Missing newline after queue cleanup operation output
-- Banner box alignment and full episode titles in search results
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/1.0.0...HEAD
+[1.0.0]: https://code.neureka.dev/warrden/warrden/releases/tag/1.0.0
