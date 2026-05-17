@@ -12,10 +12,6 @@ Makes maintaining your Radarr and Sonarr libraries easy by automatically removin
 
 </div>
 
-## Queue Cleanup
-
-Automatically removes stuck downloads from your queue that are blocking imports. Recognizes common import errors (wrong episodes, not an upgrade, samples, corrupt files, etc.) and either removes the item or blocklists it to prevent re-downloading the same bad release.
-
 ## Missing Search
 
 Periodically searches for monitored content that has never been downloaded. Limits the number of searches per run and ensures the same item isn't re-searched too often.
@@ -23,3 +19,7 @@ Periodically searches for monitored content that has never been downloaded. Limi
 ## Upgrade Search
 
 Periodically searches for monitored content that already exists on disk but has a better custom format score. Uses the same limits and cooldown behavior as Missing Search.
+
+## Queue Cleanup
+
+Detects stuck imports caused by common errors (wrong episode, not an upgrade, sample, corrupt file) and removes or blocklists them so the same release won't download again.
