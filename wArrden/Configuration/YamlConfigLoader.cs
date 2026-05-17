@@ -57,7 +57,7 @@ internal static class YamlConfigLoader
             return errors;
         }
 
-        var namesByType = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         for (int i = 0; i < config.Instances.Count; i++)
         {
@@ -70,8 +70,7 @@ internal static class YamlConfigLoader
             }
             else
             {
-                if (inst.IsSonarr) TrackName(namesByType, "sonarr", inst.Name, errors);
-                else if (inst.IsRadarr) TrackName(namesByType, "radarr", inst.Name, errors);
+                if (inst.IsSonarr || inst.IsRadarr) TrackName(usedNames, inst.Name, errors);
                 else
                     errors.Add($"{prefix} '{inst.Name}': 'type' must be 'sonarr' or 'radarr'.");
             }
@@ -138,16 +137,10 @@ internal static class YamlConfigLoader
         }
     }
 
-    private static void TrackName(Dictionary<string, HashSet<string>> names, string type, string name, List<string> errors)
+    private static void TrackName(HashSet<string> usedNames, string name, List<string> errors)
     {
-        if (!names.TryGetValue(type, out var set))
-        {
-            set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            names[type] = set;
-        }
-
-        if (!set.Add(name))
-            errors.Add($"Duplicate {type} instance name: '{name}'. Instance names must be unique per type.");
+        if (!usedNames.Add(name))
+            errors.Add($"Duplicate instance name: '{name}'. Instance names must be unique.");
     }
 
     private static bool IsValidUrl(string? url) =>

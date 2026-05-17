@@ -208,7 +208,7 @@ public class YamlConfigLoaderTests
     }
 
     [Fact]
-    public void Validate_DuplicateNamesPerType_ReturnsError()
+    public void Validate_DuplicateNames_ReturnsError()
     {
         var config = new AppConfig
         {
@@ -229,6 +229,36 @@ public class YamlConfigLoaderTests
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("Duplicate"));
+    }
+
+    [Fact]
+    public void Validate_DuplicateNamesCrossType_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Movies",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                },
+                new()
+                {
+                    Type = "radarr",
+                    Name = "Movies",
+                    Url = "http://localhost:7878",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
                 }
             }
         };
