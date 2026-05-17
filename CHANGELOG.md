@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-05-17
+
+### Added
+- YAML-based configuration supporting multiple named instances per arr type
+- `CONFIG_PATH` environment variable for specifying a custom config file path
+- Config file example with comprehensive instance configuration options
+
+### Changed
+- Configuration model from single-instance environment variables to multi-instance YAML
+
+### Deprecated
+- Legacy environment variable configuration (`SONARR_*`, `RADARR_*`); emits a warning on startup
+
 ## [1.0.0] - 2026-05-16
 
 ### Added
@@ -17,5 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/1.0.0...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/1.1.0...HEAD
+[1.1.0]: https://code.neureka.dev/warrden/warrden/releases/tag/1.1.0
 [1.0.0]: https://code.neureka.dev/warrden/warrden/releases/tag/1.0.0
