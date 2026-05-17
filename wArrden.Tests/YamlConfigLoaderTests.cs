@@ -303,4 +303,85 @@ public class YamlConfigLoaderTests
 
         Assert.Empty(errors);
     }
+
+    [Fact]
+    public void Load_FileNotFound_ThrowsFileNotFoundException()
+    {
+        Assert.Throws<FileNotFoundException>(() =>
+            YamlConfigLoader.Load("nonexistent_file.yaml"));
+    }
+
+    [Fact]
+    public void Load_InvalidYaml_ThrowsInvalidOperationException()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, "{{{ invalid yaml :::");
+
+            Assert.Throws<InvalidOperationException>(() =>
+                YamlConfigLoader.Load(tempFile));
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Load_ValidationErrors_ThrowsConfigurationException()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, "instances:\n  - type: sonarr\n    name: ''\n    url: http://localhost:8989\n    api_key: abc123");
+
+            var ex = Assert.Throws<ConfigurationException>(() =>
+                YamlConfigLoader.Load(tempFile));
+
+            Assert.NotEmpty(ex.Errors);
+            Assert.Contains(ex.Errors, e => e.Contains("name"));
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Load_AppliesDefaultMaxResults()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, @"
+instances:
+  - type: sonarr
+    name: Series
+    url: http://localhost:8989
+    api_key: abc123
+    missing_search:
+      enabled: true
+      cron: '*/5 * * * *'
+      max_results: 0
+    upgrade_search:
+      enabled: true
+      cron: '*/10 * * * *'
+      max_results: 0
+    queue_cleanup:
+      enabled: true
+      cron: '*/5 * * * *'
+");
+
+            var config = YamlConfigLoader.Load(tempFile);
+
+            var inst = config.Instances[0];
+            Assert.Equal(100, inst.MissingSearch!.MaxResults);
+            Assert.Equal(50, inst.UpgradeSearch!.MaxResults);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
 }

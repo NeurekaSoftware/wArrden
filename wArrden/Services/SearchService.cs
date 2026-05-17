@@ -14,7 +14,7 @@ public class SearchService
         _output = output;
     }
 
-    public async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
+    public virtual async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
             async progress =>
@@ -24,7 +24,7 @@ public class SearchService
             });
     }
 
-    public async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
+    public virtual async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
             async progress =>
@@ -34,7 +34,7 @@ public class SearchService
             });
     }
 
-    public async Task SearchMissingMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
+    public virtual async Task SearchMissingMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
             async progress =>
@@ -44,7 +44,7 @@ public class SearchService
             });
     }
 
-    public async Task SearchUpgradeMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
+    public virtual async Task SearchUpgradeMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
             async progress =>

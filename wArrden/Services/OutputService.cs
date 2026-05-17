@@ -7,29 +7,32 @@ public class OutputService
     private const int BoxWidth = 58;
     private const int LabelPad = 18;
 
-    public static void WriteBanner(AppConfig config, WardenOptions opts)
+    public TextWriter Out { get; set; } = Console.Out;
+
+    public static void WriteBanner(AppConfig config, WardenOptions opts, TextWriter? writer = null)
     {
+        var w = writer ?? Console.Out;
         var bar = new string('━', BoxWidth);
-        Console.WriteLine($"┏{bar}┓");
-        Console.WriteLine($"┃{PadCenter("wArrden", BoxWidth)}┃");
-        Console.WriteLine($"┗{bar}┛");
-        Console.WriteLine();
+        w.WriteLine($"┏{bar}┓");
+        w.WriteLine($"┃{PadCenter("wArrden", BoxWidth)}┃");
+        w.WriteLine($"┗{bar}┛");
+        w.WriteLine();
 
         var tz = ResolveTimezone(opts.Timezone);
         var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
         var ts = FormatTimestamp(now);
 
-        Console.WriteLine($"[{ts} INF] [system.startup]");
+        w.WriteLine($"[{ts} INF] [system.startup]");
 
         var sections = new List<Action<string, string>>();
         foreach (var inst in config.Instances)
         {
             var instCopy = inst;
             sections.Add((rootPrefix, childPrefix) =>
-                WriteInstanceSection(rootPrefix, childPrefix, instCopy));
+                WriteInstanceSection(w, rootPrefix, childPrefix, instCopy));
         }
         sections.Add((rootPrefix, childPrefix) =>
-            WriteRuntimeSection(rootPrefix, childPrefix, opts, tz, now));
+            WriteRuntimeSection(w, rootPrefix, childPrefix, opts, tz, now));
 
         for (int i = 0; i < sections.Count; i++)
         {
@@ -40,17 +43,17 @@ public class OutputService
             sections[i](rootPrefix, childPrefix);
 
             if (!isLast)
-                Console.WriteLine(" │");
+                w.WriteLine(" │");
         }
 
-        Console.WriteLine();
-        Console.WriteLine($"[{ts} INF] [system.ready] wArrden initialized");
-        Console.WriteLine();
+        w.WriteLine();
+        w.WriteLine($"[{ts} INF] [system.ready] wArrden initialized");
+        w.WriteLine();
     }
 
-    private static void WriteInstanceSection(string rootPrefix, string childPrefix, InstanceConfig inst)
+    private static void WriteInstanceSection(TextWriter w, string rootPrefix, string childPrefix, InstanceConfig inst)
     {
-        Console.WriteLine($"{rootPrefix} {inst.Name} ({inst.InstanceKey})");
+        w.WriteLine($"{rootPrefix} {inst.Name} ({inst.InstanceKey})");
 
         var children = new List<string>();
         children.Add($"URL".PadRight(LabelPad) + inst.Url);
@@ -66,14 +69,14 @@ public class OutputService
         {
             var isLastChild = i == children.Count - 1;
             var prefix = isLastChild ? " └─" : " ├─";
-            Console.WriteLine($"{childPrefix}{prefix} {children[i]}");
+            w.WriteLine($"{childPrefix}{prefix} {children[i]}");
         }
     }
 
-    private static void WriteRuntimeSection(string rootPrefix, string childPrefix, WardenOptions opts,
+    private static void WriteRuntimeSection(TextWriter w, string rootPrefix, string childPrefix, WardenOptions opts,
         TimeZoneInfo tz, DateTime now)
     {
-        Console.WriteLine($"{rootPrefix} Runtime");
+        w.WriteLine($"{rootPrefix} Runtime");
 
         var isDst = tz.IsDaylightSavingTime(now);
         var tzDisplayName = isDst ? tz.DaylightName : tz.StandardName;
@@ -89,10 +92,10 @@ public class OutputService
 
         var dryRun = opts.IsDryRun.ToString().ToLowerInvariant();
 
-        Console.WriteLine($"{childPrefix} ├─ {"Timezone".PadRight(LabelPad)}{displayId} ({abbr})");
-        Console.WriteLine($"{childPrefix} ├─ {"Local Time".PadRight(LabelPad)}{localTime}");
-        Console.WriteLine($"{childPrefix} ├─ {"UTC Offset".PadRight(LabelPad)}{offsetStr}");
-        Console.WriteLine($"{childPrefix} └─ {"Dry Run".PadRight(LabelPad)}{dryRun}");
+        w.WriteLine($"{childPrefix} ├─ {"Timezone".PadRight(LabelPad)}{displayId} ({abbr})");
+        w.WriteLine($"{childPrefix} ├─ {"Local Time".PadRight(LabelPad)}{localTime}");
+        w.WriteLine($"{childPrefix} ├─ {"UTC Offset".PadRight(LabelPad)}{offsetStr}");
+        w.WriteLine($"{childPrefix} └─ {"Dry Run".PadRight(LabelPad)}{dryRun}");
     }
 
     private static TimeZoneInfo ResolveTimezone(string? tzId)
@@ -131,63 +134,65 @@ public class OutputService
     {
         var ts = FormatTimestamp(timestamp);
         var label = InstanceJobLabel(instance, "Queue Cleanup");
-        Console.WriteLine($"[{ts} INF] [{label}]");
+        Out.WriteLine($"[{ts} INF] [{label}]");
 
         if (matched == 0)
         {
-            Console.WriteLine(" └─ Stats:");
-            Console.WriteLine($"    • Total Queue:   {totalQueue}");
-            Console.WriteLine("    • Result:        No blocked queue items detected");
+            Out.WriteLine(" └─ Stats:");
+            Out.WriteLine($"    • Total Queue:   {totalQueue}");
+            Out.WriteLine("    • Result:        No blocked queue items detected");
         }
         else
         {
             var verb = isDryRun ? "Would blocklist" : "Blocklisted";
-            Console.WriteLine(" ├─ Stats:");
-            Console.WriteLine($" │  • Total Queue:   {totalQueue}");
-            Console.WriteLine($" │  • Blocked:       {blocked}");
-            Console.WriteLine($" │  • Matched:       {matched}");
-            Console.WriteLine($" │  • Result:        {verb} {matched}");
-            Console.WriteLine(" └─ Results:");
+            Out.WriteLine(" ├─ Stats:");
+            Out.WriteLine($" │  • Total Queue:   {totalQueue}");
+            Out.WriteLine($" │  • Blocked:       {blocked}");
+            Out.WriteLine($" │  • Matched:       {matched}");
+            Out.WriteLine($" │  • Result:        {verb} {matched}");
+            Out.WriteLine(" └─ Results:");
             foreach (var (title, rule) in items)
-                Console.WriteLine($"    • {title}  {rule}");
+                Out.WriteLine($"    • {title}  {rule}");
             if (items.Count < matched)
-                Console.WriteLine($"    +{matched - items.Count} more");
+                Out.WriteLine($"    +{matched - items.Count} more");
         }
 
-        Console.WriteLine();
+        Out.WriteLine();
     }
 
     public virtual async Task RunSearchWithOutput(string instance, string job, int maxResults,
         Func<SearchOutputWriter, Task> searchLogic)
     {
-        var output = new SearchOutputWriter(instance, job, maxResults);
+        var output = new SearchOutputWriter(instance, job, maxResults, Out);
         output.WriteHeader();
         await searchLogic(output);
     }
 
     public class SearchOutputWriter
     {
+        private readonly TextWriter _writer;
         private readonly string _instance;
         private readonly string _job;
         private readonly int _maxResults;
 
-        internal SearchOutputWriter(string instance, string job, int maxResults)
+        internal SearchOutputWriter(string instance, string job, int maxResults, TextWriter writer)
         {
             _instance = instance;
             _job = job;
             _maxResults = maxResults;
+            _writer = writer;
         }
 
         public virtual void WriteHeader()
         {
             var ts = FormatTimestamp(DateTime.Now);
             var label = InstanceJobLabel(_instance, _job);
-            Console.WriteLine($"[{ts} INF] [{label}]");
+            _writer.WriteLine($"[{ts} INF] [{label}]");
         }
 
         public virtual void SetPhase(string phase)
         {
-            Console.WriteLine($" ├─ {phase}");
+            _writer.WriteLine($" ├─ {phase}");
         }
 
         public virtual void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool isLast)
@@ -195,11 +200,11 @@ public class OutputService
             var prefix = isLast ? " └─" : " ├─";
             var childPrefix = isLast ? "   " : " │ ";
 
-            Console.WriteLine($"{prefix} Stats:");
-            Console.WriteLine($"{childPrefix} • Total Items:   {totalCount}");
-            Console.WriteLine($"{childPrefix} • On Cooldown:   {onCooldown}");
-            Console.WriteLine($"{childPrefix} • Eligible:      {eligible}");
-            Console.WriteLine($"{childPrefix} • Search Limit:  {_maxResults}");
+            _writer.WriteLine($"{prefix} Stats:");
+            _writer.WriteLine($"{childPrefix} • Total Items:   {totalCount}");
+            _writer.WriteLine($"{childPrefix} • On Cooldown:   {onCooldown}");
+            _writer.WriteLine($"{childPrefix} • Eligible:      {eligible}");
+            _writer.WriteLine($"{childPrefix} • Search Limit:  {_maxResults}");
 
             string result;
             if (totalCount == 0)
@@ -209,22 +214,22 @@ public class OutputService
             else
                 result = $"Searched {searched}";
 
-            Console.WriteLine($"{childPrefix} • Result:        {result}");
+            _writer.WriteLine($"{childPrefix} • Result:        {result}");
         }
 
         public virtual void StartResults()
         {
-            Console.WriteLine(" └─ Results:");
+            _writer.WriteLine(" └─ Results:");
         }
 
         public virtual void WriteItem(string title)
         {
-            Console.WriteLine($"    • {title}");
+            _writer.WriteLine($"    • {title}");
         }
 
         public virtual void WriteTrailer()
         {
-            Console.WriteLine();
+            _writer.WriteLine();
         }
     }
 

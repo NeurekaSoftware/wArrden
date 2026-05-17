@@ -40,4 +40,11 @@ public class ArrClientFactoryTests
         Assert.Throws<NotSupportedException>(() =>
             ArrClientFactory.CreateRadarr("http://localhost:7878", "api-key", "4", "Test"));
     }
+
+    [Fact]
+    public void CreateRadarr_WithVersion2_ThrowsNotSupportedException()
+    {
+        Assert.Throws<NotSupportedException>(() =>
+            ArrClientFactory.CreateRadarr("http://localhost:7878", "api-key", "2", "Test"));
+    }
 }

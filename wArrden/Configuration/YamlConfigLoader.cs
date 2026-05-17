@@ -29,11 +29,7 @@ internal static class YamlConfigLoader
 
         var errors = Validate(config);
         if (errors.Count > 0)
-        {
-            foreach (var error in errors)
-                Console.Error.WriteLine($"Config error: {error}");
-            Environment.Exit(1);
-        }
+            throw new ConfigurationException(errors);
 
         ApplyDefaults(config);
 

@@ -48,4 +48,31 @@ public class DurationParserTests
     {
         Assert.Throws<ArgumentException>(() => DurationParser.Parse(null!));
     }
+
+    [Theory]
+    [InlineData("30D")]
+    [InlineData("12H")]
+    [InlineData("90M")]
+    [InlineData("45S")]
+    public void Parse_CaseInsensitiveUnits(string input)
+    {
+        var result = DurationParser.Parse(input);
+        Assert.True(result > TimeSpan.Zero);
+    }
+
+    [Theory]
+    [InlineData("30 d", 30, 0, 0, 0)]
+    [InlineData("1 h 30 m", 0, 1, 30, 0)]
+    public void Parse_WhitespaceBetweenNumberAndUnit(string input, int d, int h, int m, int s)
+    {
+        var result = DurationParser.Parse(input);
+        Assert.Equal(new TimeSpan(d, h, m, s), result);
+    }
+
+    [Fact]
+    public void Parse_MultipleSameUnit_SumsThem()
+    {
+        var result = DurationParser.Parse("1d2d");
+        Assert.Equal(TimeSpan.FromDays(3), result);
+    }
 }

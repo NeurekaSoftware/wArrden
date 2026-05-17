@@ -21,7 +21,17 @@ var configPath = GetEnv("CONFIG_PATH") ?? "data/config.yaml";
 AppConfig config;
 if (File.Exists(configPath))
 {
-    config = YamlConfigLoader.Load(configPath);
+    try
+    {
+        config = YamlConfigLoader.Load(configPath);
+    }
+    catch (ConfigurationException ex)
+    {
+        foreach (var error in ex.Errors)
+            Console.Error.WriteLine($"Config error: {error}");
+        Environment.Exit(1);
+        return;
+    }
 }
 else
 {
