@@ -364,7 +364,7 @@ public class YamlConfigLoaderTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            File.WriteAllText(tempFile, "instances:\n  - type: sonarr\n    name: ''\n    url: http://localhost:8989\n    api_key: abc123");
+            File.WriteAllText(tempFile, "instances:\n  - type: sonarr\n    name: ''\n    url: http://localhost:8989\n    apiKey: abc123");
 
             var ex = Assert.Throws<ConfigurationException>(() =>
                 YamlConfigLoader.Load(tempFile));
@@ -389,16 +389,16 @@ instances:
   - type: sonarr
     name: Series
     url: http://localhost:8989
-    api_key: abc123
-    missing_search:
+    apiKey: abc123
+    missingSearch:
       enabled: true
       cron: '*/5 * * * *'
-      max_results: 0
-    upgrade_search:
+      maxResults: 0
+    upgradeSearch:
       enabled: true
       cron: '*/10 * * * *'
-      max_results: 0
-    queue_cleanup:
+      maxResults: 0
+    queueCleanup:
       enabled: true
       cron: '*/5 * * * *'
 ");
