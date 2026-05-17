@@ -1,6 +1,5 @@
 using wArrden.Clients;
 using wArrden.Clients.Models;
-using wArrden.Configuration;
 using wArrden.Services;
 
 namespace wArrden.Tests;
@@ -8,20 +7,19 @@ namespace wArrden.Tests;
 public class SearchServiceTests
 {
     private readonly Mock<ICooldownService> _cooldownMock;
-    private readonly WardenOptions _options;
     private readonly Mock<OutputService> _outputMock;
     private readonly Mock<IArrClient> _clientMock;
     private readonly SearchService _service;
+    private static readonly TimeSpan DefaultCooldown = TimeSpan.FromDays(30);
 
     public SearchServiceTests()
     {
         _cooldownMock = new Mock<ICooldownService>();
-        _options = new WardenOptions { SonarrMissingMaxResults = 2 };
         _outputMock = new Mock<OutputService>();
         _clientMock = new Mock<IArrClient>();
         _clientMock.Setup(c => c.Instance).Returns("Sonarr");
 
-        _service = new SearchService(_cooldownMock.Object, _options, _outputMock.Object);
+        _service = new SearchService(_cooldownMock.Object, _outputMock.Object);
     }
 
     [Fact]
@@ -40,7 +38,7 @@ public class SearchServiceTests
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        await _service.SearchMissingEpisodesAsync(_clientMock.Object, CancellationToken.None);
+        await _service.SearchMissingEpisodesAsync(_clientMock.Object, 2, DefaultCooldown, false, CancellationToken.None);
 
         _cooldownMock.Verify(
             c => c.CleanExpiredAsync("Sonarr", "Missing", It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
@@ -50,7 +48,6 @@ public class SearchServiceTests
     [Fact]
     public async Task SearchMissingEpisodes_DryRun_DoesNotTriggerSearch()
     {
-        _options.DryRun = "true";
         var episodes = new List<WantedEpisodeResource>
         {
             new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1 }
@@ -71,7 +68,7 @@ public class SearchServiceTests
                 (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
             .Returns(Task.CompletedTask);
 
-        await _service.SearchMissingEpisodesAsync(_clientMock.Object, CancellationToken.None);
+        await _service.SearchMissingEpisodesAsync(_clientMock.Object, 2, DefaultCooldown, true, CancellationToken.None);
 
         _clientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -80,7 +77,6 @@ public class SearchServiceTests
     [Fact]
     public async Task SearchUpgradeEpisodes_DryRun_DoesNotTriggerSearch()
     {
-        _options.DryRun = "true";
         var episodes = new List<WantedEpisodeResource>
         {
             new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1 }
@@ -101,7 +97,7 @@ public class SearchServiceTests
                 (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
             .Returns(Task.CompletedTask);
 
-        await _service.SearchUpgradeEpisodesAsync(_clientMock.Object, CancellationToken.None);
+        await _service.SearchUpgradeEpisodesAsync(_clientMock.Object, 2, DefaultCooldown, true, CancellationToken.None);
 
         _clientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -131,7 +127,7 @@ public class SearchServiceTests
                 (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
             .Returns(Task.CompletedTask);
 
-        await _service.SearchMissingMoviesAsync(_clientMock.Object, CancellationToken.None);
+        await _service.SearchMissingMoviesAsync(_clientMock.Object, 5, DefaultCooldown, false, CancellationToken.None);
 
         _clientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);
@@ -145,7 +141,6 @@ public class SearchServiceTests
             new() { Id = 1, Title = "Movie 1" }
         };
 
-        _options.RadarrUpgradeMaxResults = 5;
         _clientMock.Setup(c => c.GetWantedCutoffMoviesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(movies);
 
@@ -161,7 +156,7 @@ public class SearchServiceTests
                 (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
             .Returns(Task.CompletedTask);
 
-        await _service.SearchUpgradeMoviesAsync(_clientMock.Object, CancellationToken.None);
+        await _service.SearchUpgradeMoviesAsync(_clientMock.Object, 3, DefaultCooldown, false, CancellationToken.None);
 
         _clientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.AtLeastOnce);

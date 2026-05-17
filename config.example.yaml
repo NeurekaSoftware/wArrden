@@ -1,0 +1,54 @@
+instances:
+  - type: radarr
+    name: Movies
+    url: http://radarr:7878
+    apiKey: YOUR_RADARR_API_KEY
+    missingSearch:
+      enabled: true
+      cron: "*/15 * * * *"
+      maxResults: 15
+      cooldown: 30d
+    upgradeSearch:
+      enabled: true
+      cron: "*/15 * * * *"
+      maxResults: 15
+      cooldown: 30d
+    queueCleanup:
+      enabled: true
+      cron: "* * * * *"
+
+  - type: sonarr
+    name: Series
+    url: http://sonarr:8989
+    apiKey: YOUR_SONARR_API_KEY
+    missingSearch:
+      enabled: true
+      cron: "*/15 * * * *"
+      maxResults: 15
+      cooldown: 30d
+    upgradeSearch:
+      enabled: true
+      cron: "*/15 * * * *"
+      maxResults: 15
+      cooldown: 30d
+    queueCleanup:
+      enabled: true
+      cron: "* * * * *"
+
+  - type: sonarr
+    name: Anime
+    url: http://sonarr-anime:8989
+    apiKey: YOUR_SONARR_API_KEY
+    missingSearch:
+      enabled: true
+      cron: "*/15 * * * *"
+      maxResults: 15
+      cooldown: 30d
+    upgradeSearch:
+      enabled: true
+      cron: "*/15 * * * *"
+      maxResults: 15
+      cooldown: 30d
+    queueCleanup:
+      enabled: true
+      cron: "* * * * *"

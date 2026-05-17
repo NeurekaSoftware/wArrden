@@ -1,27 +1,26 @@
 using wArrden.Clients;
 using wArrden.Clients.Models;
-using wArrden.Configuration;
 
 namespace wArrden.Services;
 
 public class QueueCleanupService
 {
     private readonly IArrClient _client;
-    private readonly WardenOptions _options;
-    private readonly string _prefix;
+    private readonly string _instanceType;
+    private readonly bool _isDryRun;
     private readonly OutputService _output;
 
-    public QueueCleanupService(IArrClient client, WardenOptions options, string envPrefix, OutputService output)
+    public QueueCleanupService(IArrClient client, string instanceType, bool isDryRun, OutputService output)
     {
         _client = client;
-        _options = options;
-        _prefix = envPrefix;
+        _instanceType = instanceType;
+        _isDryRun = isDryRun;
         _output = output;
     }
 
     public async Task<int> CleanAsync(CancellationToken ct)
     {
-        var rules = _prefix == "SONARR" ? QueueCleanupRules.Sonarr : QueueCleanupRules.Radarr;
+        var rules = _instanceType == "sonarr" ? QueueCleanupRules.Sonarr : QueueCleanupRules.Radarr;
 
         var queue = await _client.GetQueueAsync(ct);
         var blocked = queue.Where(q =>
@@ -31,7 +30,7 @@ public class QueueCleanupService
         if (blocked.Count == 0)
         {
             _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
-                Array.Empty<(string, string)>(), _options.IsDryRun);
+                Array.Empty<(string, string)>(), _isDryRun);
             return 0;
         }
 
@@ -43,7 +42,7 @@ public class QueueCleanupService
             if (match is null)
                 continue;
 
-            if (!_options.IsDryRun)
+            if (!_isDryRun)
             {
                 if (match.Value.Blocklist)
                     await _client.DeleteQueueItemAsync(item.Id, ct);
@@ -57,7 +56,7 @@ public class QueueCleanupService
         var sorted = matched.OrderBy(m => m.Title, StringComparer.OrdinalIgnoreCase).ToList();
 
         _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, sorted.Count,
-            sorted.Select(m => (m.Title, m.Rule)).ToList(), _options.IsDryRun);
+            sorted.Select(m => (m.Title, m.Rule)).ToList(), _isDryRun);
         return matched.Count;
     }
 

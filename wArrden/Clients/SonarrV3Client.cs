@@ -9,10 +9,11 @@ public class SonarrV3Client : IArrClient
     private readonly HttpClient _http;
     private readonly string _baseUrl;
 
-    public string Instance => "Sonarr";
+    public string Instance { get; }
 
-    public SonarrV3Client(string url, string apiKey)
+    public SonarrV3Client(string url, string apiKey, string instanceName)
     {
+        Instance = instanceName;
         _baseUrl = url.TrimEnd('/');
         _http = new HttpClient();
         _http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);

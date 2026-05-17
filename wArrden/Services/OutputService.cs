@@ -7,7 +7,7 @@ public class OutputService
     private const int BoxWidth = 58;
     private const int LabelPad = 18;
 
-    public static void WriteBanner(WardenOptions opts)
+    public static void WriteBanner(AppConfig config, WardenOptions opts)
     {
         var bar = new string('━', BoxWidth);
         Console.WriteLine($"┏{bar}┓");
@@ -21,10 +21,15 @@ public class OutputService
 
         Console.WriteLine($"[{ts} INF] [system.startup]");
 
-        var sections = new List<string>();
-        if (opts.HasRadarr) sections.Add("Radarr");
-        if (opts.HasSonarr) sections.Add("Sonarr");
-        sections.Add("Runtime");
+        var sections = new List<Action<string, string>>();
+        foreach (var inst in config.Instances)
+        {
+            var instCopy = inst;
+            sections.Add((rootPrefix, childPrefix) =>
+                WriteInstanceSection(rootPrefix, childPrefix, instCopy));
+        }
+        sections.Add((rootPrefix, childPrefix) =>
+            WriteRuntimeSection(rootPrefix, childPrefix, opts, tz, now));
 
         for (int i = 0; i < sections.Count; i++)
         {
@@ -32,20 +37,7 @@ public class OutputService
             var rootPrefix = isLast ? " └─" : " ├─";
             var childPrefix = isLast ? "    " : " │  ";
 
-            switch (sections[i])
-            {
-                case "Sonarr":
-                    WriteInstanceSection(rootPrefix, childPrefix, "Sonarr", opts.SonarrUrl!,
-                        opts.SonarrQueueCleanupCron, opts.SonarrMissingSearchCron, opts.SonarrUpgradeSearchCron);
-                    break;
-                case "Radarr":
-                    WriteInstanceSection(rootPrefix, childPrefix, "Radarr", opts.RadarrUrl!,
-                        opts.RadarrQueueCleanupCron, opts.RadarrMissingSearchCron, opts.RadarrUpgradeSearchCron);
-                    break;
-                case "Runtime":
-                    WriteRuntimeSection(rootPrefix, childPrefix, opts, tz, now);
-                    break;
-            }
+            sections[i](rootPrefix, childPrefix);
 
             if (!isLast)
                 Console.WriteLine(" │");
@@ -56,19 +48,19 @@ public class OutputService
         Console.WriteLine();
     }
 
-    private static void WriteInstanceSection(string rootPrefix, string childPrefix, string name, string url,
-        string? queueCron, string? missingCron, string? upgradeCron)
+    private static void WriteInstanceSection(string rootPrefix, string childPrefix, InstanceConfig inst)
     {
-        var children = new List<string>();
-        children.Add($"URL".PadRight(LabelPad) + url);
-        if (!string.IsNullOrWhiteSpace(queueCron))
-            children.Add($"Queue Cleanup".PadRight(LabelPad) + queueCron);
-        if (!string.IsNullOrWhiteSpace(missingCron))
-            children.Add($"Missing Search".PadRight(LabelPad) + missingCron);
-        if (!string.IsNullOrWhiteSpace(upgradeCron))
-            children.Add($"Upgrade Search".PadRight(LabelPad) + upgradeCron);
+        Console.WriteLine($"{rootPrefix} {inst.Name} ({inst.InstanceKey})");
 
-        Console.WriteLine($"{rootPrefix} {name}");
+        var children = new List<string>();
+        children.Add($"URL".PadRight(LabelPad) + inst.Url);
+
+        if (inst.QueueCleanup?.Enabled == true)
+            children.Add($"Queue Cleanup".PadRight(LabelPad) + inst.QueueCleanup.Cron);
+        if (inst.MissingSearch?.Enabled == true)
+            children.Add($"Missing Search".PadRight(LabelPad) + inst.MissingSearch.Cron);
+        if (inst.UpgradeSearch?.Enabled == true)
+            children.Add($"Upgrade Search".PadRight(LabelPad) + inst.UpgradeSearch.Cron);
 
         for (int i = 0; i < children.Count; i++)
         {

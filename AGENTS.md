@@ -17,7 +17,7 @@ Every job invocation starts with a header line:
 Where:
 - `HH:mm:ss` is the 24-hour timestamp of invocation
 - `INF` is the log level marker (always `INF` for application output)
-- `instance` is the lowercase instance name (`sonarr` or `radarr`)
+- `instance` is the lowercase user-defined instance name (e.g. `series`, `movies`, `anime`)
 - `job` is the lowercase job key:
   - `missing` — Missing Search
   - `upgrade` — Upgrade Search

@@ -1,5 +1,4 @@
 using wArrden.Clients;
-using wArrden.Configuration;
 using wArrden.Clients.Models;
 
 namespace wArrden.Services;
@@ -7,57 +6,55 @@ namespace wArrden.Services;
 public class SearchService
 {
     private readonly ICooldownService _cooldown;
-    private readonly WardenOptions _options;
     private readonly OutputService _output;
 
-    public SearchService(ICooldownService cooldown, WardenOptions options, OutputService output)
+    public SearchService(ICooldownService cooldown, OutputService output)
     {
         _cooldown = cooldown;
-        _options = options;
         _output = output;
     }
 
-    public async Task SearchMissingEpisodesAsync(IArrClient client, CancellationToken ct)
+    public async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Missing Search", _options.SonarrMissingMaxResults,
+        await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
             async progress =>
             {
-                await RunEpisodeSearch(client, "Missing", _options.SonarrMissingCooldown, _options.SonarrMissingMaxResults,
+                await RunEpisodeSearch(client, "Missing", cooldown, maxResults, isDryRun,
                     () => client.GetWantedMissingEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), progress, ct);
             });
     }
 
-    public async Task SearchUpgradeEpisodesAsync(IArrClient client, CancellationToken ct)
+    public async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", _options.SonarrUpgradeMaxResults,
+        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
             async progress =>
             {
-                await RunEpisodeSearch(client, "Upgrade", _options.SonarrUpgradeCooldown, _options.SonarrUpgradeMaxResults,
+                await RunEpisodeSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
                     () => client.GetWantedCutoffEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), progress, ct);
             });
     }
 
-    public async Task SearchMissingMoviesAsync(IArrClient client, CancellationToken ct)
+    public async Task SearchMissingMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Missing Search", _options.RadarrMissingMaxResults,
+        await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
             async progress =>
             {
-                await RunMovieSearch(client, "Missing", _options.RadarrMissingCooldown, _options.RadarrMissingMaxResults,
+                await RunMovieSearch(client, "Missing", cooldown, maxResults, isDryRun,
                     () => client.GetWantedMissingMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), progress, ct);
             });
     }
 
-    public async Task SearchUpgradeMoviesAsync(IArrClient client, CancellationToken ct)
+    public async Task SearchUpgradeMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", _options.RadarrUpgradeMaxResults,
+        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
             async progress =>
             {
-                await RunMovieSearch(client, "Upgrade", _options.RadarrUpgradeCooldown, _options.RadarrUpgradeMaxResults,
+                await RunMovieSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
                     () => client.GetWantedCutoffMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), progress, ct);
             });
     }
 
-    private async Task RunEpisodeSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults,
+    private async Task RunEpisodeSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedEpisodeResource>>> getWanted, Func<int[], Task> triggerSearch,
         OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
@@ -86,10 +83,10 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
-        if (selected.Count == 0 || _options.IsDryRun)
+        if (selected.Count == 0 || isDryRun)
         {
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
-                _options.IsDryRun ? 0 : selected.Count, true);
+                isDryRun ? 0 : selected.Count, true);
             return;
         }
 
@@ -113,7 +110,7 @@ public class SearchService
         progress.WriteTrailer();
     }
 
-    private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults,
+    private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedMovieResource>>> getWanted, Func<int[], Task> triggerSearch,
         OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
@@ -140,10 +137,10 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
-        if (selected.Count == 0 || _options.IsDryRun)
+        if (selected.Count == 0 || isDryRun)
         {
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
-                _options.IsDryRun ? 0 : selected.Count, true);
+                isDryRun ? 0 : selected.Count, true);
             return;
         }
 

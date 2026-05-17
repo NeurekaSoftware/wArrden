@@ -9,10 +9,11 @@ public class RadarrV3Client : IArrClient
     private readonly HttpClient _http;
     private readonly string _baseUrl;
 
-    public string Instance => "Radarr";
+    public string Instance { get; }
 
-    public RadarrV3Client(string url, string apiKey)
+    public RadarrV3Client(string url, string apiKey, string instanceName)
     {
+        Instance = instanceName;
         _baseUrl = url.TrimEnd('/');
         _http = new HttpClient();
         _http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
