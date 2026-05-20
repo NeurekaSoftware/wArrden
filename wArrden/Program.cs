@@ -42,6 +42,13 @@ else
         Console.Error.WriteLine("       Set CONFIG_PATH to a config.yaml file, or use the legacy SONARR_*/RADARR_* environment variables.");
         Environment.Exit(1);
     }
+    var legacyErrors = YamlConfigLoader.Validate(legacy);
+    if (legacyErrors.Count > 0)
+    {
+        foreach (var error in legacyErrors)
+            Console.Error.WriteLine($"Config error: {error}");
+        Environment.Exit(1);
+    }
     config = legacy;
 }
 
@@ -86,9 +93,9 @@ host.Services.UseScheduler(scheduler =>
         {
             scheduler
                 .ScheduleWithParams<SearchJob>(client, "missing", inst.IsSonarr ? "sonarr" : "radarr",
-                    inst.MissingSearch.MaxResults, inst.MissingSearch.Cooldown,
+                    inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
                     inst.MissingSearch.SearchType ?? "episode", opts.IsDryRun)
-                .Cron(inst.MissingSearch.Cron)
+                .Cron(inst.MissingSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_missing");
         }
 
@@ -96,9 +103,9 @@ host.Services.UseScheduler(scheduler =>
         {
             scheduler
                 .ScheduleWithParams<SearchJob>(client, "upgrade", inst.IsSonarr ? "sonarr" : "radarr",
-                    inst.UpgradeSearch.MaxResults, inst.UpgradeSearch.Cooldown,
-                    inst.UpgradeSearch.SearchType ?? "episode", opts.IsDryRun)
-                .Cron(inst.UpgradeSearch.Cron)
+                    inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
+                    inst.UpgradeSearch.SearchType ?? "season", opts.IsDryRun)
+                .Cron(inst.UpgradeSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_upgrade");
         }
 
@@ -106,7 +113,7 @@ host.Services.UseScheduler(scheduler =>
         {
             scheduler
                 .ScheduleWithParams<QueueJob>(client, inst.IsSonarr ? "sonarr" : "radarr", opts.IsDryRun)
-                .Cron(inst.QueueCleanup.Cron)
+                .Cron(inst.QueueCleanup.Cron!)
                 .PreventOverlapping($"{instanceKey}_queue");
         }
     }

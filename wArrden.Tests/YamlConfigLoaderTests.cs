@@ -154,7 +154,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = true, Cron = "" }
+                    MissingSearch = new JobConfig { Enabled = true, MaxResults = 10, Cooldown = "30d" }
                 }
             }
         };
@@ -198,7 +198,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", Cooldown = "xyz" }
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "xyz" }
                 }
             }
         };
@@ -268,7 +268,7 @@ public class YamlConfigLoaderTests
     }
 
     [Fact]
-    public void Validate_NegativeMaxResults_PassesSinceZeroIsAllowed()
+    public void Validate_NegativeMaxResults_ReturnsError()
     {
         var config = new AppConfig
         {
@@ -280,7 +280,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = -1 }
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = -1, Cooldown = "30d" }
                 }
             }
         };
@@ -324,7 +324,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = false, Cron = "" },
+                    MissingSearch = new JobConfig { Enabled = false, Cron = "0 0 * * *", MaxResults = 0, Cooldown = "30d" },
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -342,14 +342,14 @@ public class YamlConfigLoaderTests
     }
 
     [Fact]
-    public void Load_InvalidYaml_ThrowsInvalidOperationException()
+    public void Load_InvalidYaml_ThrowsConfigurationException()
     {
         var tempFile = Path.GetTempFileName();
         try
         {
             File.WriteAllText(tempFile, "{{{ invalid yaml :::");
 
-            Assert.Throws<InvalidOperationException>(() =>
+            Assert.Throws<ConfigurationException>(() =>
                 YamlConfigLoader.Load(tempFile));
         }
         finally
@@ -379,7 +379,7 @@ public class YamlConfigLoaderTests
     }
 
     [Fact]
-    public void Load_AppliesDefaultMaxResults()
+    public void Load_AllKeysPresent_LoadsSuccessfully()
     {
         var tempFile = Path.GetTempFileName();
         try
@@ -393,11 +393,13 @@ instances:
     missingSearch:
       enabled: true
       cron: '*/5 * * * *'
-      maxResults: 0
+      maxResults: 15
+      cooldown: 30d
     upgradeSearch:
       enabled: true
       cron: '*/10 * * * *'
-      maxResults: 0
+      maxResults: 15
+      cooldown: 30d
     queueCleanup:
       enabled: true
       cron: '*/5 * * * *'
@@ -406,8 +408,8 @@ instances:
             var config = YamlConfigLoader.Load(tempFile);
 
             var inst = config.Instances[0];
-            Assert.Equal(100, inst.MissingSearch!.MaxResults);
-            Assert.Equal(50, inst.UpgradeSearch!.MaxResults);
+            Assert.Equal(15, inst.MissingSearch!.MaxResults);
+            Assert.Equal(15, inst.UpgradeSearch!.MaxResults);
         }
         finally
         {
@@ -428,7 +430,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "season" }
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "season" }
                 }
             }
         };
@@ -450,7 +452,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "episode" }
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" }
                 }
             }
         };
@@ -472,7 +474,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "series" }
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "series" }
                 }
             }
         };
@@ -494,8 +496,8 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "SEASON" },
-                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "Episode" }
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "SEASON" },
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "Episode" }
                 }
             }
         };
@@ -517,7 +519,7 @@ instances:
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "season" }
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "season" }
                 }
             }
         };
@@ -539,7 +541,7 @@ instances:
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" }
                 }
             }
         };
@@ -566,6 +568,8 @@ instances:
     missingSearch:
       enabled: true
       cron: '*/5 * * * *'
+      maxResults: 10
+      cooldown: 30d
     queueCleanup:
       enabled: true
       cron: '* * * * *'
@@ -601,6 +605,8 @@ instances:
     upgradeSearch:
       enabled: true
       cron: '*/5 * * * *'
+      maxResults: 10
+      cooldown: 30d
     queueCleanup:
       enabled: true
       cron: '* * * * *'
@@ -616,5 +622,201 @@ instances:
             Console.SetError(originalError);
             File.Delete(tempFile);
         }
+    }
+
+    [Fact]
+    public void Validate_MissingEnabled_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("enabled") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_MissingCron_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, MaxResults = 10, Cooldown = "30d" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("cron") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_MissingMaxResults_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", Cooldown = "30d" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("maxResults") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_MissingCooldown_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10 }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("cooldown") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_MissingSearchType_PassesAndDefaults()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Load_UnknownJobKey_ThrowsYamlParseError()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, @"
+instances:
+  - type: sonarr
+    name: Series
+    url: http://localhost:8989
+    apiKey: abc123
+    missingSearch:
+      enabled: true
+      cron: '*/5 * * * *'
+      maxResults: 10
+      cooldown: 30d
+      badKey: value
+    queueCleanup:
+      enabled: true
+      cron: '* * * * *'
+");
+
+            var ex = Assert.Throws<ConfigurationException>(() =>
+                YamlConfigLoader.Load(tempFile));
+
+            Assert.Contains(ex.Errors, e => e.Contains("YAML parse error"));
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Load_UnknownInstanceKey_ThrowsYamlParseError()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, @"
+instances:
+  - type: sonarr
+    name: Series
+    url: http://localhost:8989
+    apiKey: abc123
+    badKey: value
+    queueCleanup:
+      enabled: true
+      cron: '* * * * *'
+");
+
+            var ex = Assert.Throws<ConfigurationException>(() =>
+                YamlConfigLoader.Load(tempFile));
+
+            Assert.Contains(ex.Errors, e => e.Contains("YAML parse error"));
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Validate_QueueCleanup_DoesNotRequireMaxResultsOrCooldown()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
     }
 }

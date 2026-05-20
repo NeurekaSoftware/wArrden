@@ -1,3 +1,4 @@
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -17,10 +18,18 @@ internal static class YamlConfigLoader
         {
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .IgnoreUnmatchedProperties()
                 .Build();
 
             config = deserializer.Deserialize<AppConfig>(yaml) ?? new AppConfig();
+        }
+        catch (YamlException ex)
+        {
+            var start = ex.Start;
+            var loc = $"line {start.Line}, column {start.Column}";
+            throw new ConfigurationException(new List<string>
+            {
+                $"YAML parse error at {loc}: {ex.InnerException?.Message ?? ex.Message}"
+            });
         }
         catch (Exception ex)
         {
@@ -40,43 +49,31 @@ internal static class YamlConfigLoader
     {
         foreach (var inst in config.Instances)
         {
-            if (inst.MissingSearch is not null)
+            if (inst.MissingSearch is not null && inst.IsSonarr)
             {
-                if (inst.MissingSearch.MaxResults == 0)
-                    inst.MissingSearch.MaxResults = 100;
-
-                if (inst.IsSonarr)
+                if (string.IsNullOrWhiteSpace(inst.MissingSearch.SearchType))
                 {
-                    if (string.IsNullOrWhiteSpace(inst.MissingSearch.SearchType))
-                    {
-                        Console.Error.WriteLine(
-                            $"Warning: instances '{inst.Name}'.missingSearch: 'searchType' not configured, defaulting to 'episode'.");
-                        inst.MissingSearch.SearchType = "episode";
-                    }
-                    else
-                    {
-                        inst.MissingSearch.SearchType = inst.MissingSearch.SearchType.ToLowerInvariant();
-                    }
+                    Console.Error.WriteLine(
+                        $"Warning: instances '{inst.Name}'.missingSearch: 'searchType' not configured, defaulting to 'episode'.");
+                    inst.MissingSearch.SearchType = "episode";
+                }
+                else
+                {
+                    inst.MissingSearch.SearchType = inst.MissingSearch.SearchType.ToLowerInvariant();
                 }
             }
 
-            if (inst.UpgradeSearch is not null)
+            if (inst.UpgradeSearch is not null && inst.IsSonarr)
             {
-                if (inst.UpgradeSearch.MaxResults == 0)
-                    inst.UpgradeSearch.MaxResults = 50;
-
-                if (inst.IsSonarr)
+                if (string.IsNullOrWhiteSpace(inst.UpgradeSearch.SearchType))
                 {
-                    if (string.IsNullOrWhiteSpace(inst.UpgradeSearch.SearchType))
-                    {
-                        Console.Error.WriteLine(
-                            $"Warning: instances '{inst.Name}'.upgradeSearch: 'searchType' not configured, defaulting to 'season'.");
-                        inst.UpgradeSearch.SearchType = "season";
-                    }
-                    else
-                    {
-                        inst.UpgradeSearch.SearchType = inst.UpgradeSearch.SearchType.ToLowerInvariant();
-                    }
+                    Console.Error.WriteLine(
+                        $"Warning: instances '{inst.Name}'.upgradeSearch: 'searchType' not configured, defaulting to 'season'.");
+                    inst.UpgradeSearch.SearchType = "season";
+                }
+                else
+                {
+                    inst.UpgradeSearch.SearchType = inst.UpgradeSearch.SearchType.ToLowerInvariant();
                 }
             }
         }
@@ -154,21 +151,28 @@ internal static class YamlConfigLoader
 
         var prefix = $"instances[{idx}] '{inst.Name}'.{jobKey}";
 
-        if (job.Enabled)
-        {
-            if (string.IsNullOrWhiteSpace(job.Cron))
-                errors.Add($"{prefix}: 'cron' is required when enabled.");
-            else if (!IsValidCron(job.Cron))
-                errors.Add($"{prefix}: 'cron' must be a 5-field expression 'min hour dom month dow'.");
+        if (job.Enabled is null)
+            errors.Add($"{prefix}: 'enabled' is required.");
 
-            if (jobKey != "queueCleanup" && job.MaxResults < 0)
+        if (job.Cron is null)
+            errors.Add($"{prefix}: 'cron' is required.");
+        else if (job.Enabled == true && !IsValidCron(job.Cron))
+            errors.Add($"{prefix}: 'cron' must be a 5-field expression 'min hour dom month dow'.");
+
+        if (jobKey != "queueCleanup")
+        {
+            if (job.MaxResults is null)
+                errors.Add($"{prefix}: 'maxResults' is required.");
+            else if (job.MaxResults < 0)
                 errors.Add($"{prefix}: 'maxResults' must be 0 or greater.");
-        }
 
-        if (!string.IsNullOrWhiteSpace(job.Cooldown))
-        {
-            try { DurationParser.Parse(job.Cooldown); }
-            catch (Exception ex) { errors.Add($"{prefix}: invalid 'cooldown' - {ex.Message}"); }
+            if (job.Cooldown is null)
+                errors.Add($"{prefix}: 'cooldown' is required.");
+            else
+            {
+                try { DurationParser.Parse(job.Cooldown); }
+                catch (Exception ex) { errors.Add($"{prefix}: invalid 'cooldown' - {ex.Message}"); }
+            }
         }
 
         if (inst.IsSonarr && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))

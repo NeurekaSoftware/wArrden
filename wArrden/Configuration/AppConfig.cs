@@ -23,9 +23,9 @@ public class InstanceConfig
 
 public class JobConfig
 {
-    public bool Enabled { get; set; }
-    public string Cron { get; set; } = string.Empty;
-    public int MaxResults { get; set; }
-    public string Cooldown { get; set; } = "30d";
+    public bool? Enabled { get; set; }
+    public string? Cron { get; set; }
+    public int? MaxResults { get; set; }
+    public string? Cooldown { get; set; }
     public string? SearchType { get; set; }
 }

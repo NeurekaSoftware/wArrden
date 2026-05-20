@@ -59,11 +59,11 @@ public class OutputService
         children.Add($"URL".PadRight(LabelPad) + inst.Url);
 
         if (inst.QueueCleanup?.Enabled == true)
-            children.Add($"Queue Cleanup".PadRight(LabelPad) + inst.QueueCleanup.Cron);
+            children.Add($"Queue Cleanup".PadRight(LabelPad) + inst.QueueCleanup.Cron!);
         if (inst.MissingSearch?.Enabled == true)
-            children.Add($"Missing Search".PadRight(LabelPad) + inst.MissingSearch.Cron + SearchTypeLabel(inst, inst.MissingSearch));
+            children.Add($"Missing Search".PadRight(LabelPad) + inst.MissingSearch.Cron! + SearchTypeLabel(inst, inst.MissingSearch));
         if (inst.UpgradeSearch?.Enabled == true)
-            children.Add($"Upgrade Search".PadRight(LabelPad) + inst.UpgradeSearch.Cron + SearchTypeLabel(inst, inst.UpgradeSearch));
+            children.Add($"Upgrade Search".PadRight(LabelPad) + inst.UpgradeSearch.Cron! + SearchTypeLabel(inst, inst.UpgradeSearch));
 
         for (int i = 0; i < children.Count; i++)
         {

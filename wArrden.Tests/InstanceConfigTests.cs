@@ -52,9 +52,9 @@ public class InstanceConfigTests
     public void JobConfig_Defaults()
     {
         var job = new JobConfig();
-        Assert.False(job.Enabled);
-        Assert.Equal("", job.Cron);
-        Assert.Equal(0, job.MaxResults);
-        Assert.Equal("30d", job.Cooldown);
+        Assert.Null(job.Enabled);
+        Assert.Null(job.Cron);
+        Assert.Null(job.MaxResults);
+        Assert.Null(job.Cooldown);
     }
 }
