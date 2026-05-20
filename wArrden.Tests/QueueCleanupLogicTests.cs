@@ -67,37 +67,37 @@ public class QueueCleanupLogicTests
     [Fact]
     public void MatchRule_FindsMatchingRule_CaseInsensitive()
     {
-        var rules = new Dictionary<string, (string Match, bool Blocklist)>
+        var rules = new List<QueueCleanupRule>
         {
-            ["NOT_AN_UPGRADE"] = ("Not an upgrade for existing episode", false)
+            new("Not an upgrade for existing episode", false)
         };
 
         var result = QueueCleanupService.MatchRule("This is NOT AN UPGRADE for existing episode here", rules);
         Assert.NotNull(result);
-        Assert.Equal("NOT_AN_UPGRADE", result.Value.Key);
+        Assert.Equal("Not an upgrade for existing episode", result.Value.Label);
         Assert.False(result.Value.Blocklist);
     }
 
     [Fact]
     public void MatchRule_FindsBlocklistRule()
     {
-        var rules = new Dictionary<string, (string Match, bool Blocklist)>
+        var rules = new List<QueueCleanupRule>
         {
-            ["SAMPLE"] = ("Sample", true)
+            new("Sample", true)
         };
 
         var result = QueueCleanupService.MatchRule("This is a Sample file", rules);
         Assert.NotNull(result);
-        Assert.Equal("SAMPLE", result.Value.Key);
+        Assert.Equal("Sample", result.Value.Label);
         Assert.True(result.Value.Blocklist);
     }
 
     [Fact]
     public void MatchRule_NoMatch_ReturnsNull()
     {
-        var rules = new Dictionary<string, (string Match, bool Blocklist)>
+        var rules = new List<QueueCleanupRule>
         {
-            ["NOT_AN_UPGRADE"] = ("Not an upgrade for existing episode", false)
+            new("Not an upgrade for existing episode", false)
         };
 
         var result = QueueCleanupService.MatchRule("Download completed successfully", rules);
@@ -107,15 +107,15 @@ public class QueueCleanupLogicTests
     [Fact]
     public void MatchRule_FirstMatchWins()
     {
-        var rules = new Dictionary<string, (string Match, bool Blocklist)>
+        var rules = new List<QueueCleanupRule>
         {
-            ["FIRST"] = ("common text", false),
-            ["SECOND"] = ("common", true)
+            new("common text", false),
+            new("common", true)
         };
 
         var result = QueueCleanupService.MatchRule("this contains common text", rules);
         Assert.NotNull(result);
-        Assert.Equal("FIRST", result.Value.Key);
+        Assert.Equal("common text", result.Value.Label);
     }
 
     [Fact]

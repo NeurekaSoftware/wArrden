@@ -56,3 +56,47 @@ instances:
     queueCleanup:
       enabled: true
       cron: "* * * * *"
+
+queueCleanupRules:
+  radarr:
+    - match: "Found matching movie via grab history"
+      action: removeAndBlocklist
+    - match: "Not an upgrade for existing movie"
+      action: remove
+    - match: "Not a Custom Format upgrade"
+      action: remove
+    - match: "No files found are eligible"
+      action: removeAndBlocklist
+    - match: "Movie file already imported"
+      action: remove
+    - match: "No audio tracks detected"
+      action: removeAndBlocklist
+    - match: "Sample"
+      action: removeAndBlocklist
+    - match: "Found archive file"
+      action: removeAndBlocklist
+  sonarr:
+    - match: "Found matching series via grab history"
+      action: removeAndBlocklist
+    - match: "not found in the grabbed release"
+      action: removeAndBlocklist
+    - match: "unexpected considering the"
+      action: removeAndBlocklist
+    - match: "Not an upgrade for existing episode"
+      action: remove
+    - match: "Not a Custom Format upgrade"
+      action: remove
+    - match: "No files found are eligible"
+      action: removeAndBlocklist
+    - match: "Episode file already imported"
+      action: remove
+    - match: "No audio tracks detected"
+      action: removeAndBlocklist
+    - match: "Invalid season or episode"
+      action: removeAndBlocklist
+    - match: "all episodes in seasons"
+      action: removeAndBlocklist
+    - match: "Sample"
+      action: removeAndBlocklist
+    - match: "Found archive file"
+      action: removeAndBlocklist

@@ -831,5 +831,322 @@ instances:
         Assert.NotNull(config);
         Assert.NotEmpty(config.Instances);
         Assert.Equal(3, config.Instances.Count);
+        Assert.NotNull(config.QueueCleanupRules);
+        Assert.NotNull(config.QueueCleanupRules!.Sonarr);
+        Assert.NotNull(config.QueueCleanupRules.Radarr);
+        Assert.Equal(12, config.QueueCleanupRules.Sonarr!.Count);
+        Assert.Equal(8, config.QueueCleanupRules.Radarr!.Count);
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_AllValid_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Sonarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "removeAndBlocklist" },
+                    new() { Match = "Not an upgrade", Action = "remove" }
+                },
+                Radarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "removeAndBlocklist" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_EmptyMatch_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Sonarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("match") && e.Contains("empty"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_WhitespaceMatch_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Sonarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "   ", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("match") && e.Contains("empty"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_InvalidAction_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Sonarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "delete" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("action") && e.Contains("remove") && e.Contains("removeAndBlocklist"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_EmptyAction_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Sonarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("action") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_MissingSection_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_EmptySonarrList_Warns()
+    {
+        var originalError = Console.Error;
+        var stderr = new StringWriter();
+        Console.SetError(stderr);
+        try
+        {
+            var config = new AppConfig
+            {
+                Instances = new List<InstanceConfig>
+                {
+                    new()
+                    {
+                        Type = "sonarr",
+                        Name = "Series",
+                        Url = "http://localhost:8989",
+                        ApiKey = "abc123",
+                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                    }
+                },
+                QueueCleanupRules = new QueueCleanupRulesConfig { Sonarr = new List<QueueCleanupRuleConfig>() }
+            };
+            var errors = YamlConfigLoader.Validate(config);
+
+            Assert.Empty(errors);
+            var warning = stderr.ToString();
+            Assert.Contains("queueCleanupRules.sonarr", warning);
+            Assert.Contains("empty", warning);
+        }
+        finally
+        {
+            Console.SetError(originalError);
+        }
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_ActionCaseInsensitive_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Sonarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "REMOVE" },
+                    new() { Match = "Archive", Action = "removeandblocklist" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_ErrorPrefixIncludesTypeAndIndex()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Radarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Valid", Action = "remove" },
+                    new() { Match = "", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        var error = errors.Single();
+        Assert.Contains("queueCleanupRules.radarr[1]", error);
+    }
+
+    [Fact]
+    public void Load_QueueCleanupRulesSection_DeserializesCorrectly()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, @"
+instances:
+  - type: sonarr
+    name: Series
+    url: http://localhost:8989
+    apiKey: abc123
+    queueCleanup:
+      enabled: true
+      cron: '* * * * *'
+queueCleanupRules:
+  sonarr:
+    - match: Sample
+      action: removeAndBlocklist
+    - match: Not an upgrade
+      action: remove
+  radarr:
+    - match: Found matching movie
+      action: removeAndBlocklist
+");
+
+            var config = YamlConfigLoader.Load(tempFile);
+
+            Assert.NotNull(config.QueueCleanupRules);
+            Assert.Equal(2, config.QueueCleanupRules!.Sonarr!.Count);
+            Assert.Equal("Sample", config.QueueCleanupRules.Sonarr[0].Match);
+            Assert.Equal("removeAndBlocklist", config.QueueCleanupRules.Sonarr[0].Action);
+            Assert.Equal("Not an upgrade", config.QueueCleanupRules.Sonarr[1].Match);
+            Assert.Equal("remove", config.QueueCleanupRules.Sonarr[1].Action);
+            Assert.Single(config.QueueCleanupRules.Radarr!);
+            Assert.Equal("Found matching movie", config.QueueCleanupRules.Radarr![0].Match);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
     }
 }

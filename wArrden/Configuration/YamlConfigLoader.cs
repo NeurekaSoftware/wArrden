@@ -126,6 +126,8 @@ internal static class YamlConfigLoader
             ValidateJob(errors, inst, "queueCleanup", i);
         }
 
+        ValidateQueueCleanupRules(errors, config.QueueCleanupRules);
+
         var enabledJobs = config.Instances.Sum(i =>
             (i.MissingSearch?.Enabled == true ? 1 : 0) +
             (i.UpgradeSearch?.Enabled == true ? 1 : 0) +
@@ -188,6 +190,43 @@ internal static class YamlConfigLoader
         if (inst.IsRadarr && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))
         {
             errors.Add($"{prefix}: 'searchType' is not valid for Radarr instances.");
+        }
+    }
+
+    private static void ValidateQueueCleanupRules(List<string> errors, QueueCleanupRulesConfig? rules)
+    {
+        if (rules is null) return;
+
+        ValidateRuleList(errors, rules.Sonarr, "sonarr");
+        ValidateRuleList(errors, rules.Radarr, "radarr");
+    }
+
+    private static void ValidateRuleList(List<string> errors, List<QueueCleanupRuleConfig>? list, string type)
+    {
+        if (list is null || list.Count == 0)
+        {
+            Console.Error.WriteLine($"Warning: queueCleanupRules.{type} is empty; no queue warnings will be matched for {type} instances.");
+            return;
+        }
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            var prefix = $"queueCleanupRules.{type}[{i}]";
+            var rule = list[i];
+
+            if (string.IsNullOrWhiteSpace(rule.Match))
+                errors.Add($"{prefix}: 'match' must not be empty.");
+
+            var action = rule.Action?.Trim();
+            if (string.IsNullOrWhiteSpace(action))
+            {
+                errors.Add($"{prefix}: 'action' is required.");
+            }
+            else if (!string.Equals(action, "remove", StringComparison.OrdinalIgnoreCase) &&
+                     !string.Equals(action, "removeAndBlocklist", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"{prefix}: 'action' must be 'remove' or 'removeAndBlocklist', got '{rule.Action}'.");
+            }
         }
     }
 

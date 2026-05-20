@@ -33,6 +33,8 @@ public class OutputService
         }
         sections.Add((rootPrefix, childPrefix) =>
             WriteRuntimeSection(w, rootPrefix, childPrefix, opts, tz, now));
+        sections.Add((rootPrefix, childPrefix) =>
+            WriteQueueCleanupRulesSection(w, rootPrefix, childPrefix, config));
 
         for (int i = 0; i < sections.Count; i++)
         {
@@ -96,6 +98,16 @@ public class OutputService
         w.WriteLine($"{childPrefix} ├─ {"Local Time".PadRight(LabelPad)}{localTime}");
         w.WriteLine($"{childPrefix} ├─ {"UTC Offset".PadRight(LabelPad)}{offsetStr}");
         w.WriteLine($"{childPrefix} └─ {"Dry Run".PadRight(LabelPad)}{dryRun}");
+    }
+
+    private static void WriteQueueCleanupRulesSection(TextWriter w, string rootPrefix, string childPrefix, AppConfig config)
+    {
+        var sonarrCount = config.QueueCleanupRules?.Sonarr?.Count ?? 0;
+        var radarrCount = config.QueueCleanupRules?.Radarr?.Count ?? 0;
+
+        w.WriteLine($"{rootPrefix} Queue Cleanup Rules");
+        w.WriteLine($"{childPrefix} ├─ {"sonarr".PadRight(LabelPad)}{sonarrCount} matcher(s)");
+        w.WriteLine($"{childPrefix} └─ {"radarr".PadRight(LabelPad)}{radarrCount} matcher(s)");
     }
 
     private static TimeZoneInfo ResolveTimezone(string? tzId)

@@ -43,7 +43,33 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
 
-        var job = new QueueJob(_output, _clientMock.Object, "sonarr", true);
+        var rules = new List<QueueCleanupRule>
+        {
+            new("Not an upgrade for existing episode", false)
+        };
+        var job = new QueueJob(_output, _clientMock.Object, "sonarr", true, rules);
+
+        await job.Invoke();
+
+        _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Invoke_NoRules_ReturnsZero()
+    {
+        var item = new Clients.Models.QueueResource
+        {
+            Id = 1,
+            TrackedDownloadStatus = "warning",
+            ErrorMessage = "Not an upgrade for existing episode",
+            Title = "Test"
+        };
+
+        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
+
+        var job = new QueueJob(_output, _clientMock.Object, "sonarr", true, null);
 
         await job.Invoke();
 

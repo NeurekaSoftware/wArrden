@@ -97,8 +97,9 @@ host.Services.UseScheduler(scheduler =>
 
         if (inst.QueueCleanup?.Enabled == true)
         {
+            var rules = GetRulesForType(config.QueueCleanupRules, inst.IsSonarr ? "sonarr" : "radarr");
             scheduler
-                .ScheduleWithParams<QueueJob>(client, inst.IsSonarr ? "sonarr" : "radarr", opts.IsDryRun)
+                .ScheduleWithParams<QueueJob>(client, inst.IsSonarr ? "sonarr" : "radarr", opts.IsDryRun, rules)
                 .Cron(inst.QueueCleanup.Cron!)
                 .PreventOverlapping($"{instanceKey}_queue");
         }
@@ -110,3 +111,13 @@ OutputService.WriteBanner(config, opts);
 await host.RunAsync();
 
 static string? GetEnv(string name) => Environment.GetEnvironmentVariable(name);
+
+static List<QueueCleanupRule>? GetRulesForType(QueueCleanupRulesConfig? config, string type)
+{
+    var list = type == "sonarr" ? config?.Sonarr : config?.Radarr;
+    if (list is null || list.Count == 0) return null;
+    return list.Select(r => new QueueCleanupRule(
+        r.Match,
+        string.Equals(r.Action, "removeAndBlocklist", StringComparison.OrdinalIgnoreCase)
+    )).ToList();
+}

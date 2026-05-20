@@ -18,13 +18,25 @@ public class QueueCleanupServiceIntegrationTests
         _output = new OutputService { Out = _writer };
     }
 
+    private static List<QueueCleanupRule> SonarrRules() => new()
+    {
+        new("No files found are eligible", true),
+        new("Not an upgrade for existing episode", false),
+    };
+
+    private static List<QueueCleanupRule> RadarrRules() => new()
+    {
+        new("Not an upgrade for existing movie", false),
+    };
+
     [Fact]
     public async Task CleanAsync_NoBlockedItems_ReturnsZero()
     {
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<QueueResource>());
 
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output);
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
         var result = await service.CleanAsync(CancellationToken.None);
 
         Assert.Equal(0, result);
@@ -47,7 +59,8 @@ public class QueueCleanupServiceIntegrationTests
         _clientMock.Setup(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output);
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
         var result = await service.CleanAsync(CancellationToken.None);
 
         Assert.Equal(1, result);
@@ -71,7 +84,8 @@ public class QueueCleanupServiceIntegrationTests
         _clientMock.Setup(c => c.DeleteQueueItemWithoutBlocklistAsync(1, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output);
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
         var result = await service.CleanAsync(CancellationToken.None);
 
         Assert.Equal(1, result);
@@ -92,7 +106,8 @@ public class QueueCleanupServiceIntegrationTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<QueueResource> { item });
 
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", true, _output);
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", true, _output, rules);
         var result = await service.CleanAsync(CancellationToken.None);
 
         Assert.Equal(1, result);
@@ -117,7 +132,8 @@ public class QueueCleanupServiceIntegrationTests
         _clientMock.Setup(c => c.DeleteQueueItemWithoutBlocklistAsync(1, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var service = new QueueCleanupService(_clientMock.Object, "radarr", false, _output);
+        var rules = RadarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "radarr", false, _output, rules);
         var result = await service.CleanAsync(CancellationToken.None);
 
         Assert.Equal(1, result);
@@ -137,7 +153,8 @@ public class QueueCleanupServiceIntegrationTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<QueueResource> { item });
 
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output);
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
         var result = await service.CleanAsync(CancellationToken.None);
 
         Assert.Equal(0, result);
@@ -166,7 +183,8 @@ public class QueueCleanupServiceIntegrationTests
         _clientMock.Setup(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output);
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
         var result = await service.CleanAsync(CancellationToken.None);
 
         Assert.Equal(1, result);
@@ -196,7 +214,8 @@ public class QueueCleanupServiceIntegrationTests
         _clientMock.Setup(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output);
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
         var result = await service.CleanAsync(CancellationToken.None);
 
         Assert.Equal(2, result);
@@ -204,5 +223,47 @@ public class QueueCleanupServiceIntegrationTests
         var alphaIndex = output.IndexOf("Alpha Show", StringComparison.Ordinal);
         var zetaIndex = output.IndexOf("Zeta Show", StringComparison.Ordinal);
         Assert.True(alphaIndex < zetaIndex);
+    }
+
+    [Fact]
+    public async Task CleanAsync_NoRules_ReturnsZero()
+    {
+        var item = new QueueResource
+        {
+            Id = 1,
+            TrackedDownloadStatus = "warning",
+            ErrorMessage = "No files found are eligible",
+            Title = "Test Show"
+        };
+        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QueueResource> { item });
+
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, null);
+        var result = await service.CleanAsync(CancellationToken.None);
+
+        Assert.Equal(0, result);
+        _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CleanAsync_EmptyRules_ReturnsZero()
+    {
+        var item = new QueueResource
+        {
+            Id = 1,
+            TrackedDownloadStatus = "warning",
+            ErrorMessage = "No files found are eligible",
+            Title = "Test Show"
+        };
+        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QueueResource> { item });
+
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, new List<QueueCleanupRule>());
+        var result = await service.CleanAsync(CancellationToken.None);
+
+        Assert.Equal(0, result);
+        _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Contains("No blocked queue items detected", _writer.ToString());
     }
 }

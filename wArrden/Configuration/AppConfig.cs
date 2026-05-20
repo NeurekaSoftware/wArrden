@@ -3,6 +3,19 @@ namespace wArrden.Configuration;
 public class AppConfig
 {
     public List<InstanceConfig> Instances { get; set; } = new();
+    public QueueCleanupRulesConfig? QueueCleanupRules { get; set; }
+}
+
+public class QueueCleanupRulesConfig
+{
+    public List<QueueCleanupRuleConfig>? Sonarr { get; set; }
+    public List<QueueCleanupRuleConfig>? Radarr { get; set; }
+}
+
+public class QueueCleanupRuleConfig
+{
+    public string Match { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
 }
 
 public class InstanceConfig

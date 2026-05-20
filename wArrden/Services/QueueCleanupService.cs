@@ -9,20 +9,30 @@ public class QueueCleanupService
     private readonly string _instanceType;
     private readonly bool _isDryRun;
     private readonly OutputService _output;
+    private readonly List<QueueCleanupRule>? _rules;
 
-    public QueueCleanupService(IArrClient client, string instanceType, bool isDryRun, OutputService output)
+    public QueueCleanupService(IArrClient client, string instanceType, bool isDryRun, OutputService output,
+        List<QueueCleanupRule>? rules = null)
     {
         _client = client;
         _instanceType = instanceType;
         _isDryRun = isDryRun;
         _output = output;
+        _rules = rules;
     }
 
     public async Task<int> CleanAsync(CancellationToken ct)
     {
-        var rules = _instanceType == "sonarr" ? QueueCleanupRules.Sonarr : QueueCleanupRules.Radarr;
+        var rules = _rules;
 
         var queue = await _client.GetQueueAsync(ct);
+        if (rules is null || rules.Count == 0)
+        {
+            _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
+                Array.Empty<(string, string)>(), _isDryRun);
+            return 0;
+        }
+
         var blocked = queue.Where(q =>
             string.Equals(q.TrackedDownloadStatus, "warning", StringComparison.OrdinalIgnoreCase))
             .ToList();
@@ -50,7 +60,7 @@ public class QueueCleanupService
                     await _client.DeleteQueueItemWithoutBlocklistAsync(item.Id, ct);
             }
 
-            matched.Add((item.Id, GetTitle(item), match.Value.Key));
+            matched.Add((item.Id, GetTitle(item), match.Value.Label));
         }
 
         var sorted = matched.OrderBy(m => m.Title, StringComparer.OrdinalIgnoreCase).ToList();
@@ -78,12 +88,12 @@ public class QueueCleanupService
         return string.Join(" ", parts);
     }
 
-    internal static (string Key, bool Blocklist)? MatchRule(string messages, Dictionary<string, (string Match, bool Blocklist)> rules)
+    internal static (string Label, bool Blocklist)? MatchRule(string messages, List<QueueCleanupRule> rules)
     {
-        foreach (var (key, (match, blocklist)) in rules)
+        foreach (var rule in rules)
         {
-            if (messages.Contains(match, StringComparison.OrdinalIgnoreCase))
-                return (key, blocklist);
+            if (messages.Contains(rule.Match, StringComparison.OrdinalIgnoreCase))
+                return (rule.Match, rule.Blocklist);
         }
         return null;
     }
