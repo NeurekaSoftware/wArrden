@@ -12,10 +12,15 @@ public class SonarrV3Client : IArrClient
     public string Instance { get; }
 
     public SonarrV3Client(string url, string apiKey, string instanceName)
+        : this(url, apiKey, instanceName, new HttpClientHandler())
+    {
+    }
+
+    internal SonarrV3Client(string url, string apiKey, string instanceName, HttpMessageHandler handler)
     {
         Instance = instanceName;
         _baseUrl = url.TrimEnd('/');
-        _http = new HttpClient();
+        _http = new HttpClient(handler);
         _http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
     }
 

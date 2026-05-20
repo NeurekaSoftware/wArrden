@@ -603,6 +603,145 @@ public class SearchServiceTests
         _clientMock.Verify(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
+    [Fact]
+    public async Task SearchMissingEpisodes_DoesNotFilterByMonitored()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Monitored = true, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } },
+            new() { Id = 2, Monitored = false, Title = "Ep2", SeasonNumber = 1, EpisodeNumber = 2,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } },
+            new() { Id = 3, Monitored = true, Title = "Ep3", SeasonNumber = 1, EpisodeNumber = 3,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        var searchedIds = new List<int>();
+        _clientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+        _clientMock.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
+            .Callback<int[], CancellationToken>((ids, _) => searchedIds.AddRange(ids))
+            .Returns(Task.CompletedTask);
+
+        _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _cooldownMock.Setup(c => c.GetCooldownIdsAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(new HashSet<int>());
+
+        _outputMock
+            .Setup(o => o.RunSearchWithOutput(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<Func<OutputService.SearchOutputWriter, Task>>()))
+            .Callback<string, string, int, Func<OutputService.SearchOutputWriter, Task>>(
+                (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
+            .Returns(Task.CompletedTask);
+
+        await _service.SearchMissingEpisodesAsync(_clientMock.Object, 5, DefaultCooldown, "episode", false, CancellationToken.None);
+
+        Assert.Contains(2, searchedIds);
+    }
+
+    [Fact]
+    public async Task SearchUpgradeEpisodes_DoesNotFilterByMonitored()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Monitored = true, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } },
+            new() { Id = 2, Monitored = false, Title = "Ep2", SeasonNumber = 1, EpisodeNumber = 2,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        var searchedIds = new List<int>();
+        _clientMock.Setup(c => c.GetWantedCutoffEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+        _clientMock.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
+            .Callback<int[], CancellationToken>((ids, _) => searchedIds.AddRange(ids))
+            .Returns(Task.CompletedTask);
+
+        _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _cooldownMock.Setup(c => c.GetCooldownIdsAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(new HashSet<int>());
+
+        _outputMock
+            .Setup(o => o.RunSearchWithOutput(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<Func<OutputService.SearchOutputWriter, Task>>()))
+            .Callback<string, string, int, Func<OutputService.SearchOutputWriter, Task>>(
+                (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
+            .Returns(Task.CompletedTask);
+
+        await _service.SearchUpgradeEpisodesAsync(_clientMock.Object, 5, DefaultCooldown, "episode", false, CancellationToken.None);
+
+        Assert.Contains(2, searchedIds);
+    }
+
+    [Fact]
+    public async Task SearchMissingMovies_DoesNotFilterByMonitored()
+    {
+        var movies = new List<WantedMovieResource>
+        {
+            new() { Id = 1, Monitored = true, Title = "Movie 1" },
+            new() { Id = 2, Monitored = false, Title = "Movie 2" },
+            new() { Id = 3, Monitored = true, Title = "Movie 3" }
+        };
+
+        var searchedIds = new List<int>();
+        _clientMock.Setup(c => c.GetWantedMissingMoviesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(movies);
+        _clientMock.Setup(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
+            .Callback<int[], CancellationToken>((ids, _) => searchedIds.AddRange(ids))
+            .Returns(Task.CompletedTask);
+
+        _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _cooldownMock.Setup(c => c.GetCooldownIdsAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(new HashSet<int>());
+
+        _outputMock
+            .Setup(o => o.RunSearchWithOutput(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<Func<OutputService.SearchOutputWriter, Task>>()))
+            .Callback<string, string, int, Func<OutputService.SearchOutputWriter, Task>>(
+                (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
+            .Returns(Task.CompletedTask);
+
+        await _service.SearchMissingMoviesAsync(_clientMock.Object, 5, DefaultCooldown, false, CancellationToken.None);
+
+        Assert.Contains(2, searchedIds);
+    }
+
+    [Fact]
+    public async Task SearchUpgradeMovies_DoesNotFilterByMonitored()
+    {
+        var movies = new List<WantedMovieResource>
+        {
+            new() { Id = 1, Monitored = true, Title = "Movie 1" },
+            new() { Id = 2, Monitored = false, Title = "Movie 2" }
+        };
+
+        var searchedIds = new List<int>();
+        _clientMock.Setup(c => c.GetWantedCutoffMoviesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(movies);
+        _clientMock.Setup(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
+            .Callback<int[], CancellationToken>((ids, _) => searchedIds.AddRange(ids))
+            .Returns(Task.CompletedTask);
+
+        _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _cooldownMock.Setup(c => c.GetCooldownIdsAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(new HashSet<int>());
+
+        _outputMock
+            .Setup(o => o.RunSearchWithOutput(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<Func<OutputService.SearchOutputWriter, Task>>()))
+            .Callback<string, string, int, Func<OutputService.SearchOutputWriter, Task>>(
+                (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
+            .Returns(Task.CompletedTask);
+
+        await _service.SearchUpgradeMoviesAsync(_clientMock.Object, 5, DefaultCooldown, false, CancellationToken.None);
+
+        Assert.Contains(2, searchedIds);
+    }
+
     private class TestSearchOutputWriter : OutputService.SearchOutputWriter
     {
         public TestSearchOutputWriter() : base("test", "Missing Search", 10, TextWriter.Null) { }
