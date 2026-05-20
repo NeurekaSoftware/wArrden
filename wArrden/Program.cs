@@ -80,7 +80,7 @@ host.Services.UseScheduler(scheduler =>
             scheduler
                 .ScheduleWithParams<SearchJob>(client, "missing", inst.IsSonarr ? "sonarr" : "radarr",
                     inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
-                    inst.MissingSearch.SearchType ?? "episode", opts.IsDryRun)
+                    inst.MissingSearch.SearchType!, opts.IsDryRun)
                 .Cron(inst.MissingSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_missing");
         }
@@ -90,7 +90,7 @@ host.Services.UseScheduler(scheduler =>
             scheduler
                 .ScheduleWithParams<SearchJob>(client, "upgrade", inst.IsSonarr ? "sonarr" : "radarr",
                     inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
-                    inst.UpgradeSearch.SearchType ?? "season", opts.IsDryRun)
+                    inst.UpgradeSearch.SearchType!, opts.IsDryRun)
                 .Cron(inst.UpgradeSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_upgrade");
         }

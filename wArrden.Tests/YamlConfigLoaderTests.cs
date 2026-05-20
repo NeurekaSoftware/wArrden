@@ -324,7 +324,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
-                    MissingSearch = new JobConfig { Enabled = false, Cron = "0 0 * * *", MaxResults = 0, Cooldown = "30d" },
+                    MissingSearch = new JobConfig { Enabled = false, Cron = "0 0 * * *", MaxResults = 0, Cooldown = "30d", SearchType = "episode" },
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -395,11 +395,13 @@ instances:
       cron: '*/5 * * * *'
       maxResults: 15
       cooldown: 30d
+      searchType: episode
     upgradeSearch:
       enabled: true
       cron: '*/10 * * * *'
       maxResults: 15
       cooldown: 30d
+      searchType: season
     queueCleanup:
       enabled: true
       cron: '*/5 * * * *'
@@ -409,7 +411,9 @@ instances:
 
             var inst = config.Instances[0];
             Assert.Equal(15, inst.MissingSearch!.MaxResults);
+            Assert.Equal("episode", inst.MissingSearch.SearchType);
             Assert.Equal(15, inst.UpgradeSearch!.MaxResults);
+            Assert.Equal("season", inst.UpgradeSearch.SearchType);
         }
         finally
         {
@@ -551,12 +555,9 @@ instances:
     }
 
     [Fact]
-    public void Load_SonarrMissingSearch_SearchTypeDefaultsToEpisode_WithWarning()
+    public void Load_SonarrMissingSearch_MissingSearchType_ThrowsConfigurationException()
     {
         var tempFile = Path.GetTempFileName();
-        var stderr = new StringWriter();
-        var originalError = Console.Error;
-        Console.SetError(stderr);
         try
         {
             File.WriteAllText(tempFile, @"
@@ -575,25 +576,21 @@ instances:
       cron: '* * * * *'
 ");
 
-            var config = YamlConfigLoader.Load(tempFile);
+            var ex = Assert.Throws<ConfigurationException>(() =>
+                YamlConfigLoader.Load(tempFile));
 
-            var inst = config.Instances[0];
-            Assert.Equal("episode", inst.MissingSearch!.SearchType);
+            Assert.Contains(ex.Errors, e => e.Contains("searchType") && e.Contains("required"));
         }
         finally
         {
-            Console.SetError(originalError);
             File.Delete(tempFile);
         }
     }
 
     [Fact]
-    public void Load_SonarrUpgradeSearch_SearchTypeDefaultsToSeason_WithWarning()
+    public void Load_SonarrUpgradeSearch_MissingSearchType_ThrowsConfigurationException()
     {
         var tempFile = Path.GetTempFileName();
-        var originalError = Console.Error;
-        var stderr = new StringWriter();
-        Console.SetError(stderr);
         try
         {
             File.WriteAllText(tempFile, @"
@@ -612,14 +609,13 @@ instances:
       cron: '* * * * *'
 ");
 
-            var config = YamlConfigLoader.Load(tempFile);
+            var ex = Assert.Throws<ConfigurationException>(() =>
+                YamlConfigLoader.Load(tempFile));
 
-            var inst = config.Instances[0];
-            Assert.Equal("season", inst.UpgradeSearch!.SearchType);
+            Assert.Contains(ex.Errors, e => e.Contains("searchType") && e.Contains("required"));
         }
         finally
         {
-            Console.SetError(originalError);
             File.Delete(tempFile);
         }
     }
@@ -713,7 +709,7 @@ instances:
     }
 
     [Fact]
-    public void Validate_MissingSearchType_PassesAndDefaults()
+    public void Validate_MissingSearchType_ReturnsError()
     {
         var config = new AppConfig
         {
@@ -732,7 +728,7 @@ instances:
         };
         var errors = YamlConfigLoader.Validate(config);
 
-        Assert.Empty(errors);
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("required"));
     }
 
     [Fact]

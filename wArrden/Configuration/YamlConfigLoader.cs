@@ -50,32 +50,10 @@ internal static class YamlConfigLoader
         foreach (var inst in config.Instances)
         {
             if (inst.MissingSearch is not null && inst.IsSonarr)
-            {
-                if (string.IsNullOrWhiteSpace(inst.MissingSearch.SearchType))
-                {
-                    Console.Error.WriteLine(
-                        $"Warning: instances '{inst.Name}'.missingSearch: 'searchType' not configured, defaulting to 'episode'.");
-                    inst.MissingSearch.SearchType = "episode";
-                }
-                else
-                {
-                    inst.MissingSearch.SearchType = inst.MissingSearch.SearchType.ToLowerInvariant();
-                }
-            }
+                inst.MissingSearch.SearchType = inst.MissingSearch.SearchType!.ToLowerInvariant();
 
             if (inst.UpgradeSearch is not null && inst.IsSonarr)
-            {
-                if (string.IsNullOrWhiteSpace(inst.UpgradeSearch.SearchType))
-                {
-                    Console.Error.WriteLine(
-                        $"Warning: instances '{inst.Name}'.upgradeSearch: 'searchType' not configured, defaulting to 'season'.");
-                    inst.UpgradeSearch.SearchType = "season";
-                }
-                else
-                {
-                    inst.UpgradeSearch.SearchType = inst.UpgradeSearch.SearchType.ToLowerInvariant();
-                }
-            }
+                inst.UpgradeSearch.SearchType = inst.UpgradeSearch.SearchType!.ToLowerInvariant();
         }
     }
 
@@ -177,13 +155,20 @@ internal static class YamlConfigLoader
             }
         }
 
-        if (inst.IsSonarr && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))
+        if (inst.IsSonarr && jobKey != "queueCleanup")
         {
-            var st = job.SearchType;
-            if (!string.Equals(st, "episode", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(st, "season", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(job.SearchType))
             {
-                errors.Add($"{prefix}: 'searchType' must be 'episode' or 'season'.");
+                errors.Add($"{prefix}: 'searchType' is required for Sonarr instances.");
+            }
+            else
+            {
+                var st = job.SearchType;
+                if (!string.Equals(st, "episode", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(st, "season", StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"{prefix}: 'searchType' must be 'episode' or 'season'.");
+                }
             }
         }
 
