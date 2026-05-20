@@ -18,38 +18,24 @@ var opts = new WardenOptions
 
 var configPath = GetEnv("CONFIG_PATH") ?? "data/config.yaml";
 
-AppConfig config;
-if (File.Exists(configPath))
+if (!File.Exists(configPath))
 {
-    try
-    {
-        config = YamlConfigLoader.Load(configPath);
-    }
-    catch (ConfigurationException ex)
-    {
-        foreach (var error in ex.Errors)
-            Console.Error.WriteLine($"Config error: {error}");
-        Environment.Exit(1);
-        return;
-    }
+    Console.Error.WriteLine($"Error: Config file not found: {configPath}");
+    Environment.Exit(1);
+    return;
 }
-else
+
+AppConfig config;
+try
 {
-    var legacy = LegacyConfigLoader.LoadFromEnv();
-    if (legacy is null)
-    {
-        Console.Error.WriteLine("Error: No configuration found.");
-        Console.Error.WriteLine("       Set CONFIG_PATH to a config.yaml file, or use the legacy SONARR_*/RADARR_* environment variables.");
-        Environment.Exit(1);
-    }
-    var legacyErrors = YamlConfigLoader.Validate(legacy);
-    if (legacyErrors.Count > 0)
-    {
-        foreach (var error in legacyErrors)
-            Console.Error.WriteLine($"Config error: {error}");
-        Environment.Exit(1);
-    }
-    config = legacy;
+    config = YamlConfigLoader.Load(configPath);
+}
+catch (ConfigurationException ex)
+{
+    foreach (var error in ex.Errors)
+        Console.Error.WriteLine($"Config error: {error}");
+    Environment.Exit(1);
+    return;
 }
 
 var dbPath = Path.GetFullPath(opts.DatabasePath);
