@@ -115,6 +115,8 @@ public class SearchServiceTests
         _clientMock.Setup(c => c.GetWantedMissingMoviesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(movies);
 
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _cooldownMock.Setup(c => c.GetCooldownIdsAsync(It.IsAny<string>(), It.IsAny<string>(),
@@ -145,6 +147,8 @@ public class SearchServiceTests
 
         _clientMock.Setup(c => c.GetWantedCutoffMoviesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(movies);
+
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -181,6 +185,7 @@ public class SearchServiceTests
             .ReturnsAsync(episodes);
         _clientMock.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -216,6 +221,7 @@ public class SearchServiceTests
             .ReturnsAsync(movies);
         _clientMock.Setup(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -281,6 +287,7 @@ public class SearchServiceTests
             .ReturnsAsync(episodes);
         _clientMock.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -309,6 +316,7 @@ public class SearchServiceTests
             .ReturnsAsync(new List<WantedEpisodeResource> { new() { Id = 1, Title = "Ep", SeasonNumber = 1, EpisodeNumber = 1 } });
         clientSeries.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        clientSeries.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         var clientAnime = new Mock<IArrClient>();
         clientAnime.Setup(c => c.Instance).Returns("Anime");
@@ -316,6 +324,7 @@ public class SearchServiceTests
             .ReturnsAsync(new List<WantedEpisodeResource> { new() { Id = 1, Title = "Ep", SeasonNumber = 1, EpisodeNumber = 1 } });
         clientAnime.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        clientAnime.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -359,6 +368,7 @@ public class SearchServiceTests
             .ReturnsAsync(episodes);
         _clientMock.Setup(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -395,6 +405,7 @@ public class SearchServiceTests
             .ReturnsAsync(episodes);
         _clientMock.Setup(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -516,6 +527,7 @@ public class SearchServiceTests
             .ReturnsAsync(episodes);
         _clientMock.Setup(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -548,6 +560,7 @@ public class SearchServiceTests
             .ReturnsAsync(episodes);
         _clientMock.Setup(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -585,6 +598,7 @@ public class SearchServiceTests
             .ReturnsAsync(episodes);
         _clientMock.Setup(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -622,6 +636,7 @@ public class SearchServiceTests
         _clientMock.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Callback<int[], CancellationToken>((ids, _) => searchedIds.AddRange(ids))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -657,6 +672,7 @@ public class SearchServiceTests
         _clientMock.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Callback<int[], CancellationToken>((ids, _) => searchedIds.AddRange(ids))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -691,6 +707,7 @@ public class SearchServiceTests
         _clientMock.Setup(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Callback<int[], CancellationToken>((ids, _) => searchedIds.AddRange(ids))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -724,6 +741,7 @@ public class SearchServiceTests
         _clientMock.Setup(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
             .Callback<int[], CancellationToken>((ids, _) => searchedIds.AddRange(ids))
             .Returns(Task.CompletedTask);
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
             It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
@@ -742,13 +760,114 @@ public class SearchServiceTests
         Assert.Contains(2, searchedIds);
     }
 
+    [Fact]
+    public async Task SearchMissingEpisodes_NoIndexersAvailable_SkipsSearchAndCooldown()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        _clientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+
+        _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _cooldownMock.Setup(c => c.GetCooldownIdsAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(new HashSet<int>());
+
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        _outputMock
+            .Setup(o => o.RunSearchWithOutput(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<Func<OutputService.SearchOutputWriter, Task>>()))
+            .Callback<string, string, int, Func<OutputService.SearchOutputWriter, Task>>(
+                (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
+            .Returns(Task.CompletedTask);
+
+        await _service.SearchMissingEpisodesAsync(_clientMock.Object, 5, DefaultCooldown, "episode", false, CancellationToken.None);
+
+        _clientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _cooldownMock.Verify(c => c.MarkSearchedAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<int[]>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SearchMissingEpisodes_SeasonSearch_NoIndexersAvailable_SkipsSearchAndCooldown()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, SeriesId = 100, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        _clientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+
+        _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _cooldownMock.Setup(c => c.GetCooldownIdsAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(new HashSet<int>());
+
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        _outputMock
+            .Setup(o => o.RunSearchWithOutput(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<Func<OutputService.SearchOutputWriter, Task>>()))
+            .Callback<string, string, int, Func<OutputService.SearchOutputWriter, Task>>(
+                (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
+            .Returns(Task.CompletedTask);
+
+        await _service.SearchMissingEpisodesAsync(_clientMock.Object, 5, DefaultCooldown, "season", false, CancellationToken.None);
+
+        _clientMock.Verify(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _cooldownMock.Verify(c => c.MarkSearchedAsync("Sonarr", "Missing_Season",
+            It.IsAny<int[]>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SearchMissingMovies_NoIndexersAvailable_SkipsSearchAndCooldown()
+    {
+        var movies = new List<WantedMovieResource>
+        {
+            new() { Id = 1, Title = "Movie A" }
+        };
+
+        _clientMock.Setup(c => c.GetWantedMissingMoviesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(movies);
+
+        _cooldownMock.Setup(c => c.CleanExpiredAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _cooldownMock.Setup(c => c.GetCooldownIdsAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<CancellationToken>())).ReturnsAsync(new HashSet<int>());
+
+        _clientMock.Setup(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+        _outputMock
+            .Setup(o => o.RunSearchWithOutput(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(),
+                It.IsAny<Func<OutputService.SearchOutputWriter, Task>>()))
+            .Callback<string, string, int, Func<OutputService.SearchOutputWriter, Task>>(
+                (_, _, _, logic) => logic(new TestSearchOutputWriter()).Wait())
+            .Returns(Task.CompletedTask);
+
+        await _service.SearchMissingMoviesAsync(_clientMock.Object, 5, DefaultCooldown, false, CancellationToken.None);
+
+        _clientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _cooldownMock.Verify(c => c.MarkSearchedAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<int[]>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     private class TestSearchOutputWriter : OutputService.SearchOutputWriter
     {
         public TestSearchOutputWriter() : base("test", "Missing Search", 10, TextWriter.Null) { }
 
         public override void WriteHeader() { }
         public override void SetPhase(string phase) { }
-        public override void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool isLast) { }
+        public override void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool isLast, string? resultOverride = null) { }
         public override void StartResults() { }
         public override void WriteItem(string title) { }
         public override void WriteTrailer() { }

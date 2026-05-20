@@ -207,7 +207,7 @@ public class OutputService
             _writer.WriteLine($" ├─ {phase}");
         }
 
-        public virtual void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool isLast)
+        public virtual void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool isLast, string? resultOverride = null)
         {
             var prefix = isLast ? " └─" : " ├─";
             var childPrefix = isLast ? "   " : " │ ";
@@ -219,7 +219,9 @@ public class OutputService
             _writer.WriteLine($"{childPrefix} • Search Limit:  {_maxResults}");
 
             string result;
-            if (totalCount == 0)
+            if (resultOverride is not null)
+                result = resultOverride;
+            else if (totalCount == 0)
                 result = "No wanted items found";
             else if (searched == 0)
                 result = "No search performed";

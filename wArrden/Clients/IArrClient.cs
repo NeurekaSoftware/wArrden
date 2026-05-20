@@ -16,4 +16,5 @@ public interface IArrClient
     Task TriggerEpisodeSearchAsync(int[] episodeIds, CancellationToken ct);
     Task TriggerSeasonSearchAsync(int seriesId, int seasonNumber, CancellationToken ct);
     Task TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct);
+    Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct);
 }

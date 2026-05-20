@@ -105,6 +105,14 @@ public class SonarrV3Client : IArrClient
     Task<IReadOnlyList<WantedMovieResource>> IArrClient.GetWantedCutoffMoviesAsync(CancellationToken ct)
         => throw new NotSupportedException("Sonarr does not support movie wanted endpoints.");
 
+    public async Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct)
+    {
+        var response = await _http.GetAsync($"{_baseUrl}/api/v3/indexer", ct);
+        response.EnsureSuccessStatusCode();
+        var indexers = await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct);
+        return indexers?.Any(i => i.Enable) == true;
+    }
+
     Task IArrClient.TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct)
         => throw new NotSupportedException("Sonarr does not support movie search.");
 }

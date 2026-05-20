@@ -106,6 +106,13 @@ public class SearchService
             return;
         }
 
+        progress.SetPhase("Checking indexer availability");
+        if (!await client.HasAnyEnabledIndexerAsync(ct))
+        {
+            progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            return;
+        }
+
         progress.SetPhase($"Searching {selected.Count} items");
         progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, false);
         progress.StartResults();
@@ -177,6 +184,13 @@ public class SearchService
             return;
         }
 
+        progress.SetPhase("Checking indexer availability");
+        if (!await client.HasAnyEnabledIndexerAsync(ct))
+        {
+            progress.WriteStats(seasons.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            return;
+        }
+
         progress.SetPhase($"Searching {selected.Count} seasons");
         progress.WriteStats(seasons.Count, onCooldown, eligible.Count, selected.Count, false);
         progress.StartResults();
@@ -232,6 +246,13 @@ public class SearchService
         {
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
                 isDryRun ? 0 : selected.Count, true);
+            return;
+        }
+
+        progress.SetPhase("Checking indexer availability");
+        if (!await client.HasAnyEnabledIndexerAsync(ct))
+        {
+            progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
         }
 
