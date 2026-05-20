@@ -51,7 +51,7 @@ instances:
       enabled: true
       searchType: season
       cron: "*/15 * * * *"
-      maxResults: 15
+      maxResults: 3
       cooldown: 30d
     queueCleanup:
       enabled: true
