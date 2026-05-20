@@ -40,12 +40,12 @@ internal static class YamlConfigLoader
         if (errors.Count > 0)
             throw new ConfigurationException(errors);
 
-        ApplyDefaults(config);
+        Normalize(config);
 
         return config;
     }
 
-    private static void ApplyDefaults(AppConfig config)
+    private static void Normalize(AppConfig config)
     {
         foreach (var inst in config.Instances)
         {
