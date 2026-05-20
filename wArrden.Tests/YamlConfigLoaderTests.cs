@@ -819,4 +819,17 @@ instances:
 
         Assert.Empty(errors);
     }
+
+    [Fact]
+    public void Load_ConfigExampleYaml_LoadsAndPassesValidation()
+    {
+        var examplePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "config.example.yaml");
+        Assert.True(File.Exists(examplePath), $"config.example.yaml not found at {examplePath}");
+
+        var config = YamlConfigLoader.Load(examplePath);
+
+        Assert.NotNull(config);
+        Assert.NotEmpty(config.Instances);
+        Assert.Equal(3, config.Instances.Count);
+    }
 }
