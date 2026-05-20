@@ -15,9 +15,10 @@ public class SearchJob : IInvocable
     private readonly TimeSpan _cooldown;
     private readonly string _searchType;
     private readonly bool _isDryRun;
+    private readonly List<string>? _indexerNames;
 
     public SearchJob(SearchService search, IArrClient client,
-        string searchKind, string instanceType, int maxResults, string cooldownStr, string searchType, bool isDryRun)
+        string searchKind, string instanceType, int maxResults, string cooldownStr, string searchType, bool isDryRun, List<string>? indexerNames)
     {
         _search = search;
         _client = client;
@@ -27,6 +28,7 @@ public class SearchJob : IInvocable
         _cooldown = DurationParser.Parse(cooldownStr);
         _searchType = searchType;
         _isDryRun = isDryRun;
+        _indexerNames = indexerNames;
     }
 
     public Task Invoke()
@@ -35,10 +37,10 @@ public class SearchJob : IInvocable
 
         return (_searchKind, _instanceType) switch
         {
-            ("missing", "sonarr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, ct),
-            ("upgrade", "sonarr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, ct),
-            ("missing", "radarr") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, ct),
-            ("upgrade", "radarr") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, ct),
+            ("missing", "sonarr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+            ("upgrade", "sonarr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+            ("missing", "radarr") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
+            ("upgrade", "radarr") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
             _ => Task.CompletedTask
         };
     }

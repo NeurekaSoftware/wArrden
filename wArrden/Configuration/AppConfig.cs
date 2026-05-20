@@ -25,6 +25,7 @@ public class InstanceConfig
     public string Url { get; set; } = string.Empty;
     public string ApiKey { get; set; } = string.Empty;
     public string ApiVersion { get; set; } = "3";
+    public List<string>? IndexerNames { get; set; }
     public JobConfig? MissingSearch { get; set; }
     public JobConfig? UpgradeSearch { get; set; }
     public JobConfig? QueueCleanup { get; set; }

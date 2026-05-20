@@ -100,11 +100,16 @@ public class RadarrV3Client : IArrClient
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<IndexerResource>> GetIndexersAsync(CancellationToken ct)
     {
         var response = await _http.GetAsync($"{_baseUrl}/api/v3/indexer", ct);
         response.EnsureSuccessStatusCode();
-        var indexers = await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct);
-        return indexers?.Any(i => i.Enable) == true;
+        return await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct) ?? new();
+    }
+
+    public async Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct)
+    {
+        var indexers = await GetIndexersAsync(ct);
+        return indexers.Any(i => i.Enable);
     }
 }

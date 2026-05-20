@@ -3,6 +3,11 @@ instances:
     name: Movies
     url: http://radarr:7878
     apiKey: YOUR_RADARR_API_KEY
+    # Optional: limit searches/upgrades to specific indexers by name.
+    # When unset, all enabled indexers are used.
+    # indexerNames:
+    #   - NZBGeek
+    #   - publicHD
     missingSearch:
       enabled: true
       cron: "*/15 * * * *"
@@ -21,6 +26,11 @@ instances:
     name: Series
     url: http://sonarr:8989
     apiKey: YOUR_SONARR_API_KEY
+    # Optional: limit searches/upgrades to specific indexers by name.
+    # When unset, all enabled indexers are used.
+    # indexerNames:
+    #   - NZBGeek
+    #   - Rarbg
     missingSearch:
       enabled: true
       searchType: episode
@@ -41,6 +51,11 @@ instances:
     name: Anime
     url: http://sonarr-anime:8989
     apiKey: YOUR_SONARR_API_KEY
+    # Optional: limit searches/upgrades to specific indexers by name.
+    # When unset, all enabled indexers are used.
+    # indexerNames:
+    #   - Nyaa
+    #   - AnimeTosho
     missingSearch:
       enabled: true
       searchType: episode
