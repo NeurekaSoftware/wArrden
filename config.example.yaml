@@ -23,16 +23,16 @@ instances:
     apiKey: YOUR_SONARR_API_KEY
     missingSearch:
       enabled: true
+      searchType: episode
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
-      searchType: episode
     upgradeSearch:
       enabled: true
+      searchType: season
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
-      searchType: season
     queueCleanup:
       enabled: true
       cron: "* * * * *"
@@ -43,16 +43,16 @@ instances:
     apiKey: YOUR_SONARR_API_KEY
     missingSearch:
       enabled: true
+      searchType: episode
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
-      searchType: episode
     upgradeSearch:
       enabled: true
+      searchType: season
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
-      searchType: season
     queueCleanup:
       enabled: true
       cron: "* * * * *"
