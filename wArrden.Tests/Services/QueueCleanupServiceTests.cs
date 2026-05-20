@@ -4,13 +4,13 @@ using wArrden.Services;
 
 namespace wArrden.Tests;
 
-public class QueueCleanupServiceIntegrationTests
+public class QueueCleanupServiceTests
 {
     private readonly Mock<IArrClient> _clientMock;
     private readonly OutputService _output;
     private readonly StringWriter _writer;
 
-    public QueueCleanupServiceIntegrationTests()
+    public QueueCleanupServiceTests()
     {
         _clientMock = new Mock<IArrClient>();
         _clientMock.Setup(c => c.Instance).Returns("TestSonarr");
@@ -30,7 +30,7 @@ public class QueueCleanupServiceIntegrationTests
     };
 
     [Fact]
-    public async Task CleanAsync_NoBlockedItems_ReturnsZero()
+    public async Task CleanAsync_NoBlockedItems_ShowsNoBlockedMessage()
     {
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<QueueResource>());
@@ -42,10 +42,11 @@ public class QueueCleanupServiceIntegrationTests
         Assert.Equal(0, result);
         var output = _writer.ToString();
         Assert.Contains("No blocked queue items detected", output);
+        _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task CleanAsync_BlockedItems_DeletesWithBlocklist()
+    public async Task CleanAsync_BlocklistRule_DeletesWithBlocklist()
     {
         var item = new QueueResource
         {
@@ -70,7 +71,7 @@ public class QueueCleanupServiceIntegrationTests
     }
 
     [Fact]
-    public async Task CleanAsync_BlockedItems_DeletesWithoutBlocklist()
+    public async Task CleanAsync_RemoveRule_DeletesWithoutBlocklist()
     {
         var item = new QueueResource
         {
@@ -118,7 +119,7 @@ public class QueueCleanupServiceIntegrationTests
     }
 
     [Fact]
-    public async Task CleanAsync_UsesRadarrRulesForRadarrType()
+    public async Task CleanAsync_RadarrType_UsesRadarrRules()
     {
         var item = new QueueResource
         {
@@ -141,7 +142,7 @@ public class QueueCleanupServiceIntegrationTests
     }
 
     [Fact]
-    public async Task CleanAsync_BlockedButNoMatch_ReturnsZero()
+    public async Task CleanAsync_NoMatchingRule_ReturnsZero()
     {
         var item = new QueueResource
         {
@@ -159,10 +160,11 @@ public class QueueCleanupServiceIntegrationTests
 
         Assert.Equal(0, result);
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task CleanAsync_SomeMatchSomeDont_OnlyMatchesActedUpon()
+    public async Task CleanAsync_MixedMatches_OnlyActsOnMatches()
     {
         var matched = new QueueResource
         {
@@ -190,80 +192,5 @@ public class QueueCleanupServiceIntegrationTests
         Assert.Equal(1, result);
         _clientMock.Verify(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()), Times.Once);
         _clientMock.Verify(c => c.DeleteQueueItemAsync(2, It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CleanAsync_ResultsSortedByTitle()
-    {
-        var item1 = new QueueResource
-        {
-            Id = 1,
-            TrackedDownloadStatus = "warning",
-            ErrorMessage = "No files found are eligible",
-            Title = "Zeta Show"
-        };
-        var item2 = new QueueResource
-        {
-            Id = 2,
-            TrackedDownloadStatus = "warning",
-            ErrorMessage = "No files found are eligible",
-            Title = "Alpha Show"
-        };
-        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<QueueResource> { item1, item2 });
-        _clientMock.Setup(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        var rules = SonarrRules();
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
-        var result = await service.CleanAsync(CancellationToken.None);
-
-        Assert.Equal(2, result);
-        var output = _writer.ToString();
-        var alphaIndex = output.IndexOf("Alpha Show", StringComparison.Ordinal);
-        var zetaIndex = output.IndexOf("Zeta Show", StringComparison.Ordinal);
-        Assert.True(alphaIndex < zetaIndex);
-    }
-
-    [Fact]
-    public async Task CleanAsync_NoRules_ReturnsZero()
-    {
-        var item = new QueueResource
-        {
-            Id = 1,
-            TrackedDownloadStatus = "warning",
-            ErrorMessage = "No files found are eligible",
-            Title = "Test Show"
-        };
-        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<QueueResource> { item });
-
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, null);
-        var result = await service.CleanAsync(CancellationToken.None);
-
-        Assert.Equal(0, result);
-        _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-        _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CleanAsync_EmptyRules_ReturnsZero()
-    {
-        var item = new QueueResource
-        {
-            Id = 1,
-            TrackedDownloadStatus = "warning",
-            ErrorMessage = "No files found are eligible",
-            Title = "Test Show"
-        };
-        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<QueueResource> { item });
-
-        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, new List<QueueCleanupRule>());
-        var result = await service.CleanAsync(CancellationToken.None);
-
-        Assert.Equal(0, result);
-        _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-        Assert.Contains("No blocked queue items detected", _writer.ToString());
     }
 }

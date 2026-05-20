@@ -13,7 +13,7 @@ public class DurationParserTests
     [InlineData("2d12h30m45s", 2, 12, 30, 45)]
     [InlineData("7d", 7, 0, 0, 0)]
     [InlineData("100s", 0, 0, 0, 100)]
-    public void Parse_ValidDurations(string input, int days, int hours, int minutes, int seconds)
+    public void Parse_ValidDurations_ReturnsCorrectTimespan(string input, int days, int hours, int minutes, int seconds)
     {
         var result = DurationParser.Parse(input);
         Assert.Equal(new TimeSpan(days, hours, minutes, seconds), result);
@@ -54,7 +54,7 @@ public class DurationParserTests
     [InlineData("12H")]
     [InlineData("90M")]
     [InlineData("45S")]
-    public void Parse_CaseInsensitiveUnits(string input)
+    public void Parse_CaseInsensitiveUnits_ReturnsCorrectTimespan(string input)
     {
         var result = DurationParser.Parse(input);
         Assert.True(result > TimeSpan.Zero);
@@ -63,7 +63,7 @@ public class DurationParserTests
     [Theory]
     [InlineData("30 d", 30, 0, 0, 0)]
     [InlineData("1 h 30 m", 0, 1, 30, 0)]
-    public void Parse_WhitespaceBetweenNumberAndUnit(string input, int d, int h, int m, int s)
+    public void Parse_WhitespaceBetweenNumberAndUnit_ReturnsCorrectTimespan(string input, int d, int h, int m, int s)
     {
         var result = DurationParser.Parse(input);
         Assert.Equal(new TimeSpan(d, h, m, s), result);

@@ -244,4 +244,49 @@ public class OutputServiceTests
         var output = _writer.ToString();
         Assert.DoesNotContain("(episode)", output);
     }
+
+    [Fact]
+    public void SearchOutputWriter_SetPhase_WritesPhaseLine()
+    {
+        var writer = new OutputService.SearchOutputWriter(
+            "test", "Missing Search", 10, _writer);
+        writer.SetPhase("Fetching wanted episodes");
+
+        var output = _writer.ToString();
+        Assert.Contains("├─ Fetching wanted episodes", output);
+    }
+
+    [Fact]
+    public void SearchOutputWriter_WriteItem_WritesFormattedItem()
+    {
+        var writer = new OutputService.SearchOutputWriter(
+            "test", "Missing Search", 10, _writer);
+        writer.StartResults();
+        writer.WriteItem("The Boys (2019) - S01E01 - The Name of the Game");
+
+        var output = _writer.ToString();
+        Assert.Contains("• The Boys (2019) - S01E01 - The Name of the Game", output);
+    }
+
+    [Fact]
+    public void SearchOutputWriter_StartResults_WritesResultsHeader()
+    {
+        var writer = new OutputService.SearchOutputWriter(
+            "test", "Missing Search", 10, _writer);
+        writer.StartResults();
+
+        var output = _writer.ToString();
+        Assert.Contains("└─ Results:", output);
+    }
+
+    [Fact]
+    public void SearchOutputWriter_WriteTrailer_WritesTrailerLine()
+    {
+        var writer = new OutputService.SearchOutputWriter(
+            "test", "Missing Search", 10, _writer);
+        writer.WriteTrailer();
+
+        var output = _writer.ToString();
+        Assert.NotEmpty(output);
+    }
 }

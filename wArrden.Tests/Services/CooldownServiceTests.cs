@@ -229,4 +229,22 @@ public class CooldownServiceTests : IDisposable
         var remaining = await db.CooldownEntries.ToListAsync();
         Assert.Equal(2, remaining.Count);
     }
+
+    [Fact]
+    public async Task CleanExpiredAsync_ExactlyAtCooldown_RemovesEntry()
+    {
+        using var db = CreateContext();
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Sonarr", Category = "Missing", ItemId = 1,
+            SearchedAtUtc = DateTime.UtcNow.AddDays(-30)
+        });
+        await db.SaveChangesAsync();
+
+        var service = new CooldownService(db);
+        await service.CleanExpiredAsync("Sonarr", "Missing", TimeSpan.FromDays(30), CancellationToken.None);
+
+        var remaining = await db.CooldownEntries.ToListAsync();
+        Assert.Empty(remaining);
+    }
 }

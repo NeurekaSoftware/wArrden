@@ -3,10 +3,10 @@ using wArrden.Services;
 
 namespace wArrden.Tests;
 
-public class QueueCleanupLogicTests
+public class QueueCleanupHelpersTests
 {
     [Fact]
-    public void CollectMessages_ErrorMessageOnly()
+    public void CollectMessages_ErrorMessageOnly_ReturnsRawMessage()
     {
         var item = new QueueResource
         {
@@ -19,7 +19,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void CollectMessages_StatusMessagesConcatenated()
+    public void CollectMessages_StatusMessages_ConcatenatesAll()
     {
         var item = new QueueResource
         {
@@ -36,7 +36,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void CollectMessages_NullStatusMessages()
+    public void CollectMessages_NullMessages_ReturnsEmptyString()
     {
         var item = new QueueResource
         {
@@ -49,7 +49,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void CollectMessages_StatusMessagesWithNullMessagesList()
+    public void CollectMessages_NullMessagesList_ReturnsOnlyError()
     {
         var item = new QueueResource
         {
@@ -65,7 +65,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void MatchRule_FindsMatchingRule_CaseInsensitive()
+    public void MatchRule_CaseInsensitive_FindsMatch()
     {
         var rules = new List<QueueCleanupRule>
         {
@@ -79,7 +79,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void MatchRule_FindsBlocklistRule()
+    public void MatchRule_BlocklistRule_FindsMatch()
     {
         var rules = new List<QueueCleanupRule>
         {
@@ -105,7 +105,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void MatchRule_FirstMatchWins()
+    public void MatchRule_MultipleRules_FirstMatchWins()
     {
         var rules = new List<QueueCleanupRule>
         {
@@ -119,7 +119,26 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void GetTitle_EpisodeWithSeries()
+    public void MatchRule_EmptyMessage_ReturnsNull()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("Sample", true)
+        };
+
+        var result = QueueCleanupService.MatchRule("", rules);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void MatchRule_EmptyRules_ReturnsNull()
+    {
+        var result = QueueCleanupService.MatchRule("Some message", new List<QueueCleanupRule>());
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetTitle_Episode_FormatsCorrectly()
     {
         var item = new QueueResource
         {
@@ -138,7 +157,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void GetTitle_Movie()
+    public void GetTitle_Movie_FormatsCorrectly()
     {
         var item = new QueueResource
         {
@@ -150,7 +169,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void GetTitle_MovieWithZeroYear()
+    public void GetTitle_MovieZeroYear_OmitsYear()
     {
         var item = new QueueResource
         {
@@ -162,7 +181,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void GetTitle_FallbackToItemTitle()
+    public void GetTitle_NoEpisodeOrMovie_FallsBackToItemTitle()
     {
         var item = new QueueResource { Id = 99, Title = "Fallback Title" };
 
@@ -171,7 +190,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void GetTitle_FallbackToIdWhenNoTitle()
+    public void GetTitle_NoItemTitle_FallsBackToId()
     {
         var item = new QueueResource { Id = 99 };
 
@@ -180,7 +199,7 @@ public class QueueCleanupLogicTests
     }
 
     [Fact]
-    public void GetTitle_EpisodeNullTitle()
+    public void GetTitle_EpisodeNullTitle_FallsBackToEpisodeId()
     {
         var item = new QueueResource
         {

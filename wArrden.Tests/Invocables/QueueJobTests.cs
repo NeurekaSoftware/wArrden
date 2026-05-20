@@ -7,17 +7,19 @@ namespace wArrden.Tests;
 public class QueueJobTests
 {
     private readonly Mock<IArrClient> _clientMock;
+    private readonly StringWriter _writer;
     private readonly OutputService _output;
 
     public QueueJobTests()
     {
         _clientMock = new Mock<IArrClient>();
         _clientMock.Setup(c => c.Instance).Returns("TestSonarr");
-        _output = new OutputService { Out = TextWriter.Null };
+        _writer = new StringWriter();
+        _output = new OutputService { Out = _writer };
     }
 
     [Fact]
-    public async Task Invoke_CallsCleanAsync()
+    public async Task Invoke_EmptyQueue_ShowsNoBlockedMessage()
     {
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource>());
@@ -27,10 +29,15 @@ public class QueueJobTests
         await job.Invoke();
 
         _clientMock.Verify(c => c.GetQueueAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        Assert.Contains("No blocked queue items detected", _writer.ToString());
     }
 
     [Fact]
-    public async Task Invoke_UsesSonarrRulesForSonarrType()
+    public async Task Invoke_DryRun_DoesNotDelete()
     {
         var item = new Clients.Models.QueueResource
         {
@@ -53,10 +60,13 @@ public class QueueJobTests
 
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Never);
+        _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        Assert.Contains("Would blocklist", _writer.ToString());
     }
 
     [Fact]
-    public async Task Invoke_NoRules_ReturnsZero()
+    public async Task Invoke_NoRules_DoesNotDelete()
     {
         var item = new Clients.Models.QueueResource
         {
@@ -74,6 +84,8 @@ public class QueueJobTests
         await job.Invoke();
 
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }
