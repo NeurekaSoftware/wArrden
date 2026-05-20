@@ -14,5 +14,6 @@ public interface IArrClient
     Task<IReadOnlyList<WantedMovieResource>> GetWantedMissingMoviesAsync(CancellationToken ct);
     Task<IReadOnlyList<WantedMovieResource>> GetWantedCutoffMoviesAsync(CancellationToken ct);
     Task TriggerEpisodeSearchAsync(int[] episodeIds, CancellationToken ct);
+    Task TriggerSeasonSearchAsync(int seriesId, int seasonNumber, CancellationToken ct);
     Task TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct);
 }

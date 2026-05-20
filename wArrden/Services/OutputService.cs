@@ -61,9 +61,9 @@ public class OutputService
         if (inst.QueueCleanup?.Enabled == true)
             children.Add($"Queue Cleanup".PadRight(LabelPad) + inst.QueueCleanup.Cron);
         if (inst.MissingSearch?.Enabled == true)
-            children.Add($"Missing Search".PadRight(LabelPad) + inst.MissingSearch.Cron);
+            children.Add($"Missing Search".PadRight(LabelPad) + inst.MissingSearch.Cron + SearchTypeLabel(inst, inst.MissingSearch));
         if (inst.UpgradeSearch?.Enabled == true)
-            children.Add($"Upgrade Search".PadRight(LabelPad) + inst.UpgradeSearch.Cron);
+            children.Add($"Upgrade Search".PadRight(LabelPad) + inst.UpgradeSearch.Cron + SearchTypeLabel(inst, inst.UpgradeSearch));
 
         for (int i = 0; i < children.Count; i++)
         {
@@ -231,6 +231,14 @@ public class OutputService
         {
             _writer.WriteLine();
         }
+    }
+
+    private static string SearchTypeLabel(InstanceConfig inst, JobConfig job)
+    {
+        if (!inst.IsSonarr || string.IsNullOrWhiteSpace(job.SearchType))
+            return string.Empty;
+
+        return $"  ({job.SearchType.ToLowerInvariant()})";
     }
 
     private static string InstanceJobLabel(string instance, string job)

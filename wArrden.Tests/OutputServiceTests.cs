@@ -196,4 +196,52 @@ public class OutputServiceTests
         var output = _writer.ToString();
         Assert.Contains("├─ Stats:", output);
     }
+
+    [Fact]
+    public void WriteBanner_SonarrSearchJobs_ShowsSearchType()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "key",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "episode" },
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/10 * * * *", SearchType = "season" }
+                }
+            }
+        };
+        var opts = new WardenOptions();
+
+        OutputService.WriteBanner(config, opts, _writer);
+
+        var output = _writer.ToString();
+        Assert.Contains("(episode)", output);
+        Assert.Contains("(season)", output);
+    }
+
+    [Fact]
+    public void WriteBanner_RadarrSearchJobs_DoesNotShowSearchType()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "radarr", Name = "Movies", Url = "http://localhost:7878",
+                    ApiKey = "key",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "episode" }
+                }
+            }
+        };
+        var opts = new WardenOptions();
+
+        OutputService.WriteBanner(config, opts, _writer);
+
+        var output = _writer.ToString();
+        Assert.DoesNotContain("(episode)", output);
+    }
 }

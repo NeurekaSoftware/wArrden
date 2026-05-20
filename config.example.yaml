@@ -26,11 +26,13 @@ instances:
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      searchType: episode
     upgradeSearch:
       enabled: true
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      searchType: season
     queueCleanup:
       enabled: true
       cron: "* * * * *"
@@ -44,11 +46,13 @@ instances:
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      searchType: episode
     upgradeSearch:
       enabled: true
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      searchType: season
     queueCleanup:
       enabled: true
       cron: "* * * * *"

@@ -27,4 +27,5 @@ public class JobConfig
     public string Cron { get; set; } = string.Empty;
     public int MaxResults { get; set; }
     public string Cooldown { get; set; } = "30d";
+    public string? SearchType { get; set; }
 }

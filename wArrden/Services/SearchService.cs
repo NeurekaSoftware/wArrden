@@ -14,23 +14,39 @@ public class SearchService
         _output = output;
     }
 
-    public virtual async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
+    public virtual async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
             async progress =>
             {
-                await RunEpisodeSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                    () => client.GetWantedMissingEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), progress, ct);
+                if (string.Equals(searchType, "season", StringComparison.OrdinalIgnoreCase))
+                {
+                    await RunSeasonSearch(client, "Missing", cooldown, maxResults, isDryRun,
+                        () => client.GetWantedMissingEpisodesAsync(ct), progress, ct);
+                }
+                else
+                {
+                    await RunEpisodeSearch(client, "Missing", cooldown, maxResults, isDryRun,
+                        () => client.GetWantedMissingEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), progress, ct);
+                }
             });
     }
 
-    public virtual async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, CancellationToken ct)
+    public virtual async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
             async progress =>
             {
-                await RunEpisodeSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                    () => client.GetWantedCutoffEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), progress, ct);
+                if (string.Equals(searchType, "season", StringComparison.OrdinalIgnoreCase))
+                {
+                    await RunSeasonSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+                        () => client.GetWantedCutoffEpisodesAsync(ct), progress, ct);
+                }
+                else
+                {
+                    await RunEpisodeSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+                        () => client.GetWantedCutoffEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), progress, ct);
+                }
             });
     }
 
@@ -109,6 +125,81 @@ public class SearchService
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(e => e.Id).ToArray(), ct);
         progress.WriteTrailer();
     }
+
+    private async Task RunSeasonSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
+        Func<Task<IReadOnlyList<WantedEpisodeResource>>> getWanted,
+        OutputService.SearchOutputWriter progress, CancellationToken ct)
+    {
+        var seasonCategory = $"{category}_Season";
+
+        progress.SetPhase("Cleaning cooldown entries");
+        await _cooldown.CleanExpiredAsync(client.Instance, seasonCategory, cooldown, ct);
+
+        progress.SetPhase("Fetching wanted episodes");
+        var wanted = await getWanted();
+
+        if (wanted.Count == 0)
+        {
+            progress.WriteStats(0, 0, 0, 0, true);
+            return;
+        }
+
+        progress.SetPhase("Grouping by season");
+        var seasons = wanted
+            .GroupBy(e => (e.SeriesId, e.SeasonNumber))
+            .Select(g => new SeasonGroup(
+                g.Key.SeriesId,
+                g.Key.SeasonNumber,
+                g.First().Series,
+                // Encode (seriesId, seasonNumber) into a single int via positional notation.
+                // Multiplier 1000 > max season number (~50), ensuring injectivity:
+                //   seriesId = key / 1000, seasonNumber = key % 1000
+                g.Key.SeriesId * 1000 + g.Key.SeasonNumber
+            ))
+            .ToList();
+
+        progress.SetPhase("Applying cooldown filters");
+        var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, seasonCategory, ct);
+
+        var eligible = seasons.Where(s => !cooldownIds.Contains(s.SeasonKey)).ToList();
+        Shuffle(eligible);
+        var selected = eligible
+            .Take(maxResults)
+            .OrderBy(s => s.Series?.Title ?? "")
+            .ThenBy(s => s.SeasonNumber)
+            .ToList();
+        var onCooldown = seasons.Count - eligible.Count;
+
+        if (selected.Count == 0 || isDryRun)
+        {
+            progress.WriteStats(seasons.Count, onCooldown, eligible.Count,
+                isDryRun ? 0 : selected.Count, true);
+            return;
+        }
+
+        progress.SetPhase($"Searching {selected.Count} seasons");
+        progress.WriteStats(seasons.Count, onCooldown, eligible.Count, selected.Count, false);
+        progress.StartResults();
+
+        foreach (var s in selected)
+        {
+            var title = s.Series?.Title ?? $"Series {s.SeriesId}";
+            if (s.Series is not null && s.Series.Year > 0)
+                title = $"{title} ({s.Series.Year})";
+            title = $"{title} - Season {s.SeasonNumber}";
+
+            progress.WriteItem(title);
+
+            try { await client.TriggerSeasonSearchAsync(s.SeriesId, s.SeasonNumber, ct); }
+            catch { }
+        }
+
+        await _cooldown.MarkSearchedAsync(client.Instance, seasonCategory,
+            selected.Select(s => s.SeasonKey).ToArray(), ct);
+        progress.WriteTrailer();
+    }
+
+    private sealed record SeasonGroup(int SeriesId, int SeasonNumber, WantedEpisodeSeriesResource? Series, int SeasonKey);
 
     private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedMovieResource>>> getWanted, Func<int[], Task> triggerSearch,

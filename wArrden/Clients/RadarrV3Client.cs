@@ -85,6 +85,9 @@ public class RadarrV3Client : IArrClient
     public Task TriggerEpisodeSearchAsync(int[] episodeIds, CancellationToken ct)
         => throw new NotSupportedException("Radarr does not support episode search.");
 
+    public Task TriggerSeasonSearchAsync(int seriesId, int seasonNumber, CancellationToken ct)
+        => throw new NotSupportedException("Radarr does not support season search.");
+
     public async Task TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct)
     {
         var body = new { name = "MoviesSearch", movieIds };

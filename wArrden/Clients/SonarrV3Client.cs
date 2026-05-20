@@ -82,6 +82,12 @@ public class SonarrV3Client : IArrClient
         return PostCommandAsync(body, ct);
     }
 
+    public Task TriggerSeasonSearchAsync(int seriesId, int seasonNumber, CancellationToken ct)
+    {
+        var body = new { name = "SeasonSearch", seriesId, seasonNumber };
+        return PostCommandAsync(body, ct);
+    }
+
     private async Task PostCommandAsync(object command, CancellationToken ct)
     {
         var response = await _http.PostAsJsonAsync($"{_baseUrl}/api/v3/command", command, cancellationToken: ct);

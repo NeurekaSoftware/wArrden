@@ -40,10 +40,45 @@ internal static class YamlConfigLoader
     {
         foreach (var inst in config.Instances)
         {
-            if (inst.MissingSearch is not null && inst.MissingSearch.MaxResults == 0)
-                inst.MissingSearch.MaxResults = 100;
-            if (inst.UpgradeSearch is not null && inst.UpgradeSearch.MaxResults == 0)
-                inst.UpgradeSearch.MaxResults = 50;
+            if (inst.MissingSearch is not null)
+            {
+                if (inst.MissingSearch.MaxResults == 0)
+                    inst.MissingSearch.MaxResults = 100;
+
+                if (inst.IsSonarr)
+                {
+                    if (string.IsNullOrWhiteSpace(inst.MissingSearch.SearchType))
+                    {
+                        Console.Error.WriteLine(
+                            $"Warning: instances '{inst.Name}'.missingSearch: 'searchType' not configured, defaulting to 'episode'.");
+                        inst.MissingSearch.SearchType = "episode";
+                    }
+                    else
+                    {
+                        inst.MissingSearch.SearchType = inst.MissingSearch.SearchType.ToLowerInvariant();
+                    }
+                }
+            }
+
+            if (inst.UpgradeSearch is not null)
+            {
+                if (inst.UpgradeSearch.MaxResults == 0)
+                    inst.UpgradeSearch.MaxResults = 50;
+
+                if (inst.IsSonarr)
+                {
+                    if (string.IsNullOrWhiteSpace(inst.UpgradeSearch.SearchType))
+                    {
+                        Console.Error.WriteLine(
+                            $"Warning: instances '{inst.Name}'.upgradeSearch: 'searchType' not configured, defaulting to 'season'.");
+                        inst.UpgradeSearch.SearchType = "season";
+                    }
+                    else
+                    {
+                        inst.UpgradeSearch.SearchType = inst.UpgradeSearch.SearchType.ToLowerInvariant();
+                    }
+                }
+            }
         }
     }
 
@@ -134,6 +169,21 @@ internal static class YamlConfigLoader
         {
             try { DurationParser.Parse(job.Cooldown); }
             catch (Exception ex) { errors.Add($"{prefix}: invalid 'cooldown' - {ex.Message}"); }
+        }
+
+        if (inst.IsSonarr && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))
+        {
+            var st = job.SearchType;
+            if (!string.Equals(st, "episode", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(st, "season", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"{prefix}: 'searchType' must be 'episode' or 'season'.");
+            }
+        }
+
+        if (inst.IsRadarr && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))
+        {
+            errors.Add($"{prefix}: 'searchType' is not valid for Radarr instances.");
         }
     }
 

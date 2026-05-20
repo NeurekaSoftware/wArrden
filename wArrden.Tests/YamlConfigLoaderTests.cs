@@ -414,4 +414,207 @@ instances:
             File.Delete(tempFile);
         }
     }
+
+    [Fact]
+    public void Validate_SonarrMissingSearch_ValidSeasonSearchType_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "season" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_SonarrUpgradeSearch_ValidEpisodeSearchType_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "episode" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_SonarrSearch_InvalidSearchType_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "series" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("episode") && e.Contains("season"));
+    }
+
+    [Fact]
+    public void Validate_SonarrSearch_SearchTypeCaseInsensitive_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "SEASON" },
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "Episode" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_RadarrSearch_SearchTypeSet_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "radarr",
+                    Name = "Movies",
+                    Url = "http://localhost:7878",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "season" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("Radarr"));
+    }
+
+    [Fact]
+    public void Validate_RadarrSearch_NoSearchTypeSet_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "radarr",
+                    Name = "Movies",
+                    Url = "http://localhost:7878",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Load_SonarrMissingSearch_SearchTypeDefaultsToEpisode_WithWarning()
+    {
+        var tempFile = Path.GetTempFileName();
+        var stderr = new StringWriter();
+        var originalError = Console.Error;
+        Console.SetError(stderr);
+        try
+        {
+            File.WriteAllText(tempFile, @"
+instances:
+  - type: sonarr
+    name: Series
+    url: http://localhost:8989
+    apiKey: abc123
+    missingSearch:
+      enabled: true
+      cron: '*/5 * * * *'
+    queueCleanup:
+      enabled: true
+      cron: '* * * * *'
+");
+
+            var config = YamlConfigLoader.Load(tempFile);
+
+            var inst = config.Instances[0];
+            Assert.Equal("episode", inst.MissingSearch!.SearchType);
+        }
+        finally
+        {
+            Console.SetError(originalError);
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Load_SonarrUpgradeSearch_SearchTypeDefaultsToSeason_WithWarning()
+    {
+        var tempFile = Path.GetTempFileName();
+        var originalError = Console.Error;
+        var stderr = new StringWriter();
+        Console.SetError(stderr);
+        try
+        {
+            File.WriteAllText(tempFile, @"
+instances:
+  - type: sonarr
+    name: Series
+    url: http://localhost:8989
+    apiKey: abc123
+    upgradeSearch:
+      enabled: true
+      cron: '*/5 * * * *'
+    queueCleanup:
+      enabled: true
+      cron: '* * * * *'
+");
+
+            var config = YamlConfigLoader.Load(tempFile);
+
+            var inst = config.Instances[0];
+            Assert.Equal("season", inst.UpgradeSearch!.SearchType);
+        }
+        finally
+        {
+            Console.SetError(originalError);
+            File.Delete(tempFile);
+        }
+    }
 }
