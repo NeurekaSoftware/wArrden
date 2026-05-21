@@ -10,6 +10,8 @@ jobs:
   setup-build-edge:
     name: "Setup Build: Edge"
     uses: forgejo/workflows/.forgejo/workflows/build-edge.yaml@main
+    with:
+      platforms: linux/amd64,linux/arm64
     secrets:
       REGISTRY: ${{ secrets.REGISTRY }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}

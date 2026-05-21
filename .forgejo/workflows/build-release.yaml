@@ -9,6 +9,8 @@ jobs:
   setup-build-release:
     name: "Setup Build: Release"
     uses: forgejo/workflows/.forgejo/workflows/build-release.yaml@main
+    with:
+      platforms: linux/amd64,linux/arm64
     secrets:
       REGISTRY: ${{ secrets.REGISTRY }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}

@@ -1,0 +1,16 @@
+.git/
+.gitignore
+.gitattributes
+wArrden.Tests/
+**/bin/
+**/obj/
+**/*.user
+**/*.log
+**/.vs/
+**/.vscode/
+**/.idea/
+*.md
+Dockerfile
+.dockerignore
+compose.yaml
+compose.override.yaml
