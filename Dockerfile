@@ -1,5 +1,6 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG TARGETARCH
+ARG BUILDPLATFORM
 ARG APP_VERSION
 WORKDIR /app
 COPY wArrden/wArrden.csproj .
