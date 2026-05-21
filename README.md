@@ -55,3 +55,10 @@ This creates a few common gaps in automation:
 Over time, this can leave libraries with permanently missing content or media that no longer matches your preferred quality and scoring standards.
 
 wArrden fills those gaps by periodically rechecking your library and automating the cleanup work that would otherwise require manual intervention.
+
+## CLI Usage
+
+| Command | Description |
+|---|---|
+| `docker exec wArrden clear-missing [instance]` | Clears all missing search cooldowns. If `instance` is omitted, clears across all instances. |
+| `docker exec wArrden clear-upgrades [instance]` | Clears all upgrade search cooldowns. If `instance` is omitted, clears across all instances. |

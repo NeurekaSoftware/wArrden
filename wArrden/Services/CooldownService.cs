@@ -8,6 +8,7 @@ public interface ICooldownService
     Task CleanExpiredAsync(string instance, string category, TimeSpan cooldown, CancellationToken ct);
     Task<HashSet<int>> GetCooldownIdsAsync(string instance, string category, CancellationToken ct);
     Task MarkSearchedAsync(string instance, string category, int[] itemIds, CancellationToken ct);
+    Task<int> ClearAllAsync(string category, string? instance, CancellationToken ct);
 }
 
 public class CooldownService : ICooldownService
@@ -50,5 +51,15 @@ public class CooldownService : ICooldownService
 
         await _db.CooldownEntries.AddRangeAsync(entries, ct);
         await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task<int> ClearAllAsync(string category, string? instance, CancellationToken ct)
+    {
+        var categories = new[] { category, $"{category}_Season" };
+        var query = _db.CooldownEntries.Where(e => categories.Contains(e.Category));
+        if (instance is not null)
+            query = query.Where(e => e.Instance == instance);
+
+        return await query.ExecuteDeleteAsync(ct);
     }
 }

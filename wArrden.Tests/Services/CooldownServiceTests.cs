@@ -247,4 +247,165 @@ public class CooldownServiceTests : IDisposable
         var remaining = await db.CooldownEntries.ToListAsync();
         Assert.Empty(remaining);
     }
+
+    [Fact]
+    public async Task ClearAllAsync_RemovesAllMatchingEntries()
+    {
+        using var db = CreateContext();
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Missing", ItemId = 1,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Missing", ItemId = 2,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var service = new CooldownService(db);
+        var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
+
+        Assert.Equal(2, count);
+        var remaining = await db.CooldownEntries.ToListAsync();
+        Assert.Empty(remaining);
+    }
+
+    [Fact]
+    public async Task ClearAllAsync_AlsoClearsSeasonVariant()
+    {
+        using var db = CreateContext();
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Missing", ItemId = 1,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Missing_Season", ItemId = 1001001,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var service = new CooldownService(db);
+        var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
+
+        Assert.Equal(2, count);
+        var remaining = await db.CooldownEntries.ToListAsync();
+        Assert.Empty(remaining);
+    }
+
+    [Fact]
+    public async Task ClearAllAsync_UpgradeAlsoClearsSeasonVariant()
+    {
+        using var db = CreateContext();
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Upgrade", ItemId = 1,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Upgrade_Season", ItemId = 2002002,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var service = new CooldownService(db);
+        var count = await service.ClearAllAsync("Upgrade", "Series", CancellationToken.None);
+
+        Assert.Equal(2, count);
+        var remaining = await db.CooldownEntries.ToListAsync();
+        Assert.Empty(remaining);
+    }
+
+    [Fact]
+    public async Task ClearAllAsync_RespectsInstanceFilter()
+    {
+        using var db = CreateContext();
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Missing", ItemId = 1,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Anime", Category = "Missing", ItemId = 2,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var service = new CooldownService(db);
+        var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
+
+        Assert.Equal(1, count);
+        var remaining = await db.CooldownEntries.ToListAsync();
+        Assert.Single(remaining);
+        Assert.Equal("Anime", remaining[0].Instance);
+    }
+
+    [Fact]
+    public async Task ClearAllAsync_AllInstancesWhenInstanceNull()
+    {
+        using var db = CreateContext();
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Missing", ItemId = 1,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Movies", Category = "Missing", ItemId = 2,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Anime", Category = "Missing_Season", ItemId = 1001001,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var service = new CooldownService(db);
+        var count = await service.ClearAllAsync("Missing", null, CancellationToken.None);
+
+        Assert.Equal(3, count);
+        var remaining = await db.CooldownEntries.ToListAsync();
+        Assert.Empty(remaining);
+    }
+
+    [Fact]
+    public async Task ClearAllAsync_NoEntries_ReturnsZero()
+    {
+        using var db = CreateContext();
+        var service = new CooldownService(db);
+        var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
+
+        Assert.Equal(0, count);
+    }
+
+    [Fact]
+    public async Task ClearAllAsync_OnlyClearsSpecifiedCategory()
+    {
+        using var db = CreateContext();
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Missing", ItemId = 1,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Series", Category = "Upgrade", ItemId = 2,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var service = new CooldownService(db);
+        var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
+
+        Assert.Equal(1, count);
+        var remaining = await db.CooldownEntries.ToListAsync();
+        Assert.Single(remaining);
+        Assert.Equal("Upgrade", remaining[0].Category);
+    }
 }

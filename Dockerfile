@@ -22,6 +22,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/bin /app/bin
+RUN echo '#!/bin/sh' > /app/bin/clear-missing && \
+    echo 'dotnet /app/bin/wArrden.dll clear-missing "$@"' >> /app/bin/clear-missing && \
+    echo '#!/bin/sh' > /app/bin/clear-upgrades && \
+    echo 'dotnet /app/bin/wArrden.dll clear-upgrades "$@"' >> /app/bin/clear-upgrades && \
+    chmod +x /app/bin/clear-missing /app/bin/clear-upgrades
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 VOLUME ["/app/data"]

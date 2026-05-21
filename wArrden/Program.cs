@@ -43,6 +43,26 @@ var dbDir = Path.GetDirectoryName(dbPath);
 if (dbDir is not null)
     Directory.CreateDirectory(dbDir);
 
+if (args.Length > 0)
+{
+    var command = args[0];
+
+    if (command is "clear-missing" or "clear-upgrades")
+    {
+        var category = command == "clear-missing" ? "Missing" : "Upgrade";
+        var targets = ResolveTargets(config, args.Length > 1 ? args[1] : null);
+        if (targets is null) return;
+
+        await RunClearCooldownsCommand(dbPath, category, targets, opts);
+        return;
+    }
+
+    Console.Error.WriteLine($"Unknown command: {args[0]}");
+    Console.Error.WriteLine("Available commands: clear-missing [instance], clear-upgrades [instance]");
+    Environment.Exit(1);
+    return;
+}
+
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
@@ -63,6 +83,7 @@ using (var scope = host.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<WardenDbContext>();
     await db.Database.EnsureCreatedAsync();
+    await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL");
 }
 
 host.Services.UseScheduler(scheduler =>
@@ -143,3 +164,86 @@ static List<QueueCleanupRule>? GetRulesForType(QueueCleanupRulesConfig? config, 
         string.Equals(r.Action, "removeAndBlocklist", StringComparison.OrdinalIgnoreCase)
     )).ToList();
 }
+
+static List<InstanceConfig>? ResolveTargets(AppConfig config, string? instanceArg)
+{
+    if (instanceArg is null)
+        return config.Instances;
+
+    var match = config.Instances.FirstOrDefault(i =>
+        string.Equals(i.Name, instanceArg, StringComparison.OrdinalIgnoreCase));
+    if (match is not null)
+        return new List<InstanceConfig> { match };
+
+    Console.Error.WriteLine($"Unknown instance: {instanceArg}");
+    Console.Error.WriteLine($"Available instances: {string.Join(", ", config.Instances.Select(i => i.Name))}");
+    Environment.Exit(1);
+    return null;
+}
+
+static async Task RunClearCooldownsCommand(string dbPath, string category, List<InstanceConfig> targets, WardenOptions opts)
+{
+    var services = new ServiceCollection();
+    services.AddDbContext<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
+    services.AddSingleton<ICooldownService, CooldownService>();
+
+    var sp = services.BuildServiceProvider();
+    using var scope = sp.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<WardenDbContext>();
+    await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL");
+
+    var cooldown = scope.ServiceProvider.GetRequiredService<ICooldownService>();
+
+    var counts = new List<(string Instance, int Count)>();
+    foreach (var inst in targets)
+    {
+        var count = await cooldown.ClearAllAsync(category, inst.Name, CancellationToken.None);
+        counts.Add((inst.Name, count));
+    }
+
+    var tz = ResolveTimezone(opts.Timezone);
+    var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
+    var ts = FormatTimestamp(now);
+
+    var isSingle = targets.Count == 1;
+    var jobKey = category == "Missing" ? "clear-missing" : "clear-upgrades";
+    var headerLabel = isSingle
+        ? $"cli.{targets[0].Name.ToLowerInvariant()}.{jobKey}"
+        : $"cli.{jobKey}";
+
+    Console.WriteLine($"[{ts} INF] [{headerLabel}]");
+
+    var typeLabel = category == "Missing" ? "Missing" : "Upgrade";
+    var lines = new List<string> { $" ├─ Type:       {typeLabel}" };
+
+    if (isSingle)
+    {
+        var c = counts[0].Count;
+        lines.Add($" └─ Cleared:    {c} entr{(c == 1 ? "y" : "ies")}");
+    }
+    else
+    {
+        foreach (var (inst, count) in counts)
+            lines.Add($" ├─ {inst}:     {count} entr{(count == 1 ? "y" : "ies")}");
+
+        var total = counts.Sum(x => x.Count);
+        lines.Add($" └─ Cleared:    {total} entr{(total == 1 ? "y" : "ies")}");
+    }
+
+    foreach (var line in lines)
+        Console.WriteLine(line);
+
+    Console.WriteLine();
+}
+
+static TimeZoneInfo ResolveTimezone(string? tzId)
+{
+    if (!string.IsNullOrWhiteSpace(tzId))
+    {
+        try { return TimeZoneInfo.FindSystemTimeZoneById(tzId); }
+        catch { }
+    }
+    return TimeZoneInfo.Local;
+}
+
+static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
