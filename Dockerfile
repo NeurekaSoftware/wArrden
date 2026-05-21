@@ -15,6 +15,7 @@ ARG PGID
 ENV APP_VERSION=$APP_VERSION
 ENV PUID=$PUID
 ENV PGID=$PGID
+ENV PATH="/app/bin:$PATH"
 RUN apt-get update \
  && apt-get install -y --no-install-recommends gosu \
  && rm -rf /var/lib/apt/lists/*
