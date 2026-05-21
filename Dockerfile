@@ -2,13 +2,14 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG APP_VERSION
 ARG PUID
 ARG PGID
+ARG TARGETARCH
 WORKDIR /app
 COPY wArrden/wArrden.csproj .
 RUN dotnet restore -a $TARGETARCH
 COPY wArrden/ .
 RUN dotnet publish -c Release -a $TARGETARCH -o /app/bin
 
-FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/runtime:10.0
+FROM mcr.microsoft.com/dotnet/runtime:10.0
 ARG APP_VERSION
 ARG PUID
 ARG PGID
