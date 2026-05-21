@@ -21,4 +21,5 @@ if [ -n "$PUID" ] && [ "$PUID" != "0" ] && [ -n "$PGID" ] && [ "$PGID" != "0" ];
   exec gosu app "$@"
 fi
 
+chown -R 0:0 /app
 exec "$@"
