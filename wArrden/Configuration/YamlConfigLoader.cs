@@ -104,7 +104,7 @@ internal static class YamlConfigLoader
             ValidateJob(errors, inst, "queueCleanup", i);
         }
 
-        ValidateQueueCleanupRules(errors, config.QueueCleanupRules);
+        ValidateQueueCleanupRules(errors, config.QueueCleanupRules, config);
 
         var enabledJobs = config.Instances.Sum(i =>
             (i.MissingSearch?.Enabled == true ? 1 : 0) +
@@ -195,18 +195,28 @@ internal static class YamlConfigLoader
         }
     }
 
-    private static void ValidateQueueCleanupRules(List<string> errors, QueueCleanupRulesConfig? rules)
+    private static void ValidateQueueCleanupRules(List<string> errors, QueueCleanupRulesConfig? rules, AppConfig config)
     {
         if (rules is null) return;
 
-        ValidateRuleList(errors, rules.Sonarr, "sonarr");
-        ValidateRuleList(errors, rules.Radarr, "radarr");
-        ValidateRuleList(errors, rules.Lidarr, "lidarr");
-        ValidateRuleList(errors, rules.Whisparr, "whisparr");
+        var presentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var inst in config.Instances)
+        {
+            if (!string.IsNullOrWhiteSpace(inst.Type))
+                presentTypes.Add(inst.Type);
+        }
+
+        ValidateRuleList(errors, rules.Sonarr, "sonarr", presentTypes);
+        ValidateRuleList(errors, rules.Radarr, "radarr", presentTypes);
+        ValidateRuleList(errors, rules.Lidarr, "lidarr", presentTypes);
+        ValidateRuleList(errors, rules.Whisparr, "whisparr", presentTypes);
     }
 
-    private static void ValidateRuleList(List<string> errors, List<QueueCleanupRuleConfig>? list, string type)
+    private static void ValidateRuleList(List<string> errors, List<QueueCleanupRuleConfig>? list, string type, HashSet<string> presentTypes)
     {
+        if (!presentTypes.Contains(type))
+            return;
+
         if (list is null || list.Count == 0)
         {
             Console.Error.WriteLine($"Warning: queueCleanupRules.{type} is empty; no queue warnings will be matched for {type} instances.");

@@ -1674,6 +1674,116 @@ queueCleanupRules:
     }
 
     [Fact]
+    public void Validate_QueueCleanupRules_EmptyLidarrList_NoLidarrInstance_NoWarning()
+    {
+        var originalError = Console.Error;
+        var stderr = new StringWriter();
+        Console.SetError(stderr);
+        try
+        {
+            var config = new AppConfig
+            {
+                Instances = new List<InstanceConfig>
+                {
+                    new()
+                    {
+                        Type = "sonarr",
+                        Name = "Series",
+                        Url = "http://localhost:8989",
+                        ApiKey = "abc123",
+                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                    }
+                },
+                QueueCleanupRules = new QueueCleanupRulesConfig { Lidarr = new List<QueueCleanupRuleConfig>() }
+            };
+            var errors = YamlConfigLoader.Validate(config);
+
+            Assert.Empty(errors);
+            var output = stderr.ToString();
+            Assert.DoesNotContain("queueCleanupRules.lidarr", output);
+        }
+        finally
+        {
+            Console.SetError(originalError);
+        }
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_EmptyWhisparrList_NoWhisparrInstance_NoWarning()
+    {
+        var originalError = Console.Error;
+        var stderr = new StringWriter();
+        Console.SetError(stderr);
+        try
+        {
+            var config = new AppConfig
+            {
+                Instances = new List<InstanceConfig>
+                {
+                    new()
+                    {
+                        Type = "sonarr",
+                        Name = "Series",
+                        Url = "http://localhost:8989",
+                        ApiKey = "abc123",
+                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                    }
+                },
+                QueueCleanupRules = new QueueCleanupRulesConfig { Whisparr = new List<QueueCleanupRuleConfig>() }
+            };
+            var errors = YamlConfigLoader.Validate(config);
+
+            Assert.Empty(errors);
+            var output = stderr.ToString();
+            Assert.DoesNotContain("queueCleanupRules.whisparr", output);
+        }
+        finally
+        {
+            Console.SetError(originalError);
+        }
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_SonarrPresentLidarrAbsent_OnlySonarrWarns()
+    {
+        var originalError = Console.Error;
+        var stderr = new StringWriter();
+        Console.SetError(stderr);
+        try
+        {
+            var config = new AppConfig
+            {
+                Instances = new List<InstanceConfig>
+                {
+                    new()
+                    {
+                        Type = "sonarr",
+                        Name = "Series",
+                        Url = "http://localhost:8989",
+                        ApiKey = "abc123",
+                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                    }
+                },
+                QueueCleanupRules = new QueueCleanupRulesConfig
+                {
+                    Sonarr = new List<QueueCleanupRuleConfig>(),
+                    Lidarr = new List<QueueCleanupRuleConfig>()
+                }
+            };
+            var errors = YamlConfigLoader.Validate(config);
+
+            Assert.Empty(errors);
+            var output = stderr.ToString();
+            Assert.Contains("queueCleanupRules.sonarr", output);
+            Assert.DoesNotContain("queueCleanupRules.lidarr", output);
+        }
+        finally
+        {
+            Console.SetError(originalError);
+        }
+    }
+
+    [Fact]
     public void Validate_QueueCleanupRules_Lidarr_WhitespaceMatch_ReturnsError()
     {
         var config = new AppConfig
