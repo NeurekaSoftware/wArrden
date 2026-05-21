@@ -6,6 +6,8 @@ services:
     container_name: warrden
     environment:
       - TZ=UTC
+      - PUID=1000
+      - PGID=1000
       - DRY_RUN=false
       - DATABASE_PATH=/app/data/warden.db
       - CONFIG_PATH=/app/data/config.yaml
