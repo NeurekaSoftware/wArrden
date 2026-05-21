@@ -60,5 +60,5 @@ wArrden fills those gaps by periodically rechecking your library and automating 
 
 | Command | Description |
 |---|---|
-| `docker exec wArrden clear-missing [instance]` | Clears all missing search cooldowns. If `instance` is omitted, clears across all instances. |
-| `docker exec wArrden clear-upgrades [instance]` | Clears all upgrade search cooldowns. If `instance` is omitted, clears across all instances. |
+| `docker exec warrden clear-missing [instance]` | Clears all missing search cooldowns. If `instance` is omitted, clears across all instances. |
+| `docker exec warrden clear-upgrades [instance]` | Clears all upgrade search cooldowns. If `instance` is omitted, clears across all instances. |
