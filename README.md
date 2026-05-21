@@ -7,6 +7,7 @@
 [![Release](https://img.shields.io/badge/dynamic/json.svg?style=flat-square&logo=git&logoColor=F43F5E&label=Release&color=F43F5E&url=https://code.neureka.dev/api/v1/repos/warrden/warrden/releases&query=$[0].tag_name)](https://code.neureka.dev/warrden/warrden/releases)
 [![Actions](https://img.shields.io/badge/dynamic/json?style=flat-square&logo=gitlfs&logoColor=8B5CF6&label=Actions&color=8B5CF6&url=https://code.neureka.dev/api/v1/repos/warrden/warrden/actions/runs&query=workflow_runs[0].status)](https://code.neureka.dev/warrden/warrden/actions)
 [![AI](https://img.shields.io/badge/AI-assisted-5786FE?style=flat-square&logo=deepseek&logoColor=5786FE)](https://code.neureka.dev/warrden/warrden)
+[![Stars](https://img.shields.io/github/stars/NeurekaSoftware/wArrden?style=flat-square&label=Stars&color=EAB308&logo=googlegemini&logoColor=EAB308)](https://code.neureka.dev/warrden/warrden)
 
 wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding missing or upgradeable content, as well as detecting and clearing stuck imports from the queue.
 
