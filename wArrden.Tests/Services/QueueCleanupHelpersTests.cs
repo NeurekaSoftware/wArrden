@@ -216,4 +216,73 @@ public class QueueCleanupHelpersTests
         var result = QueueCleanupService.GetTitle(item);
         Assert.Equal("Show (2021) - S02E05 - Episode 42", result);
     }
+
+    [Fact]
+    public void GetTitle_ArtistWithAlbum_FormatsCorrectly()
+    {
+        var item = new QueueResource
+        {
+            Artist = new QueueArtist { Id = 1, ArtistName = "The Beatles" },
+            Album = new QueueAlbum { Id = 10, Title = "Abbey Road" }
+        };
+
+        var result = QueueCleanupService.GetTitle(item);
+        Assert.Equal("The Beatles - Abbey Road", result);
+    }
+
+    [Fact]
+    public void GetTitle_ArtistWithoutAlbum_UsesArtistNameOnly()
+    {
+        var item = new QueueResource
+        {
+            Artist = new QueueArtist { Id = 1, ArtistName = "Pink Floyd" }
+        };
+
+        var result = QueueCleanupService.GetTitle(item);
+        Assert.Equal("Pink Floyd", result);
+    }
+
+    [Fact]
+    public void GetTitle_ArtistNullName_FallsBackToArtistId()
+    {
+        var item = new QueueResource
+        {
+            Artist = new QueueArtist { Id = 7, ArtistName = null }
+        };
+
+        var result = QueueCleanupService.GetTitle(item);
+        Assert.Equal("Artist 7", result);
+    }
+
+    [Fact]
+    public void GetTitle_ArtistNullNameWithAlbum_FallsBackToArtistId()
+    {
+        var item = new QueueResource
+        {
+            Artist = new QueueArtist { Id = 7, ArtistName = null },
+            Album = new QueueAlbum { Id = 10, Title = "Dark Side of the Moon" }
+        };
+
+        var result = QueueCleanupService.GetTitle(item);
+        Assert.Equal("Artist 7 - Dark Side of the Moon", result);
+    }
+
+    [Fact]
+    public void GetTitle_WhisparrEpisode_FormatsSameAsSonarr()
+    {
+        var item = new QueueResource
+        {
+            Episode = new QueueEpisode
+            {
+                Id = 99,
+                Title = "Scene 1",
+                SeasonNumber = 1,
+                EpisodeNumber = 1,
+                Series = new QueueEpisodeSeriesResource { Title = "Test Studio", Year = 2023 }
+            }
+        };
+
+        var result = QueueCleanupService.GetTitle(item);
+        Assert.Equal("Test Studio (2023) - S01E01 - Scene 1", result);
+    }
 }

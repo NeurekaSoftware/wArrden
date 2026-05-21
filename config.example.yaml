@@ -72,6 +72,56 @@ instances:
       enabled: true
       cron: "* * * * *"
 
+  - type: lidarr
+    name: Music
+    url: http://lidarr:8686
+    apiKey: YOUR_LIDARR_API_KEY
+    apiVersion: "1"
+    # Optional: limit searches/upgrades to specific indexers by name.
+    # When unset, all enabled indexers are used.
+    # indexerNames:
+    #   - NZBGeek
+    #   - publicHD
+    missingSearch:
+      enabled: false
+      searchType: album
+      cron: "*/15 * * * *"
+      maxResults: 1
+      cooldown: 30d
+    upgradeSearch:
+      enabled: false
+      searchType: album
+      cron: "*/15 * * * *"
+      maxResults: 1
+      cooldown: 30d
+    queueCleanup:
+      enabled: true
+      cron: "* * * * *"
+
+  - type: whisparr
+    name: Adult
+    url: http://whisparr:6969
+    apiKey: YOUR_WHISPARR_API_KEY
+    # Optional: limit searches/upgrades to specific indexers by name.
+    # When unset, all enabled indexers are used.
+    # indexerNames:
+    #   - NZBGeek
+    missingSearch:
+      enabled: true
+      searchType: episode
+      cron: "*/15 * * * *"
+      maxResults: 15
+      cooldown: 30d
+    upgradeSearch:
+      enabled: true
+      searchType: season
+      cron: "*/15 * * * *"
+      maxResults: 1
+      cooldown: 30d
+    queueCleanup:
+      enabled: true
+      cron: "* * * * *"
+
 queueCleanupRules:
   radarr:
     - match: "Found matching movie via grab history"
@@ -91,6 +141,68 @@ queueCleanupRules:
     - match: "Found archive file"
       action: removeAndBlocklist
   sonarr:
+    - match: "Found matching series via grab history"
+      action: removeAndBlocklist
+    - match: "not found in the grabbed release"
+      action: removeAndBlocklist
+    - match: "unexpected considering the"
+      action: removeAndBlocklist
+    - match: "Not an upgrade for existing episode"
+      action: remove
+    - match: "Not a Custom Format upgrade"
+      action: remove
+    - match: "No files found are eligible"
+      action: removeAndBlocklist
+    - match: "Episode file already imported"
+      action: remove
+    - match: "No audio tracks detected"
+      action: removeAndBlocklist
+    - match: "Invalid season or episode"
+      action: removeAndBlocklist
+    - match: "all episodes in seasons"
+      action: removeAndBlocklist
+    - match: "Sample"
+      action: removeAndBlocklist
+    - match: "Found archive file"
+      action: removeAndBlocklist
+  lidarr:
+    - match: "No files found are eligible"
+      action: removeAndBlocklist
+    - match: "Album already imported at"
+      action: remove
+    - match: "Not an upgrade for existing track file"
+      action: remove
+    - match: "Not an upgrade for existing album file"
+      action: remove
+    - match: "Not a Custom Format upgrade"
+      action: remove
+    - match: "Not enough free space"
+      action: removeAndBlocklist
+    - match: "File is still being unpacked"
+      action: remove
+    - match: "Has fewer tracks than existing release"
+      action: remove
+    - match: "Has unmatched tracks"
+      action: removeAndBlocklist
+    - match: "Has missing tracks"
+      action: removeAndBlocklist
+    - match: "Album release not requested"
+      action: removeAndBlocklist
+    - match: "Track file on disk contains more tracks"
+      action: remove
+    - match: "Destination folder"
+      action: removeAndBlocklist
+    - match: "Sample"
+      action: removeAndBlocklist
+    - match: "No audio tracks detected"
+      action: removeAndBlocklist
+    - match: "Album match is not close enough"
+      action: removeAndBlocklist
+    - match: "No tracks matched"
+      action: removeAndBlocklist
+    - match: "Track match is not close enough"
+      action: removeAndBlocklist
+  whisparr:
     - match: "Found matching series via grab history"
       action: removeAndBlocklist
     - match: "not found in the grabbed release"

@@ -44,7 +44,7 @@ public class YamlConfigLoaderTests
             {
                 new()
                 {
-                    Type = "lidarr",
+                    Type = "unknown",
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123"
@@ -53,7 +53,7 @@ public class YamlConfigLoaderTests
         };
         var errors = YamlConfigLoader.Validate(config);
 
-        Assert.Contains(errors, e => e.Contains("type") && e.Contains("sonarr") && e.Contains("radarr"));
+        Assert.Contains(errors, e => e.Contains("type") && e.Contains("sonarr") && e.Contains("radarr") && e.Contains("lidarr") && e.Contains("whisparr"));
     }
 
     [Fact]
@@ -529,7 +529,7 @@ instances:
         };
         var errors = YamlConfigLoader.Validate(config);
 
-        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("Radarr"));
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("radarr"));
     }
 
     [Fact]
@@ -826,12 +826,16 @@ instances:
 
         Assert.NotNull(config);
         Assert.NotEmpty(config.Instances);
-        Assert.Equal(3, config.Instances.Count);
+        Assert.Equal(5, config.Instances.Count);
         Assert.NotNull(config.QueueCleanupRules);
         Assert.NotNull(config.QueueCleanupRules!.Sonarr);
         Assert.NotNull(config.QueueCleanupRules.Radarr);
+        Assert.NotNull(config.QueueCleanupRules.Lidarr);
+        Assert.NotNull(config.QueueCleanupRules.Whisparr);
         Assert.Equal(12, config.QueueCleanupRules.Sonarr!.Count);
         Assert.Equal(8, config.QueueCleanupRules.Radarr!.Count);
+        Assert.Equal(18, config.QueueCleanupRules.Lidarr!.Count);
+        Assert.Equal(12, config.QueueCleanupRules.Whisparr!.Count);
     }
 
     [Fact]
@@ -1043,7 +1047,7 @@ instances:
     }
 
     [Fact]
-    public void Validate_QueueCleanupRules_ActionCaseInsensitive_Passes()
+    public void Validate_LidarrInstance_Passes()
     {
         var config = new AppConfig
         {
@@ -1051,19 +1055,12 @@ instances:
             {
                 new()
                 {
-                    Type = "sonarr",
-                    Name = "Series",
-                    Url = "http://localhost:8989",
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
                     ApiKey = "abc123",
+                    ApiVersion = "1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
-                }
-            },
-            QueueCleanupRules = new QueueCleanupRulesConfig
-            {
-                Sonarr = new List<QueueCleanupRuleConfig>
-                {
-                    new() { Match = "Sample", Action = "REMOVE" },
-                    new() { Match = "Archive", Action = "removeandblocklist" }
                 }
             }
         };
@@ -1073,7 +1070,7 @@ instances:
     }
 
     [Fact]
-    public void Validate_QueueCleanupRules_ErrorPrefixIncludesTypeAndIndex()
+    public void Validate_WhisparrInstance_Passes()
     {
         var config = new AppConfig
         {
@@ -1081,16 +1078,435 @@ instances:
             {
                 new()
                 {
-                    Type = "sonarr",
-                    Name = "Series",
-                    Url = "http://localhost:8989",
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_WhisparrSearch_ValidSearchType_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_WhisparrSearch_MissingSearchType_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_LidarrSearch_InvalidSearchType_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("album") && e.Contains("artist"));
+    }
+
+    [Fact]
+    public void Validate_TypeCaseInsensitive_LidarrWhisparr_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "LIDARR",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "album" },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                },
+                new()
+                {
+                    Type = "Whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Load_LidarrWhisparrQueueCleanupRules_DeserializesCorrectly()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, @"
+instances:
+  - type: lidarr
+    name: Music
+    url: http://localhost:8686
+    apiKey: abc123
+    apiVersion: '1'
+    queueCleanup:
+      enabled: true
+      cron: '* * * * *'
+  - type: whisparr
+    name: Adult
+    url: http://localhost:6969
+    apiKey: abc123
+    queueCleanup:
+      enabled: true
+      cron: '* * * * *'
+queueCleanupRules:
+  lidarr:
+    - match: Not an upgrade for existing track file
+      action: remove
+    - match: Sample
+      action: removeAndBlocklist
+  whisparr:
+    - match: Not an upgrade for existing episode
+      action: remove
+    - match: Sample
+      action: removeAndBlocklist
+");
+
+            var config = YamlConfigLoader.Load(tempFile);
+
+            Assert.NotNull(config.QueueCleanupRules);
+            Assert.Equal(2, config.QueueCleanupRules!.Lidarr!.Count);
+            Assert.Equal("Not an upgrade for existing track file", config.QueueCleanupRules.Lidarr[0].Match);
+            Assert.Equal("remove", config.QueueCleanupRules.Lidarr[0].Action);
+            Assert.Equal(2, config.QueueCleanupRules.Whisparr!.Count);
+            Assert.Equal("Not an upgrade for existing episode", config.QueueCleanupRules.Whisparr[0].Match);
+            Assert.Equal("remove", config.QueueCleanupRules.Whisparr[0].Action);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_EmptyLidarrList_Warns()
+    {
+        var originalError = Console.Error;
+        var stderr = new StringWriter();
+        Console.SetError(stderr);
+        try
+        {
+            var config = new AppConfig
+            {
+                Instances = new List<InstanceConfig>
+                {
+                    new()
+                    {
+                        Type = "lidarr",
+                        Name = "Music",
+                        Url = "http://localhost:8686",
+                        ApiKey = "abc123",
+                        ApiVersion = "1",
+                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                    }
+                },
+                QueueCleanupRules = new QueueCleanupRulesConfig { Lidarr = new List<QueueCleanupRuleConfig>() }
+            };
+            var errors = YamlConfigLoader.Validate(config);
+
+            Assert.Empty(errors);
+            var warning = stderr.ToString();
+            Assert.Contains("queueCleanupRules.lidarr", warning);
+            Assert.Contains("empty", warning);
+        }
+        finally
+        {
+            Console.SetError(originalError);
+        }
+    }
+
+    [Fact]
+    public void Validate_LidarrSearch_MissingSearchType_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_LidarrSearch_ValidAlbumSearchType_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "album" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_LidarrSearch_ValidArtistSearchType_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "artist" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_LidarrSearch_SearchTypeCaseInsensitive_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "ALBUM" },
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "Artist" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_WhisparrSearch_InvalidSearchType_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "series" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("episode") && e.Contains("season"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Lidarr_EmptyMatch_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
             QueueCleanupRules = new QueueCleanupRulesConfig
             {
-                Radarr = new List<QueueCleanupRuleConfig>
+                Lidarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("match") && e.Contains("empty"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Lidarr_InvalidAction_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Lidarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "delete" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("action") && e.Contains("remove") && e.Contains("removeAndBlocklist"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Lidarr_EmptyAction_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Lidarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("action") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Lidarr_ErrorPrefixIncludesTypeAndIndex()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Lidarr = new List<QueueCleanupRuleConfig>
                 {
                     new() { Match = "Valid", Action = "remove" },
                     new() { Match = "", Action = "remove" }
@@ -1100,49 +1516,242 @@ instances:
         var errors = YamlConfigLoader.Validate(config);
 
         var error = errors.Single();
-        Assert.Contains("queueCleanupRules.radarr[1]", error);
+        Assert.Contains("queueCleanupRules.lidarr[1]", error);
     }
 
     [Fact]
-    public void Load_QueueCleanupRulesSection_DeserializesCorrectly()
+    public void Validate_QueueCleanupRules_Whisparr_EmptyMatch_ReturnsError()
     {
-        var tempFile = Path.GetTempFileName();
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Whisparr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("match") && e.Contains("empty"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Whisparr_InvalidAction_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Whisparr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "delete" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("action") && e.Contains("remove") && e.Contains("removeAndBlocklist"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Whisparr_EmptyAction_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Whisparr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Sample", Action = "" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("action") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Whisparr_ErrorPrefixIncludesTypeAndIndex()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Whisparr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "Valid", Action = "remove" },
+                    new() { Match = "", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        var error = errors.Single();
+        Assert.Contains("queueCleanupRules.whisparr[1]", error);
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_EmptyWhisparrList_Warns()
+    {
+        var originalError = Console.Error;
+        var stderr = new StringWriter();
+        Console.SetError(stderr);
         try
         {
-            File.WriteAllText(tempFile, @"
-instances:
-  - type: sonarr
-    name: Series
-    url: http://localhost:8989
-    apiKey: abc123
-    queueCleanup:
-      enabled: true
-      cron: '* * * * *'
-queueCleanupRules:
-  sonarr:
-    - match: Sample
-      action: removeAndBlocklist
-    - match: Not an upgrade
-      action: remove
-  radarr:
-    - match: Found matching movie
-      action: removeAndBlocklist
-");
+            var config = new AppConfig
+            {
+                Instances = new List<InstanceConfig>
+                {
+                    new()
+                    {
+                        Type = "whisparr",
+                        Name = "Adult",
+                        Url = "http://localhost:6969",
+                        ApiKey = "abc123",
+                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                    }
+                },
+                QueueCleanupRules = new QueueCleanupRulesConfig { Whisparr = new List<QueueCleanupRuleConfig>() }
+            };
+            var errors = YamlConfigLoader.Validate(config);
 
-            var config = YamlConfigLoader.Load(tempFile);
-
-            Assert.NotNull(config.QueueCleanupRules);
-            Assert.Equal(2, config.QueueCleanupRules!.Sonarr!.Count);
-            Assert.Equal("Sample", config.QueueCleanupRules.Sonarr[0].Match);
-            Assert.Equal("removeAndBlocklist", config.QueueCleanupRules.Sonarr[0].Action);
-            Assert.Equal("Not an upgrade", config.QueueCleanupRules.Sonarr[1].Match);
-            Assert.Equal("remove", config.QueueCleanupRules.Sonarr[1].Action);
-            Assert.Single(config.QueueCleanupRules.Radarr!);
-            Assert.Equal("Found matching movie", config.QueueCleanupRules.Radarr![0].Match);
+            Assert.Empty(errors);
+            var warning = stderr.ToString();
+            Assert.Contains("queueCleanupRules.whisparr", warning);
+            Assert.Contains("empty", warning);
         }
         finally
         {
-            File.Delete(tempFile);
+            Console.SetError(originalError);
         }
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Lidarr_WhitespaceMatch_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Lidarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "   ", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("match") && e.Contains("empty"));
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_Whisparr_WhitespaceMatch_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Whisparr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "   ", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("match") && e.Contains("empty"));
+    }
+
+    [Fact]
+    public void Validate_WhisparrSearch_SearchTypeCaseInsensitive_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "SEASON" },
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "Episode" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
     }
 }

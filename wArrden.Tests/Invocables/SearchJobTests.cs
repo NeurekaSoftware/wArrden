@@ -129,4 +129,52 @@ public class SearchJobTests
         _searchMock.Verify(s => s.SearchMissingEpisodesAsync(
             _clientMock.Object, 10, TimeSpan.FromDays(30), "episode", false, indexerNames, CancellationToken.None), Times.Once);
     }
+
+    [Fact]
+    public void Invoke_MissingWhisparr_CallsSearchMissingEpisodes()
+    {
+        var job = new SearchJob(_searchMock.Object, _clientMock.Object,
+            "missing", "whisparr", 10, "30d", "episode", false, null);
+
+        job.Invoke();
+
+        _searchMock.Verify(s => s.SearchMissingEpisodesAsync(
+            _clientMock.Object, 10, TimeSpan.FromDays(30), "episode", false, null, CancellationToken.None), Times.Once);
+    }
+
+    [Fact]
+    public void Invoke_UpgradeWhisparr_CallsSearchUpgradeEpisodes()
+    {
+        var job = new SearchJob(_searchMock.Object, _clientMock.Object,
+            "upgrade", "whisparr", 5, "7d", "season", true, null);
+
+        job.Invoke();
+
+        _searchMock.Verify(s => s.SearchUpgradeEpisodesAsync(
+            _clientMock.Object, 5, TimeSpan.FromDays(7), "season", true, null, CancellationToken.None), Times.Once);
+    }
+
+    [Fact]
+    public void Invoke_MissingLidarr_ReturnsCompletedTask()
+    {
+        var job = new SearchJob(_searchMock.Object, _clientMock.Object,
+            "missing", "lidarr", 10, "30d", "album", false, null);
+
+        var task = job.Invoke();
+
+        Assert.Equal(Task.CompletedTask, task);
+        _searchMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public void Invoke_UpgradeLidarr_ReturnsCompletedTask()
+    {
+        var job = new SearchJob(_searchMock.Object, _clientMock.Object,
+            "upgrade", "lidarr", 5, "7d", "artist", false, null);
+
+        var task = job.Invoke();
+
+        Assert.Equal(Task.CompletedTask, task);
+        _searchMock.VerifyNoOtherCalls();
+    }
 }

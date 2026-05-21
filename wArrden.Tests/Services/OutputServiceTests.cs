@@ -289,4 +289,54 @@ public class OutputServiceTests
         var output = _writer.ToString();
         Assert.NotEmpty(output);
     }
+
+    [Fact]
+    public void WriteBanner_WhisparrSearchJobs_ShowsSearchType()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr", Name = "Adult", Url = "http://localhost:6969",
+                    ApiKey = "key",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "episode" },
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/10 * * * *", SearchType = "season" }
+                }
+            }
+        };
+        var opts = new WardenOptions();
+
+        OutputService.WriteBanner(config, opts, _writer);
+
+        var output = _writer.ToString();
+        Assert.Contains("(episode)", output);
+        Assert.Contains("(season)", output);
+    }
+
+    [Fact]
+    public void WriteBanner_LidarrSearchJobs_ShowsSearchType()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "lidarr", Name = "Music", Url = "http://localhost:8686",
+                    ApiKey = "key", ApiVersion = "1",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "album" },
+                    UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/10 * * * *", SearchType = "artist" }
+                }
+            }
+        };
+        var opts = new WardenOptions();
+
+        OutputService.WriteBanner(config, opts, _writer);
+
+        var output = _writer.ToString();
+        Assert.Contains("(album)", output);
+        Assert.Contains("(artist)", output);
+    }
 }

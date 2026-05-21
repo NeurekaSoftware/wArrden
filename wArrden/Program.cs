@@ -69,16 +69,22 @@ host.Services.UseScheduler(scheduler =>
 {
     foreach (var inst in config.Instances)
     {
-        var client = inst.IsSonarr
-            ? ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name)
-            : ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name);
+        var client = inst switch
+        {
+            { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
+        };
 
         var instanceKey = inst.InstanceKey;
+        var instanceType = InstanceType(inst);
 
         if (inst.MissingSearch?.Enabled == true)
         {
             scheduler
-                .ScheduleWithParams<SearchJob>(client, "missing", inst.IsSonarr ? "sonarr" : "radarr",
+                .ScheduleWithParams<SearchJob>(client, "missing", instanceType,
                     inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
                     inst.MissingSearch.SearchType!, opts.IsDryRun, inst.IndexerNames)
                 .Cron(inst.MissingSearch.Cron!)
@@ -88,7 +94,7 @@ host.Services.UseScheduler(scheduler =>
         if (inst.UpgradeSearch?.Enabled == true)
         {
             scheduler
-                .ScheduleWithParams<SearchJob>(client, "upgrade", inst.IsSonarr ? "sonarr" : "radarr",
+                .ScheduleWithParams<SearchJob>(client, "upgrade", instanceType,
                     inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
                     inst.UpgradeSearch.SearchType!, opts.IsDryRun, inst.IndexerNames)
                 .Cron(inst.UpgradeSearch.Cron!)
@@ -97,9 +103,9 @@ host.Services.UseScheduler(scheduler =>
 
         if (inst.QueueCleanup?.Enabled == true)
         {
-            var rules = GetRulesForType(config.QueueCleanupRules, inst.IsSonarr ? "sonarr" : "radarr");
+            var rules = GetRulesForType(config.QueueCleanupRules, instanceType);
             scheduler
-                .ScheduleWithParams<QueueJob>(client, inst.IsSonarr ? "sonarr" : "radarr", opts.IsDryRun, rules)
+                .ScheduleWithParams<QueueJob>(client, instanceType, opts.IsDryRun, rules)
                 .Cron(inst.QueueCleanup.Cron!)
                 .PreventOverlapping($"{instanceKey}_queue");
         }
@@ -112,9 +118,25 @@ await host.RunAsync();
 
 static string? GetEnv(string name) => Environment.GetEnvironmentVariable(name);
 
+static string InstanceType(InstanceConfig inst)
+{
+    if (inst.IsSonarr) return "sonarr";
+    if (inst.IsRadarr) return "radarr";
+    if (inst.IsLidarr) return "lidarr";
+    if (inst.IsWhisparr) return "whisparr";
+    throw new InvalidOperationException($"Unknown instance type: {inst.Type}");
+}
+
 static List<QueueCleanupRule>? GetRulesForType(QueueCleanupRulesConfig? config, string type)
 {
-    var list = type == "sonarr" ? config?.Sonarr : config?.Radarr;
+    var list = type switch
+    {
+        "sonarr" => config?.Sonarr,
+        "radarr" => config?.Radarr,
+        "lidarr" => config?.Lidarr,
+        "whisparr" => config?.Whisparr,
+        _ => null
+    };
     if (list is null || list.Count == 0) return null;
     return list.Select(r => new QueueCleanupRule(
         r.Match,

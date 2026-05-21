@@ -10,6 +10,8 @@ public class QueueCleanupRulesConfig
 {
     public List<QueueCleanupRuleConfig>? Sonarr { get; set; }
     public List<QueueCleanupRuleConfig>? Radarr { get; set; }
+    public List<QueueCleanupRuleConfig>? Lidarr { get; set; }
+    public List<QueueCleanupRuleConfig>? Whisparr { get; set; }
 }
 
 public class QueueCleanupRuleConfig
@@ -33,6 +35,8 @@ public class InstanceConfig
     public string InstanceKey => Name.ToLowerInvariant();
     public bool IsSonarr => string.Equals(Type, "sonarr", StringComparison.OrdinalIgnoreCase);
     public bool IsRadarr => string.Equals(Type, "radarr", StringComparison.OrdinalIgnoreCase);
+    public bool IsLidarr => string.Equals(Type, "lidarr", StringComparison.OrdinalIgnoreCase);
+    public bool IsWhisparr => string.Equals(Type, "whisparr", StringComparison.OrdinalIgnoreCase);
 }
 
 public class JobConfig

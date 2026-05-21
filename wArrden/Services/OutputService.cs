@@ -104,10 +104,14 @@ public class OutputService
     {
         var sonarrCount = config.QueueCleanupRules?.Sonarr?.Count ?? 0;
         var radarrCount = config.QueueCleanupRules?.Radarr?.Count ?? 0;
+        var lidarrCount = config.QueueCleanupRules?.Lidarr?.Count ?? 0;
+        var whisparrCount = config.QueueCleanupRules?.Whisparr?.Count ?? 0;
 
         w.WriteLine($"{rootPrefix} Queue Cleanup Rules");
         w.WriteLine($"{childPrefix} ├─ {"sonarr".PadRight(LabelPad)}{sonarrCount} matcher(s)");
-        w.WriteLine($"{childPrefix} └─ {"radarr".PadRight(LabelPad)}{radarrCount} matcher(s)");
+        w.WriteLine($"{childPrefix} ├─ {"radarr".PadRight(LabelPad)}{radarrCount} matcher(s)");
+        w.WriteLine($"{childPrefix} ├─ {"lidarr".PadRight(LabelPad)}{lidarrCount} matcher(s)");
+        w.WriteLine($"{childPrefix} └─ {"whisparr".PadRight(LabelPad)}{whisparrCount} matcher(s)");
     }
 
     private static TimeZoneInfo ResolveTimezone(string? tzId)
@@ -249,7 +253,7 @@ public class OutputService
 
     private static string SearchTypeLabel(InstanceConfig inst, JobConfig job)
     {
-        if (!inst.IsSonarr || string.IsNullOrWhiteSpace(job.SearchType))
+        if ((!inst.IsSonarr && !inst.IsWhisparr && !inst.IsLidarr) || string.IsNullOrWhiteSpace(job.SearchType))
             return string.Empty;
 
         return $"  ({job.SearchType.ToLowerInvariant()})";

@@ -58,11 +58,23 @@ public class QueueResource
     [JsonPropertyName("seriesId")]
     public int? SeriesId { get; set; }
 
+    [JsonPropertyName("artistId")]
+    public int? ArtistId { get; set; }
+
+    [JsonPropertyName("albumId")]
+    public int? AlbumId { get; set; }
+
     [JsonPropertyName("episode")]
     public QueueEpisode? Episode { get; set; }
 
     [JsonPropertyName("movie")]
     public QueueMovie? Movie { get; set; }
+
+    [JsonPropertyName("artist")]
+    public QueueArtist? Artist { get; set; }
+
+    [JsonPropertyName("album")]
+    public QueueAlbum? Album { get; set; }
 }
 
 public class QueueStatusMessage
@@ -114,4 +126,22 @@ public class QueueMovie
 
     [JsonPropertyName("year")]
     public int Year { get; set; }
+}
+
+public class QueueArtist
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("artistName")]
+    public string? ArtistName { get; set; }
+}
+
+public class QueueAlbum
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
 }

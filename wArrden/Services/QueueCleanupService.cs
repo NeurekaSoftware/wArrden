@@ -117,6 +117,14 @@ public class QueueCleanupService
             return movieTitle;
         }
 
+        if (item.Artist is not null)
+        {
+            var artistName = item.Artist.ArtistName ?? $"Artist {item.Artist.Id}";
+            if (item.Album?.Title is not null)
+                return $"{artistName} - {item.Album.Title}";
+            return artistName;
+        }
+
         return item.Title ?? $"ID {item.Id}";
     }
 }

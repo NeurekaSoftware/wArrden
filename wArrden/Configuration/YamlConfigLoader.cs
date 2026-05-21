@@ -49,10 +49,10 @@ internal static class YamlConfigLoader
     {
         foreach (var inst in config.Instances)
         {
-            if (inst.MissingSearch is not null && inst.IsSonarr)
+            if (inst.MissingSearch is not null && (inst.IsSonarr || inst.IsWhisparr || inst.IsLidarr))
                 inst.MissingSearch.SearchType = inst.MissingSearch.SearchType!.ToLowerInvariant();
 
-            if (inst.UpgradeSearch is not null && inst.IsSonarr)
+            if (inst.UpgradeSearch is not null && (inst.IsSonarr || inst.IsWhisparr || inst.IsLidarr))
                 inst.UpgradeSearch.SearchType = inst.UpgradeSearch.SearchType!.ToLowerInvariant();
         }
     }
@@ -80,15 +80,15 @@ internal static class YamlConfigLoader
             }
             else
             {
-                if (inst.IsSonarr || inst.IsRadarr) TrackName(usedNames, inst.Name, errors);
+                if (inst.IsSonarr || inst.IsRadarr || inst.IsLidarr || inst.IsWhisparr) TrackName(usedNames, inst.Name, errors);
                 else
-                    errors.Add($"{prefix} '{inst.Name}': 'type' must be 'sonarr' or 'radarr'.");
+                    errors.Add($"{prefix} '{inst.Name}': 'type' must be 'sonarr', 'radarr', 'lidarr' or 'whisparr'.");
             }
 
             if (string.IsNullOrWhiteSpace(inst.Type))
                 errors.Add($"{prefix}: 'type' is required.");
-            else if (!inst.IsSonarr && !inst.IsRadarr)
-                errors.Add($"{prefix} '{inst.Name}': 'type' must be 'sonarr' or 'radarr'.");
+            else if (!inst.IsSonarr && !inst.IsRadarr && !inst.IsLidarr && !inst.IsWhisparr)
+                errors.Add($"{prefix} '{inst.Name}': 'type' must be 'sonarr', 'radarr', 'lidarr' or 'whisparr'.");
 
             if (!IsValidUrl(inst.Url))
                 errors.Add($"{prefix} '{inst.Name}': 'url' must be a valid http(s) URL.");
@@ -96,8 +96,8 @@ internal static class YamlConfigLoader
             if (string.IsNullOrWhiteSpace(inst.ApiKey))
                 errors.Add($"{prefix} '{inst.Name}': 'apiKey' is required.");
 
-            if (inst.ApiVersion != "3")
-                errors.Add($"{prefix} '{inst.Name}': 'apiVersion' must be '3'.");
+            if ((inst.IsLidarr && inst.ApiVersion != "1") || (!inst.IsLidarr && inst.ApiVersion != "3"))
+                errors.Add($"{prefix} '{inst.Name}': 'apiVersion' must be '{(inst.IsLidarr ? "1" : "3")}'.");
 
             ValidateJob(errors, inst, "missingSearch", i);
             ValidateJob(errors, inst, "upgradeSearch", i);
@@ -155,11 +155,11 @@ internal static class YamlConfigLoader
             }
         }
 
-        if (inst.IsSonarr && jobKey != "queueCleanup")
+        if ((inst.IsSonarr || inst.IsWhisparr) && jobKey != "queueCleanup")
         {
             if (string.IsNullOrWhiteSpace(job.SearchType))
             {
-                errors.Add($"{prefix}: 'searchType' is required for Sonarr instances.");
+                errors.Add($"{prefix}: 'searchType' is required for {inst.Type} instances.");
             }
             else
             {
@@ -172,9 +172,26 @@ internal static class YamlConfigLoader
             }
         }
 
+        if (inst.IsLidarr && jobKey != "queueCleanup")
+        {
+            if (string.IsNullOrWhiteSpace(job.SearchType))
+            {
+                errors.Add($"{prefix}: 'searchType' is required for {inst.Type} instances.");
+            }
+            else
+            {
+                var st = job.SearchType;
+                if (!string.Equals(st, "album", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(st, "artist", StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"{prefix}: 'searchType' must be 'album' or 'artist'.");
+                }
+            }
+        }
+
         if (inst.IsRadarr && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))
         {
-            errors.Add($"{prefix}: 'searchType' is not valid for Radarr instances.");
+            errors.Add($"{prefix}: 'searchType' is not valid for {inst.Type} instances.");
         }
     }
 
@@ -184,6 +201,8 @@ internal static class YamlConfigLoader
 
         ValidateRuleList(errors, rules.Sonarr, "sonarr");
         ValidateRuleList(errors, rules.Radarr, "radarr");
+        ValidateRuleList(errors, rules.Lidarr, "lidarr");
+        ValidateRuleList(errors, rules.Whisparr, "whisparr");
     }
 
     private static void ValidateRuleList(List<string> errors, List<QueueCleanupRuleConfig>? list, string type)

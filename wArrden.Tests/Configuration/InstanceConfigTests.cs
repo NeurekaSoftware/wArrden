@@ -49,6 +49,54 @@ public class InstanceConfigTests
     }
 
     [Fact]
+    public void IsLidarr_CaseInsensitive()
+    {
+        var inst = new InstanceConfig { Type = "LIDARR" };
+        Assert.True(inst.IsLidarr);
+        Assert.False(inst.IsSonarr);
+        Assert.False(inst.IsRadarr);
+        Assert.False(inst.IsWhisparr);
+    }
+
+    [Fact]
+    public void IsLidarr_ReturnsTrueForCorrectType()
+    {
+        var inst = new InstanceConfig { Type = "lidarr" };
+        Assert.True(inst.IsLidarr);
+    }
+
+    [Fact]
+    public void IsLidarr_NullType_ReturnsFalse()
+    {
+        var inst = new InstanceConfig { Type = null! };
+        Assert.False(inst.IsLidarr);
+    }
+
+    [Fact]
+    public void IsWhisparr_CaseInsensitive()
+    {
+        var inst = new InstanceConfig { Type = "WHISPARR" };
+        Assert.True(inst.IsWhisparr);
+        Assert.False(inst.IsSonarr);
+        Assert.False(inst.IsRadarr);
+        Assert.False(inst.IsLidarr);
+    }
+
+    [Fact]
+    public void IsWhisparr_ReturnsTrueForCorrectType()
+    {
+        var inst = new InstanceConfig { Type = "whisparr" };
+        Assert.True(inst.IsWhisparr);
+    }
+
+    [Fact]
+    public void IsWhisparr_NullType_ReturnsFalse()
+    {
+        var inst = new InstanceConfig { Type = null! };
+        Assert.False(inst.IsWhisparr);
+    }
+
+    [Fact]
     public void JobConfig_Defaults()
     {
         var job = new JobConfig();
