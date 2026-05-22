@@ -110,7 +110,7 @@ public class RadarrV3Client : IArrClient
     public async Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct)
     {
         var indexers = await GetIndexersAsync(ct);
-        return indexers.Any(i => i.Enable);
+        return indexers.Any(i => i.EnableAutomaticSearch);
     }
 
     Task<IReadOnlyList<WantedAlbumResource>> IArrClient.GetWantedMissingAlbumsAsync(CancellationToken ct)

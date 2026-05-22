@@ -59,7 +59,7 @@ public class LidarrV1Client : IArrClient
     public async Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct)
     {
         var indexers = await GetIndexersAsync(ct);
-        return indexers.Any(i => i.Enable);
+        return indexers.Any(i => i.EnableAutomaticSearch);
     }
 
     public async Task<IReadOnlyList<WantedAlbumResource>> GetWantedMissingAlbumsAsync(CancellationToken ct)
