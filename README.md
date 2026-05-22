@@ -12,7 +12,7 @@
 wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding missing or upgradeable content, as well as detecting and clearing stuck imports from the queue.
 
 > [!IMPORTANT]  
-> This GitHub repository is a mirror. Please report bugs and request features on our [official Forgejo instance](https://code.neureka.dev).
+> This repository's GitHub mirror is for reference only. Please submit bug reports and feature requests to our [official Forgejo repository](https://code.neureka.dev/warrden/warrden).
 
 </div>
 
