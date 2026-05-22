@@ -41,32 +41,7 @@ instances:
       enabled: true
       searchType: season
       cron: "*/15 * * * *"
-      maxResults: 3
-      cooldown: 30d
-    queueCleanup:
-      enabled: true
-      cron: "* * * * *"
-
-  - type: sonarr
-    name: Anime
-    url: http://sonarr-anime:8989
-    apiKey: YOUR_SONARR_API_KEY
-    # Optional: limit searches/upgrades to specific indexers by name.
-    # When unset, all enabled indexers are used.
-    # indexerNames:
-    #   - Nyaa
-    #   - AnimeTosho
-    missingSearch:
-      enabled: true
-      searchType: episode
-      cron: "*/15 * * * *"
-      maxResults: 15
-      cooldown: 30d
-    upgradeSearch:
-      enabled: true
-      searchType: season
-      cron: "*/15 * * * *"
-      maxResults: 3
+      maxResults: 1
       cooldown: 30d
     queueCleanup:
       enabled: true
