@@ -62,6 +62,59 @@ public class LidarrV1Client : IArrClient
         return indexers.Any(i => i.Enable);
     }
 
+    public async Task<IReadOnlyList<WantedAlbumResource>> GetWantedMissingAlbumsAsync(CancellationToken ct)
+    {
+        return await FetchAllWantedAlbumPagesAsync("missing", ct);
+    }
+
+    public async Task<IReadOnlyList<WantedAlbumResource>> GetWantedCutoffAlbumsAsync(CancellationToken ct)
+    {
+        return await FetchAllWantedAlbumPagesAsync("cutoff", ct);
+    }
+
+    private async Task<IReadOnlyList<WantedAlbumResource>> FetchAllWantedAlbumPagesAsync(string type, CancellationToken ct)
+    {
+        var all = new List<WantedAlbumResource>();
+        var page = 1;
+        const int pageSize = 100;
+
+        while (true)
+        {
+            var url = $"{_baseUrl}/api/v1/wanted/{type}?includeArtist=true&monitored=true&page={page}&pageSize={pageSize}&sortKey=albums.lastSearchTime&sortDirection=ascending";
+            var response = await _http.GetAsync(url, ct);
+            response.EnsureSuccessStatusCode();
+
+            var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<WantedAlbumResource>>(cancellationToken: ct);
+            if (paging?.Records is { Count: > 0 })
+                all.AddRange(paging.Records);
+
+            if (paging == null || all.Count >= paging.TotalRecords)
+                break;
+
+            page++;
+        }
+
+        return all.Where(a => a.Monitored).ToList();
+    }
+
+    public async Task TriggerAlbumSearchAsync(int[] albumIds, CancellationToken ct)
+    {
+        var body = new { name = "AlbumSearch", albumIds };
+        await PostCommandAsync(body, ct);
+    }
+
+    public async Task TriggerArtistSearchAsync(int artistId, CancellationToken ct)
+    {
+        var body = new { name = "ArtistSearch", artistId };
+        await PostCommandAsync(body, ct);
+    }
+
+    private async Task PostCommandAsync(object command, CancellationToken ct)
+    {
+        var response = await _http.PostAsJsonAsync($"{_baseUrl}/api/v1/command", command, cancellationToken: ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     Task<IReadOnlyList<WantedEpisodeResource>> IArrClient.GetWantedMissingEpisodesAsync(CancellationToken ct)
         => throw new NotSupportedException("Lidarr does not support episode wanted endpoints.");
 

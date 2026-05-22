@@ -79,3 +79,45 @@ public class WantedMovieResource
     [JsonPropertyName("year")]
     public int Year { get; set; }
 }
+
+public class WantedAlbumResource
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("album")]
+    public WantedAlbumRecord? Album { get; set; }
+
+    [JsonPropertyName("artist")]
+    public WantedAlbumArtistResource? Artist { get; set; }
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("monitored")]
+    public bool Monitored { get; set; }
+
+    [JsonPropertyName("lastSearchTime")]
+    public DateTime? LastSearchTime { get; set; }
+}
+
+public class WantedAlbumRecord
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("artistId")]
+    public int ArtistId { get; set; }
+}
+
+public class WantedAlbumArtistResource
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("artistName")]
+    public string? ArtistName { get; set; }
+}

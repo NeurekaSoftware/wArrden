@@ -16,6 +16,10 @@ public interface IArrClient
     Task TriggerEpisodeSearchAsync(int[] episodeIds, CancellationToken ct);
     Task TriggerSeasonSearchAsync(int seriesId, int seasonNumber, CancellationToken ct);
     Task TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct);
+    Task<IReadOnlyList<WantedAlbumResource>> GetWantedMissingAlbumsAsync(CancellationToken ct);
+    Task<IReadOnlyList<WantedAlbumResource>> GetWantedCutoffAlbumsAsync(CancellationToken ct);
+    Task TriggerAlbumSearchAsync(int[] albumIds, CancellationToken ct);
+    Task TriggerArtistSearchAsync(int artistId, CancellationToken ct);
     Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct);
     Task<IReadOnlyList<IndexerResource>> GetIndexersAsync(CancellationToken ct);
 }

@@ -123,4 +123,16 @@ public class WhisparrV3Client : IArrClient
 
     Task IArrClient.TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct)
         => throw new NotSupportedException("Whisparr does not support movie search.");
+
+    Task<IReadOnlyList<WantedAlbumResource>> IArrClient.GetWantedMissingAlbumsAsync(CancellationToken ct)
+        => throw new NotSupportedException("Whisparr does not support album wanted endpoints.");
+
+    Task<IReadOnlyList<WantedAlbumResource>> IArrClient.GetWantedCutoffAlbumsAsync(CancellationToken ct)
+        => throw new NotSupportedException("Whisparr does not support album wanted endpoints.");
+
+    Task IArrClient.TriggerAlbumSearchAsync(int[] albumIds, CancellationToken ct)
+        => throw new NotSupportedException("Whisparr does not support album search.");
+
+    Task IArrClient.TriggerArtistSearchAsync(int artistId, CancellationToken ct)
+        => throw new NotSupportedException("Whisparr does not support artist search.");
 }

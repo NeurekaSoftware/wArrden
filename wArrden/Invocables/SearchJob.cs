@@ -43,7 +43,10 @@ public class SearchJob : IInvocable
             ("upgrade", "radarr") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
             ("missing", "whisparr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
             ("upgrade", "whisparr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-            _ => Task.CompletedTask
+            ("missing", "lidarr") => _search.SearchMissingAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+            ("upgrade", "lidarr") => _search.SearchUpgradeAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+            _ => throw new InvalidOperationException(
+                $"No search handler for kind='{_searchKind}' type='{_instanceType}'")
         };
     }
 }

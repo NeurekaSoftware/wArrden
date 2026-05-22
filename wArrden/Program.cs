@@ -131,6 +131,10 @@ host.Services.UseScheduler(scheduler =>
                 .PreventOverlapping($"{instanceKey}_queue");
         }
     }
+})
+.OnError(ex =>
+{
+    Console.Error.WriteLine($"[wArrden] Scheduled task error: {ex}");
 });
 
 OutputService.WriteBanner(config, opts);

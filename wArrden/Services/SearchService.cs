@@ -70,6 +70,42 @@ public class SearchService
             });
     }
 
+    public virtual async Task SearchMissingAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, List<string>? indexerNames, CancellationToken ct)
+    {
+        await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
+            async progress =>
+            {
+                if (string.Equals(searchType, "artist", StringComparison.OrdinalIgnoreCase))
+                {
+                    await RunArtistSearch(client, "Missing", cooldown, maxResults, isDryRun,
+                        () => client.GetWantedMissingAlbumsAsync(ct), indexerNames, progress, ct);
+                }
+                else
+                {
+                    await RunAlbumSearch(client, "Missing", cooldown, maxResults, isDryRun,
+                        () => client.GetWantedMissingAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, progress, ct);
+                }
+            });
+    }
+
+    public virtual async Task SearchUpgradeAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, List<string>? indexerNames, CancellationToken ct)
+    {
+        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
+            async progress =>
+            {
+                if (string.Equals(searchType, "artist", StringComparison.OrdinalIgnoreCase))
+                {
+                    await RunArtistSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+                        () => client.GetWantedCutoffAlbumsAsync(ct), indexerNames, progress, ct);
+                }
+                else
+                {
+                    await RunAlbumSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+                        () => client.GetWantedCutoffAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, progress, ct);
+                }
+            });
+    }
+
     private async Task RunEpisodeSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedEpisodeResource>>> getWanted, Func<int[], Task> triggerSearch,
         List<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
@@ -214,6 +250,142 @@ public class SearchService
     }
 
     private sealed record SeasonGroup(int SeriesId, int SeasonNumber, WantedEpisodeSeriesResource? Series, int SeasonKey);
+
+    private async Task RunAlbumSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
+        Func<Task<IReadOnlyList<WantedAlbumResource>>> getWanted, Func<int[], Task> triggerSearch,
+        List<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+    {
+        progress.SetPhase("Cleaning cooldown entries");
+        await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
+
+        progress.SetPhase("Fetching wanted albums");
+        var wanted = await getWanted();
+
+        if (wanted.Count == 0)
+        {
+            progress.WriteStats(0, 0, 0, 0, true);
+            return;
+        }
+
+        progress.SetPhase("Applying cooldown filters");
+        var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, category, ct);
+
+        var eligible = wanted.Where(a => !cooldownIds.Contains(a.Id)).ToList();
+        Shuffle(eligible);
+        var selected = eligible
+            .Take(maxResults)
+            .OrderBy(a => a.Artist?.ArtistName ?? "")
+            .ThenBy(a => a.Album?.Title ?? "")
+            .ToList();
+        var onCooldown = wanted.Count - eligible.Count;
+
+        if (selected.Count == 0 || isDryRun)
+        {
+            progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
+                isDryRun ? 0 : selected.Count, true);
+            return;
+        }
+
+        progress.SetPhase("Checking indexer availability");
+        if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
+        {
+            progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            return;
+        }
+
+        progress.SetPhase($"Searching {selected.Count} items");
+        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, false);
+        progress.StartResults();
+
+        foreach (var a in selected)
+        {
+            var artistName = a.Artist?.ArtistName ?? $"Artist Unknown";
+            var albumTitle = a.Album?.Title ?? $"Album {a.Id}";
+            var title = $"{artistName} - {albumTitle}";
+
+            progress.WriteItem(title);
+
+            try { await triggerSearch(new[] { a.Id }); }
+            catch { }
+        }
+
+        await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(a => a.Id).ToArray(), ct);
+        progress.WriteTrailer();
+    }
+
+    private async Task RunArtistSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
+        Func<Task<IReadOnlyList<WantedAlbumResource>>> getWanted,
+        List<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+    {
+        var artistCategory = $"{category}_Artist";
+
+        progress.SetPhase("Cleaning cooldown entries");
+        await _cooldown.CleanExpiredAsync(client.Instance, artistCategory, cooldown, ct);
+
+        progress.SetPhase("Fetching wanted albums");
+        var wanted = await getWanted();
+
+        if (wanted.Count == 0)
+        {
+            progress.WriteStats(0, 0, 0, 0, true);
+            return;
+        }
+
+        progress.SetPhase("Grouping by artist");
+        var artists = wanted
+            .GroupBy(a => a.Album?.ArtistId ?? a.Artist?.Id ?? 0)
+            .Where(g => g.Key != 0)
+            .Select(g => new ArtistGroup(
+                g.Key,
+                g.First().Artist
+            ))
+            .ToList();
+
+        progress.SetPhase("Applying cooldown filters");
+        var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, artistCategory, ct);
+
+        var eligible = artists.Where(a => !cooldownIds.Contains(a.ArtistId)).ToList();
+        Shuffle(eligible);
+        var selected = eligible
+            .Take(maxResults)
+            .OrderBy(a => a.Artist?.ArtistName ?? "")
+            .ToList();
+        var onCooldown = artists.Count - eligible.Count;
+
+        if (selected.Count == 0 || isDryRun)
+        {
+            progress.WriteStats(artists.Count, onCooldown, eligible.Count,
+                isDryRun ? 0 : selected.Count, true);
+            return;
+        }
+
+        progress.SetPhase("Checking indexer availability");
+        if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
+        {
+            progress.WriteStats(artists.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            return;
+        }
+
+        progress.SetPhase($"Searching {selected.Count} artists");
+        progress.WriteStats(artists.Count, onCooldown, eligible.Count, selected.Count, false);
+        progress.StartResults();
+
+        foreach (var a in selected)
+        {
+            var title = a.Artist?.ArtistName ?? $"Artist {a.ArtistId}";
+
+            progress.WriteItem(title);
+
+            try { await client.TriggerArtistSearchAsync(a.ArtistId, ct); }
+            catch { }
+        }
+
+        await _cooldown.MarkSearchedAsync(client.Instance, artistCategory,
+            selected.Select(a => a.ArtistId).ToArray(), ct);
+        progress.WriteTrailer();
+    }
+
+    private sealed record ArtistGroup(int ArtistId, WantedAlbumArtistResource? Artist);
 
     private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedMovieResource>>> getWanted, Func<int[], Task> triggerSearch,

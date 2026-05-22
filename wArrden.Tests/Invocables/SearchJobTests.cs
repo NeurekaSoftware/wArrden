@@ -64,15 +64,12 @@ public class SearchJobTests
     }
 
     [Fact]
-    public void Invoke_UnknownCombo_ReturnsCompletedTask()
+    public async Task Invoke_UnknownCombo_ThrowsInvalidOperationException()
     {
         var job = new SearchJob(_searchMock.Object, _clientMock.Object,
             "unknown", "sonarr", 10, "30d", "episode", false, null);
 
-        var task = job.Invoke();
-
-        Assert.Equal(Task.CompletedTask, task);
-        _searchMock.VerifyNoOtherCalls();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => job.Invoke());
     }
 
     [Fact]
@@ -155,26 +152,50 @@ public class SearchJobTests
     }
 
     [Fact]
-    public void Invoke_MissingLidarr_ReturnsCompletedTask()
+    public void Invoke_MissingLidarr_Album_CallsSearchMissingAlbums()
     {
         var job = new SearchJob(_searchMock.Object, _clientMock.Object,
             "missing", "lidarr", 10, "30d", "album", false, null);
 
-        var task = job.Invoke();
+        job.Invoke();
 
-        Assert.Equal(Task.CompletedTask, task);
-        _searchMock.VerifyNoOtherCalls();
+        _searchMock.Verify(s => s.SearchMissingAlbumsAsync(
+            _clientMock.Object, 10, TimeSpan.FromDays(30), "album", false, null, CancellationToken.None), Times.Once);
     }
 
     [Fact]
-    public void Invoke_UpgradeLidarr_ReturnsCompletedTask()
+    public void Invoke_MissingLidarr_Artist_CallsSearchMissingAlbums()
     {
         var job = new SearchJob(_searchMock.Object, _clientMock.Object,
-            "upgrade", "lidarr", 5, "7d", "artist", false, null);
+            "missing", "lidarr", 15, "7d", "artist", true, null);
 
-        var task = job.Invoke();
+        job.Invoke();
 
-        Assert.Equal(Task.CompletedTask, task);
-        _searchMock.VerifyNoOtherCalls();
+        _searchMock.Verify(s => s.SearchMissingAlbumsAsync(
+            _clientMock.Object, 15, TimeSpan.FromDays(7), "artist", true, null, CancellationToken.None), Times.Once);
+    }
+
+    [Fact]
+    public void Invoke_UpgradeLidarr_Album_CallsSearchUpgradeAlbums()
+    {
+        var job = new SearchJob(_searchMock.Object, _clientMock.Object,
+            "upgrade", "lidarr", 5, "90m", "album", false, null);
+
+        job.Invoke();
+
+        _searchMock.Verify(s => s.SearchUpgradeAlbumsAsync(
+            _clientMock.Object, 5, TimeSpan.FromMinutes(90), "album", false, null, CancellationToken.None), Times.Once);
+    }
+
+    [Fact]
+    public void Invoke_UpgradeLidarr_Artist_CallsSearchUpgradeAlbums()
+    {
+        var job = new SearchJob(_searchMock.Object, _clientMock.Object,
+            "upgrade", "lidarr", 3, "12h", "artist", true, null);
+
+        job.Invoke();
+
+        _searchMock.Verify(s => s.SearchUpgradeAlbumsAsync(
+            _clientMock.Object, 3, TimeSpan.FromHours(12), "artist", true, null, CancellationToken.None), Times.Once);
     }
 }
