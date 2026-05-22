@@ -116,6 +116,8 @@ public class SearchService
         progress.SetPhase("Fetching wanted episodes");
         var wanted = await getWanted();
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Fetched {wanted.Count} wanted episodes");
+
         if (wanted.Count == 0)
         {
             progress.WriteStats(0, 0, 0, 0, true);
@@ -135,6 +137,9 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+            $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
+
         if (selected.Count == 0 || isDryRun)
         {
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
@@ -145,6 +150,8 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
+            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+                indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
         }
@@ -162,7 +169,11 @@ public class SearchService
             progress.WriteItem(title);
 
             try { await triggerSearch(new[] { ep.Id }); }
-            catch { }
+            catch (Exception ex)
+            {
+                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                    $"Search trigger failed for {title}", ex.Message);
+            }
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(e => e.Id).ToArray(), ct);
@@ -194,12 +205,11 @@ public class SearchService
                 g.Key.SeriesId,
                 g.Key.SeasonNumber,
                 g.First().Series,
-                // Encode (seriesId, seasonNumber) into a single int via positional notation.
-                // Multiplier 1000 > max season number (~50), ensuring injectivity:
-                //   seriesId = key / 1000, seasonNumber = key % 1000
                 g.Key.SeriesId * 1000 + g.Key.SeasonNumber
             ))
             .ToList();
+
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Grouped {wanted.Count} episodes into {seasons.Count} seasons");
 
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, seasonCategory, ct);
@@ -213,6 +223,9 @@ public class SearchService
             .ToList();
         var onCooldown = seasons.Count - eligible.Count;
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+            $"Season cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
+
         if (selected.Count == 0 || isDryRun)
         {
             progress.WriteStats(seasons.Count, onCooldown, eligible.Count,
@@ -223,6 +236,8 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
+            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+                indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(seasons.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
         }
@@ -241,7 +256,11 @@ public class SearchService
             progress.WriteItem(title);
 
             try { await client.TriggerSeasonSearchAsync(s.SeriesId, s.SeasonNumber, ct); }
-            catch { }
+            catch (Exception ex)
+            {
+                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                    $"Search trigger failed for {title}", ex.Message);
+            }
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, seasonCategory,
@@ -261,6 +280,8 @@ public class SearchService
         progress.SetPhase("Fetching wanted albums");
         var wanted = await getWanted();
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Fetched {wanted.Count} wanted albums");
+
         if (wanted.Count == 0)
         {
             progress.WriteStats(0, 0, 0, 0, true);
@@ -279,6 +300,9 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+            $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
+
         if (selected.Count == 0 || isDryRun)
         {
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
@@ -289,6 +313,8 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
+            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+                indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
         }
@@ -306,7 +332,11 @@ public class SearchService
             progress.WriteItem(title);
 
             try { await triggerSearch(new[] { a.Id }); }
-            catch { }
+            catch (Exception ex)
+            {
+                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                    $"Search trigger failed for {title}", ex.Message);
+            }
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(a => a.Id).ToArray(), ct);
@@ -341,6 +371,8 @@ public class SearchService
             ))
             .ToList();
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Grouped {wanted.Count} albums into {artists.Count} artists");
+
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, artistCategory, ct);
 
@@ -352,6 +384,9 @@ public class SearchService
             .ToList();
         var onCooldown = artists.Count - eligible.Count;
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+            $"Artist cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
+
         if (selected.Count == 0 || isDryRun)
         {
             progress.WriteStats(artists.Count, onCooldown, eligible.Count,
@@ -362,6 +397,8 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
+            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+                indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(artists.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
         }
@@ -377,7 +414,11 @@ public class SearchService
             progress.WriteItem(title);
 
             try { await client.TriggerArtistSearchAsync(a.ArtistId, ct); }
-            catch { }
+            catch (Exception ex)
+            {
+                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                    $"Search trigger failed for {title}", ex.Message);
+            }
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, artistCategory,
@@ -397,6 +438,8 @@ public class SearchService
         progress.SetPhase("Fetching wanted movies");
         var wanted = await getWanted();
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Fetched {wanted.Count} wanted movies");
+
         if (wanted.Count == 0)
         {
             progress.WriteStats(0, 0, 0, 0, true);
@@ -414,6 +457,9 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
+        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+            $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
+
         if (selected.Count == 0 || isDryRun)
         {
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
@@ -424,6 +470,8 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
+            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+                indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
         }
@@ -441,7 +489,11 @@ public class SearchService
             progress.WriteItem(title);
 
             try { await triggerSearch(new[] { m.Id }); }
-            catch { }
+            catch (Exception ex)
+            {
+                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                    $"Search trigger failed for {title}", ex.Message);
+            }
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(m => m.Id).ToArray(), ct);

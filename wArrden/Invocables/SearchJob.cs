@@ -8,6 +8,7 @@ namespace wArrden.Invocables;
 public class SearchJob : IInvocable
 {
     private readonly SearchService _search;
+    private readonly OutputService _output;
     private readonly IArrClient _client;
     private readonly string _searchKind;
     private readonly string _instanceType;
@@ -17,10 +18,11 @@ public class SearchJob : IInvocable
     private readonly bool _isDryRun;
     private readonly List<string>? _indexerNames;
 
-    public SearchJob(SearchService search, IArrClient client,
+    public SearchJob(SearchService search, OutputService output, IArrClient client,
         string searchKind, string instanceType, int maxResults, string cooldownStr, string searchType = "", bool isDryRun = false, List<string>? indexerNames = null)
     {
         _search = search;
+        _output = output;
         _client = client;
         _searchKind = searchKind;
         _instanceType = instanceType;
@@ -31,22 +33,32 @@ public class SearchJob : IInvocable
         _indexerNames = indexerNames;
     }
 
-    public Task Invoke()
+    public async Task Invoke()
     {
         var ct = CancellationToken.None;
+        var jobKey = _searchKind == "missing" ? "missing" : "upgrade";
+        var context = $"{_client.Instance.ToLowerInvariant()}.{jobKey}";
 
-        return (_searchKind, _instanceType) switch
+        try
         {
-            ("missing", "sonarr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-            ("upgrade", "sonarr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-            ("missing", "radarr") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
-            ("upgrade", "radarr") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
-            ("missing", "whisparr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-            ("upgrade", "whisparr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-            ("missing", "lidarr") => _search.SearchMissingAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-            ("upgrade", "lidarr") => _search.SearchUpgradeAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-            _ => throw new InvalidOperationException(
-                $"No search handler for kind='{_searchKind}' type='{_instanceType}'")
-        };
+            var task = (_searchKind, _instanceType) switch
+            {
+                ("missing", "sonarr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+                ("upgrade", "sonarr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+                ("missing", "radarr") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
+                ("upgrade", "radarr") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
+                ("missing", "whisparr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+                ("upgrade", "whisparr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+                ("missing", "lidarr") => _search.SearchMissingAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+                ("upgrade", "lidarr") => _search.SearchUpgradeAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+                _ => throw new InvalidOperationException(
+                    $"No search handler for kind='{_searchKind}' type='{_instanceType}'")
+            };
+            await task;
+        }
+        catch (Exception ex) when (ex is not InvalidOperationException)
+        {
+            _output.WriteError(context, $"{_searchKind} search job failed", ex);
+        }
     }
 }

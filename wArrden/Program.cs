@@ -38,10 +38,17 @@ catch (ConfigurationException ex)
     return;
 }
 
+var startupOutput = new OutputService { MinimumLevel = ParseLogLevel(config.LogLevel) };
+var logLevelLabel = config.LogLevel ?? "info";
+startupOutput.WriteDebug("warden.config", $"Loaded config from {configPath}");
+startupOutput.WriteDebug("warden.config", $"Log level set to {logLevelLabel}");
+
 var dbPath = Path.GetFullPath(opts.DatabasePath);
 var dbDir = Path.GetDirectoryName(dbPath);
 if (dbDir is not null)
     Directory.CreateDirectory(dbDir);
+
+startupOutput.WriteDebug("warden.config", $"Database path: {dbPath}");
 
 if (args.Length > 0)
 {
@@ -50,31 +57,31 @@ if (args.Length > 0)
     if (command is "clear-missing" or "clear-upgrades")
     {
         var category = command == "clear-missing" ? "Missing" : "Upgrade";
-        var targets = ResolveTargets(config, args.Length > 1 ? args[1] : null);
+        var targets = ResolveTargets(config, args.Length > 1 ? args[1] : null, startupOutput);
         if (targets is null) return;
 
-        await RunClearCooldownsCommand(dbPath, category, targets, opts);
+        await RunClearCooldownsCommand(dbPath, category, targets, opts, startupOutput);
         return;
     }
 
-    Console.Error.WriteLine($"Unknown command: {args[0]}");
-    Console.Error.WriteLine("Available commands: clear-missing [instance], clear-upgrades [instance]");
+    startupOutput.WriteError("cli", $"Unknown command: {args[0]}");
+    startupOutput.WriteError("cli", "Available commands: clear-missing [instance], clear-upgrades [instance]");
     Environment.Exit(1);
     return;
 }
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
-builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
-builder.Logging.AddFilter("System", LogLevel.Warning);
-builder.Logging.SetMinimumLevel(LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft", Microsoft.Extensions.Logging.LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", Microsoft.Extensions.Logging.LogLevel.Warning);
+builder.Logging.AddFilter("System", Microsoft.Extensions.Logging.LogLevel.Warning);
+builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
 
 builder.Services.AddDbContext<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
 builder.Services.AddSingleton(opts);
 builder.Services.AddScheduler();
 builder.Services.AddSingleton<ICooldownService, CooldownService>();
-builder.Services.AddSingleton<OutputService>();
+builder.Services.AddSingleton(new OutputService { MinimumLevel = ParseLogLevel(config.LogLevel) });
 builder.Services.AddSingleton<SearchService>();
 
 var host = builder.Build();
@@ -85,6 +92,8 @@ using (var scope = host.Services.CreateScope())
     await db.Database.EnsureCreatedAsync();
     await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL");
 }
+
+var schedulerOutput = host.Services.GetRequiredService<OutputService>();
 
 host.Services.UseScheduler(scheduler =>
 {
@@ -101,6 +110,8 @@ host.Services.UseScheduler(scheduler =>
 
         var instanceKey = inst.InstanceKey;
         var instanceType = InstanceType(inst);
+
+        schedulerOutput.WriteDebug("warden.scheduler", $"Scheduling jobs for {inst.Name} ({instanceType})");
 
         if (inst.MissingSearch?.Enabled == true)
         {
@@ -134,7 +145,7 @@ host.Services.UseScheduler(scheduler =>
 })
 .OnError(ex =>
 {
-    Console.Error.WriteLine($"[wArrden] Scheduled task error: {ex}");
+    schedulerOutput.WriteError("warden.scheduler", "Scheduled task error", ex);
 });
 
 OutputService.WriteBanner(config, opts);
@@ -142,6 +153,15 @@ OutputService.WriteBanner(config, opts);
 await host.RunAsync();
 
 static string? GetEnv(string name) => Environment.GetEnvironmentVariable(name);
+
+static wArrden.Services.LogLevel ParseLogLevel(string? level)
+{
+    if (string.IsNullOrWhiteSpace(level)) return wArrden.Services.LogLevel.Info;
+    return level.Trim().Equals("debug", StringComparison.OrdinalIgnoreCase) ? wArrden.Services.LogLevel.Debug :
+           level.Trim().Equals("warning", StringComparison.OrdinalIgnoreCase) ? wArrden.Services.LogLevel.Warning :
+           level.Trim().Equals("error", StringComparison.OrdinalIgnoreCase) ? wArrden.Services.LogLevel.Error :
+           wArrden.Services.LogLevel.Info;
+}
 
 static string InstanceType(InstanceConfig inst)
 {
@@ -169,7 +189,7 @@ static List<QueueCleanupRule>? GetRulesForType(QueueCleanupRulesConfig? config, 
     )).ToList();
 }
 
-static List<InstanceConfig>? ResolveTargets(AppConfig config, string? instanceArg)
+static List<InstanceConfig>? ResolveTargets(AppConfig config, string? instanceArg, OutputService output)
 {
     if (instanceArg is null)
         return config.Instances;
@@ -179,13 +199,13 @@ static List<InstanceConfig>? ResolveTargets(AppConfig config, string? instanceAr
     if (match is not null)
         return new List<InstanceConfig> { match };
 
-    Console.Error.WriteLine($"Unknown instance: {instanceArg}");
-    Console.Error.WriteLine($"Available instances: {string.Join(", ", config.Instances.Select(i => i.Name))}");
+    output.WriteError("cli", $"Unknown instance: {instanceArg}");
+    output.WriteError("cli", $"Available instances: {string.Join(", ", config.Instances.Select(i => i.Name))}");
     Environment.Exit(1);
     return null;
 }
 
-static async Task RunClearCooldownsCommand(string dbPath, string category, List<InstanceConfig> targets, WardenOptions opts)
+static async Task RunClearCooldownsCommand(string dbPath, string category, List<InstanceConfig> targets, WardenOptions opts, OutputService output)
 {
     var services = new ServiceCollection();
     services.AddDbContext<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
@@ -203,6 +223,7 @@ static async Task RunClearCooldownsCommand(string dbPath, string category, List<
     {
         var count = await cooldown.ClearAllAsync(category, inst.Name, CancellationToken.None);
         counts.Add((inst.Name, count));
+        output.WriteDebug($"cli.{targets[0].Name.ToLowerInvariant()}.clear", $"Cleared {count} cooldown entries for {inst.Name}");
     }
 
     var tz = ResolveTimezone(opts.Timezone);

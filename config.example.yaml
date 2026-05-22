@@ -1,3 +1,7 @@
+# Optional: minimum log severity for console output. Default: info
+# Values: debug | info | warning | error
+logLevel: info
+
 instances:
   - type: radarr
     name: Movies

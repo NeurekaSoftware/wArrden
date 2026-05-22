@@ -4,7 +4,7 @@ namespace wArrden.Tests;
 
 public class NullSearchOutputWriter : OutputService.SearchOutputWriter
 {
-    public NullSearchOutputWriter() : base("test", "Missing Search", 10, TextWriter.Null) { }
+    public NullSearchOutputWriter() : base("test", "Missing Search", 10, TextWriter.Null, true) { }
 
     public override void WriteHeader() { }
     public override void SetPhase(string phase) { }

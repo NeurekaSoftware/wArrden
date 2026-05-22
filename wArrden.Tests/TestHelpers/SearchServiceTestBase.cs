@@ -14,7 +14,9 @@ public abstract class SearchServiceTestBase
     protected SearchServiceTestBase()
     {
         CooldownMock = new Mock<ICooldownService>();
-        OutputMock = new Mock<OutputService>();
+        OutputMock = new Mock<OutputService> { CallBase = true };
+        OutputMock.Object.Out = TextWriter.Null;
+        OutputMock.Object.Error = TextWriter.Null;
         ClientMock = new Mock<IArrClient>();
         ClientMock.Setup(c => c.Instance).Returns("Sonarr");
 

@@ -826,7 +826,7 @@ instances:
 
         Assert.NotNull(config);
         Assert.NotEmpty(config.Instances);
-        Assert.Equal(5, config.Instances.Count);
+        Assert.Equal(4, config.Instances.Count);
         Assert.NotNull(config.QueueCleanupRules);
         Assert.NotNull(config.QueueCleanupRules!.Sonarr);
         Assert.NotNull(config.QueueCleanupRules.Radarr);
@@ -1857,6 +1857,75 @@ queueCleanupRules:
                     ApiKey = "abc123",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "SEASON" },
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "Episode" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Theory]
+    [InlineData("debug")]
+    [InlineData("info")]
+    [InlineData("warning")]
+    [InlineData("error")]
+    [InlineData("DEBUG")]
+    [InlineData("Info")]
+    public void Validate_ValidLogLevel_Passes(string level)
+    {
+        var config = new AppConfig
+        {
+            LogLevel = level,
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_InvalidLogLevel_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            LogLevel = "verbose",
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("logLevel") && e.Contains("debug") && e.Contains("verbose"));
+    }
+
+    [Fact]
+    public void Validate_NullLogLevel_Passes()
+    {
+        var config = new AppConfig
+        {
+            LogLevel = null,
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
         };

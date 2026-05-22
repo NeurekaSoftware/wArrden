@@ -4,24 +4,38 @@
 
 wArrden is a scheduled job runner that searches for missing/upgrade items and cleans stuck queue entries on Sonarr/Radarr instances. This file enforces output formatting standards for all log output shown in the console.
 
+## Log Level Threshold
+
+Configured via `logLevel` in `config.yaml`. The value sets the minimum severity for console output:
+
+| `logLevel` | Messages Shown |
+|---|---|
+| `debug` | DBG + INF + WRN + ERR (most verbose) |
+| `info` (default) | INF + WRN + ERR |
+| `warning` | WRN + ERR |
+| `error` | ERR only (least verbose) |
+
+Debug and Info messages write to `stdout`. Warning and Error messages write to `stderr`.
+
+## Output Streams
+
+- **DBG / INF** → `Console.Out` (`OutputService.Out`)
+- **WRN / ERR** → `Console.Error` (`OutputService.Error`)
+
 ## Log Format Rules
 
 ### Header
 
-Every job invocation starts with a header line:
+Every log entry starts with a header line:
 
 ```
-[HH:mm:ss INF] [instance.job]
+[HH:mm:ss LVL] [context]
 ```
 
 Where:
 - `HH:mm:ss` is the 24-hour timestamp of invocation
-- `INF` is the log level marker (always `INF` for application output)
-- `instance` is the lowercase user-defined instance name (e.g. `series`, `movies`, `anime`)
-- `job` is the lowercase job key:
-  - `missing` — Missing Search
-  - `upgrade` — Upgrade Search
-  - `queue` — Queue Cleanup
+- `LVL` is the three-letter log level marker: `DBG`, `INF`, `WRN`, or `ERR`
+- `context` is `instance.job` for job output, or a system context like `warden.config`, `warden.scheduler`, `cli`
 
 ### Tree Structure
 
@@ -33,7 +47,47 @@ All log output uses Unicode box-drawing characters to form a tree:
 - `    ` — spacing for nested content under final parent
 - ` • ` — bullet for list items
 
-### Search Jobs (missing / upgrade)
+### Debug (DBG)
+
+Single message:
+
+```
+[07:45:01 DBG] [warden.config]
+ └─ Loaded config from data/config.yaml
+```
+
+With detail:
+
+```
+[07:45:01 DBG] [series.missing]
+ ├─ Fetched 45 wanted episodes
+ └─ Cooldown filter: 12 on cooldown, 33 eligible, 3 selected
+```
+
+### Warning (WRN)
+
+```
+[07:45:01 WRN] [series.missing]
+ └─ No enabled indexers — search skipped
+
+[07:45:01 WRN] [series.missing]
+ ├─ Search trigger failed for The Boys (2019) - S01E01 - The Name of the Game
+ └─ HttpRequestException: Connection refused (192.168.1.100:8989)
+```
+
+### Error (ERR)
+
+```
+[07:45:01 ERR] [series.missing]
+ ├─ Missing search job failed
+ └─ HttpRequestException: No route to host
+
+[07:45:01 ERR] [warden.scheduler]
+ ├─ Scheduled task error
+ └─ InvalidOperationException: Unknown instance type: unknown
+```
+
+### Info (INF) — Search Jobs (missing / upgrade)
 
 ```
 [07:45:01 INF] [sonarr.missing]
@@ -74,7 +128,7 @@ When items are searched, stats come before results:
 - `Result` field: `"No wanted items found"` (0 total), `"No search performed"` (0 searched), or `"Searched N"`
 - For Radarr, use `"Fetching wanted movies"` instead of `"Fetching wanted episodes"`
 
-### Queue Cleanup Job (queue)
+### Info (INF) — Queue Cleanup Job (queue)
 
 No blocked items:
 

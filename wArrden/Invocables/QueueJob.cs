@@ -24,7 +24,14 @@ public class QueueJob : IInvocable
 
     public async Task Invoke()
     {
-        var service = new QueueCleanupService(_client, _instanceType, _isDryRun, _output, _rules);
-        await service.CleanAsync(CancellationToken.None);
+        try
+        {
+            var service = new QueueCleanupService(_client, _instanceType, _isDryRun, _output, _rules);
+            await service.CleanAsync(CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _output.WriteError($"{_client.Instance.ToLowerInvariant()}.queue", "Queue cleanup job failed", ex);
+        }
     }
 }

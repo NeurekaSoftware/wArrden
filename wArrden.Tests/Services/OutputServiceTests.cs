@@ -339,4 +339,170 @@ public class OutputServiceTests
         Assert.Contains("(album)", output);
         Assert.Contains("(artist)", output);
     }
+
+    [Fact]
+    public void WriteDebug_MessageOnly_WritesFormattedDebugLine()
+    {
+        _output.MinimumLevel = LogLevel.Debug;
+        _output.WriteDebug("warden.config", "Loaded config");
+
+        var output = _writer.ToString();
+        Assert.Contains("DBG", output);
+        Assert.Contains("warden.config", output);
+        Assert.Contains("└─ Loaded config", output);
+    }
+
+    [Fact]
+    public void WriteDebug_WithDetail_WritesTreeStructure()
+    {
+        _output.MinimumLevel = LogLevel.Debug;
+        _output.WriteDebug("series.missing", "Fetched 45 episodes", "12 on cooldown, 33 eligible");
+
+        var output = _writer.ToString();
+        Assert.Contains("DBG", output);
+        Assert.Contains("series.missing", output);
+        Assert.Contains("├─ Fetched 45 episodes", output);
+        Assert.Contains("└─ 12 on cooldown, 33 eligible", output);
+    }
+
+    [Fact]
+    public void WriteWarning_MessageOnly_WritesToError()
+    {
+        var errorWriter = new StringWriter();
+        _output.Error = errorWriter;
+
+        _output.WriteWarning("series.missing", "No enabled indexers");
+
+        var error = errorWriter.ToString();
+        Assert.Contains("WRN", error);
+        Assert.Contains("series.missing", error);
+        Assert.Contains("└─ No enabled indexers", error);
+    }
+
+    [Fact]
+    public void WriteWarning_WithDetail_WritesToErrorTree()
+    {
+        var errorWriter = new StringWriter();
+        _output.Error = errorWriter;
+
+        _output.WriteWarning("series.missing", "Search trigger failed", "HttpRequestException: Connection refused");
+
+        var error = errorWriter.ToString();
+        Assert.Contains("WRN", error);
+        Assert.Contains("series.missing", error);
+        Assert.Contains("├─ Search trigger failed", error);
+        Assert.Contains("└─ HttpRequestException: Connection refused", error);
+    }
+
+    [Fact]
+    public void WriteError_MessageOnly_WritesToError()
+    {
+        var errorWriter = new StringWriter();
+        _output.Error = errorWriter;
+
+        _output.WriteError("warden.scheduler", "Task failed");
+
+        var error = errorWriter.ToString();
+        Assert.Contains("ERR", error);
+        Assert.Contains("warden.scheduler", error);
+        Assert.Contains("└─ Task failed", error);
+    }
+
+    [Fact]
+    public void WriteError_WithException_WritesExceptionDetail()
+    {
+        var errorWriter = new StringWriter();
+        _output.Error = errorWriter;
+        var ex = new InvalidOperationException("Unknown instance type: foo");
+
+        _output.WriteError("warden.scheduler", "Scheduled task error", ex);
+
+        var error = errorWriter.ToString();
+        Assert.Contains("ERR", error);
+        Assert.Contains("warden.scheduler", error);
+        Assert.Contains("├─ Scheduled task error", error);
+        Assert.Contains("└─ InvalidOperationException: Unknown instance type: foo", error);
+    }
+
+    [Fact]
+    public void WriteDebug_Suppressed_WhenMinimumIsInfo()
+    {
+        _output.MinimumLevel = LogLevel.Info;
+        _output.WriteDebug("warden.core", "Should not appear");
+
+        var output = _writer.ToString();
+        Assert.Empty(output);
+    }
+
+    [Fact]
+    public void WriteDebug_Shown_WhenMinimumIsDebug()
+    {
+        _output.MinimumLevel = LogLevel.Debug;
+        _output.WriteDebug("warden.core", "Should appear");
+
+        var output = _writer.ToString();
+        Assert.Contains("DBG", output);
+    }
+
+    [Fact]
+    public void WriteWarning_Suppressed_WhenMinimumIsError()
+    {
+        var errorWriter = new StringWriter();
+        _output.Error = errorWriter;
+        _output.MinimumLevel = LogLevel.Error;
+
+        _output.WriteWarning("warden.core", "Should not appear");
+
+        Assert.Empty(errorWriter.ToString());
+    }
+
+    [Fact]
+    public void WriteError_Shown_WhenMinimumIsError()
+    {
+        var errorWriter = new StringWriter();
+        _output.Error = errorWriter;
+        _output.MinimumLevel = LogLevel.Error;
+
+        _output.WriteError("warden.core", "Should appear");
+
+        Assert.Contains("ERR", errorWriter.ToString());
+    }
+
+    [Fact]
+    public void WriteQueueResult_Suppressed_WhenMinimumIsWarning()
+    {
+        _output.MinimumLevel = LogLevel.Warning;
+        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
+            Array.Empty<(string, string)>(), false);
+
+        var output = _writer.ToString();
+        Assert.Empty(output);
+    }
+
+    [Fact]
+    public void WriteQueueResult_Shown_WhenMinimumIsInfo()
+    {
+        _output.MinimumLevel = LogLevel.Info;
+        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
+            Array.Empty<(string, string)>(), false);
+
+        var output = _writer.ToString();
+        Assert.Contains("INF", output);
+    }
+
+    [Fact]
+    public void SearchOutputWriter_Suppressed_WhenShouldLogIsFalse()
+    {
+        var writer = new OutputService.SearchOutputWriter(
+            "test", "Missing Search", 10, _writer, shouldLog: false);
+        writer.WriteHeader();
+        writer.SetPhase("Testing");
+        writer.WriteStats(5, 0, 5, 3, true);
+        writer.StartResults();
+        writer.WriteItem("Test Item");
+        writer.WriteTrailer();
+
+        var output = _writer.ToString();
+        Assert.Empty(output);
+    }
 }

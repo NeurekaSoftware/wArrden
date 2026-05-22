@@ -2,6 +2,7 @@ namespace wArrden.Configuration;
 
 public class AppConfig
 {
+    public string? LogLevel { get; set; }
     public List<InstanceConfig> Instances { get; set; } = new();
     public QueueCleanupRulesConfig? QueueCleanupRules { get; set; }
 }

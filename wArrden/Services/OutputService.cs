@@ -2,12 +2,22 @@ using wArrden.Configuration;
 
 namespace wArrden.Services;
 
+public enum LogLevel
+{
+    Debug,
+    Info,
+    Warning,
+    Error
+}
+
 public class OutputService
 {
     private const int BoxWidth = 58;
     private const int LabelPad = 18;
 
     public TextWriter Out { get; set; } = Console.Out;
+    public TextWriter Error { get; set; } = Console.Error;
+    public LogLevel MinimumLevel { get; set; } = LogLevel.Info;
 
     public static void WriteBanner(AppConfig config, WardenOptions opts, TextWriter? writer = null)
     {
@@ -145,9 +155,67 @@ public class OutputService
 
     private static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
 
+    public virtual void WriteDebug(string context, string message)
+    {
+        if (!ShouldLog(LogLevel.Debug)) return;
+        WriteLogLine(Out, "DBG", context, message, null);
+    }
+
+    public virtual void WriteDebug(string context, string message, string detail)
+    {
+        if (!ShouldLog(LogLevel.Debug)) return;
+        WriteLogLine(Out, "DBG", context, message, detail);
+    }
+
+    public virtual void WriteWarning(string context, string message)
+    {
+        if (!ShouldLog(LogLevel.Warning)) return;
+        WriteLogLine(Error, "WRN", context, message, null);
+    }
+
+    public virtual void WriteWarning(string context, string message, string detail)
+    {
+        if (!ShouldLog(LogLevel.Warning)) return;
+        WriteLogLine(Error, "WRN", context, message, detail);
+    }
+
+    public virtual void WriteError(string context, string message)
+    {
+        if (!ShouldLog(LogLevel.Error)) return;
+        WriteLogLine(Error, "ERR", context, message, null);
+    }
+
+    public virtual void WriteError(string context, string message, Exception ex)
+    {
+        if (!ShouldLog(LogLevel.Error)) return;
+        WriteLogLine(Error, "ERR", context, message, $"{ex.GetType().Name}: {ex.Message}");
+    }
+
+    private bool ShouldLog(LogLevel level) => level >= MinimumLevel;
+
+    private static void WriteLogLine(TextWriter writer, string level, string context, string message, string? detail)
+    {
+        var ts = FormatTimestamp(DateTime.Now);
+        writer.WriteLine($"[{ts} {level}] [{context}]");
+
+        if (detail is null)
+        {
+            writer.WriteLine($" └─ {message}");
+        }
+        else
+        {
+            writer.WriteLine($" ├─ {message}");
+            writer.WriteLine($" └─ {detail}");
+        }
+
+        writer.WriteLine();
+    }
+
     public void WriteQueueResult(DateTime timestamp, string instance, int totalQueue, int blocked, int matched,
         IReadOnlyList<(string Title, string Rule)> items, bool isDryRun)
     {
+        if (!ShouldLog(LogLevel.Info)) return;
+
         var ts = FormatTimestamp(timestamp);
         var label = InstanceJobLabel(instance, "Queue Cleanup");
         Out.WriteLine($"[{ts} INF] [{label}]");
@@ -179,7 +247,7 @@ public class OutputService
     public virtual async Task RunSearchWithOutput(string instance, string job, int maxResults,
         Func<SearchOutputWriter, Task> searchLogic)
     {
-        var output = new SearchOutputWriter(instance, job, maxResults, Out);
+        var output = new SearchOutputWriter(instance, job, maxResults, Out, ShouldLog(LogLevel.Info));
         output.WriteHeader();
         await searchLogic(output);
     }
@@ -190,17 +258,20 @@ public class OutputService
         private readonly string _instance;
         private readonly string _job;
         private readonly int _maxResults;
+        private readonly bool _shouldLog;
 
-        internal SearchOutputWriter(string instance, string job, int maxResults, TextWriter writer)
+        internal SearchOutputWriter(string instance, string job, int maxResults, TextWriter writer, bool shouldLog = true)
         {
             _instance = instance;
             _job = job;
             _maxResults = maxResults;
             _writer = writer;
+            _shouldLog = shouldLog;
         }
 
         public virtual void WriteHeader()
         {
+            if (!_shouldLog) return;
             var ts = FormatTimestamp(DateTime.Now);
             var label = InstanceJobLabel(_instance, _job);
             _writer.WriteLine($"[{ts} INF] [{label}]");
@@ -208,11 +279,14 @@ public class OutputService
 
         public virtual void SetPhase(string phase)
         {
+            if (!_shouldLog) return;
             _writer.WriteLine($" ├─ {phase}");
         }
 
         public virtual void WriteStats(int totalCount, int onCooldown, int eligible, int searched, bool isLast, string? resultOverride = null)
         {
+            if (!_shouldLog) return;
+
             var prefix = isLast ? " └─" : " ├─";
             var childPrefix = isLast ? "   " : " │ ";
 
@@ -237,16 +311,19 @@ public class OutputService
 
         public virtual void StartResults()
         {
+            if (!_shouldLog) return;
             _writer.WriteLine(" └─ Results:");
         }
 
         public virtual void WriteItem(string title)
         {
+            if (!_shouldLog) return;
             _writer.WriteLine($"    • {title}");
         }
 
         public virtual void WriteTrailer()
         {
+            if (!_shouldLog) return;
             _writer.WriteLine();
         }
     }

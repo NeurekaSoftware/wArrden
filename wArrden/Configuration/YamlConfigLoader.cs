@@ -106,6 +106,10 @@ internal static class YamlConfigLoader
 
         ValidateQueueCleanupRules(errors, config.QueueCleanupRules, config);
 
+        if (!string.IsNullOrWhiteSpace(config.LogLevel) &&
+            !IsValidLogLevel(config.LogLevel))
+            errors.Add($"'logLevel' must be one of: debug, info, warning, error (got '{config.LogLevel}').");
+
         var enabledJobs = config.Instances.Sum(i =>
             (i.MissingSearch?.Enabled == true ? 1 : 0) +
             (i.UpgradeSearch?.Enabled == true ? 1 : 0) +
@@ -254,6 +258,15 @@ internal static class YamlConfigLoader
         !string.IsNullOrWhiteSpace(url) &&
         Uri.TryCreate(url, UriKind.Absolute, out var u) &&
         (u.Scheme == "http" || u.Scheme == "https");
+
+    private static bool IsValidLogLevel(string? level)
+    {
+        if (string.IsNullOrWhiteSpace(level)) return false;
+        return level.Trim().Equals("debug", StringComparison.OrdinalIgnoreCase) ||
+               level.Trim().Equals("info", StringComparison.OrdinalIgnoreCase) ||
+               level.Trim().Equals("warning", StringComparison.OrdinalIgnoreCase) ||
+               level.Trim().Equals("error", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static bool IsValidCron(string cron)
     {
