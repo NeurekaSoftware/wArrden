@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-05-22
+
+### Fixed
+- Fix Lidarr missing/upgrade search silently returning no results despite valid configuration
+- Fix crash when optional configuration fields are left empty
+- Fix indexer availability check using wrong search endpoint across all instance types
+
 ## [2.1.0] - 2026-05-21
 
 ### Added
@@ -58,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/2.1.0...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/2.1.1...HEAD
+[2.1.1]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.1
 [2.1.0]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.0
 [2.0.1]: https://code.neureka.dev/warrden/warrden/releases/tag/2.0.1
 [2.0.0]: https://code.neureka.dev/warrden/warrden/releases/tag/2.0.0
