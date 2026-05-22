@@ -18,7 +18,7 @@ public class SearchJob : IInvocable
     private readonly List<string>? _indexerNames;
 
     public SearchJob(SearchService search, IArrClient client,
-        string searchKind, string instanceType, int maxResults, string cooldownStr, string searchType, bool isDryRun, List<string>? indexerNames)
+        string searchKind, string instanceType, int maxResults, string cooldownStr, string searchType = "", bool isDryRun = false, List<string>? indexerNames = null)
     {
         _search = search;
         _client = client;

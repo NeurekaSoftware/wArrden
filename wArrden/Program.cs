@@ -107,7 +107,7 @@ host.Services.UseScheduler(scheduler =>
             scheduler
                 .ScheduleWithParams<SearchJob>(client, "missing", instanceType,
                     inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
-                    inst.MissingSearch.SearchType!, opts.IsDryRun, inst.IndexerNames)
+                    inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames ?? new List<string>())
                 .Cron(inst.MissingSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_missing");
         }
@@ -117,7 +117,7 @@ host.Services.UseScheduler(scheduler =>
             scheduler
                 .ScheduleWithParams<SearchJob>(client, "upgrade", instanceType,
                     inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
-                    inst.UpgradeSearch.SearchType!, opts.IsDryRun, inst.IndexerNames)
+                    inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames ?? new List<string>())
                 .Cron(inst.UpgradeSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_upgrade");
         }
