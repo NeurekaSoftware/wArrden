@@ -16,6 +16,17 @@ wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding mi
 > [!IMPORTANT]  
 > This repository's GitHub mirror is for reference only. Please submit bug reports and feature requests to our [official Forgejo repository](https://code.neureka.dev/warrden/warrden).
 
+## Features
+
+wArrden supports multiple instances of each arr type, so you can manage separate libraries (movies, series, anime, music) independently with their own schedules and cooldowns.
+
+| Supported | Queue Cleanup | Missing Search | Upgrade Search |
+|-----------|:---:|:---:|:---:|
+| Radarr    | ✔️ | ✔️ | ✔️ |
+| Sonarr    | ✔️ | ✔️ | ✔️ |
+| Lidarr    | ✔️ | ✔️ | ✔️ |
+| Whisparr  | ✔️ | ✔️ | ✔️ |
+
 ## Quickstart
 
 1. Download `compose.yaml`:
