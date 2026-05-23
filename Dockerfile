@@ -5,11 +5,11 @@ ARG PGID
 ARG TARGETARCH
 WORKDIR /app
 COPY wArrden/wArrden.csproj .
-RUN dotnet restore -a $TARGETARCH
+RUN dotnet restore -r linux-$TARGETARCH
 COPY wArrden/ .
-RUN dotnet publish -c Release -a $TARGETARCH -o /app/bin
+RUN dotnet publish -c Release -r linux-$TARGETARCH -o /app/bin
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0
+FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/runtime:10.0
 ARG APP_VERSION
 ARG PUID
 ARG PGID
