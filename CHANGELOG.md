@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.3] - 2026-05-23
+
+### Changed
+- Switch Docker image to Alpine Linux for smaller image size
+
+### Fixed
+- Fix ARM64 Docker images not being built for ARM architecture
+
 ## [2.1.2] - 2026-05-22
 
 ### Added
@@ -73,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/2.1.2...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/2.1.3...HEAD
+[2.1.3]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.3
 [2.1.2]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.2
 [2.1.1]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.1
 [2.1.0]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.0
