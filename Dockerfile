@@ -15,10 +15,14 @@ ENV APP_VERSION=$APP_VERSION
 ENV PUID=$PUID
 ENV PGID=$PGID
 ENV PATH="/app/bin:$PATH"
-RUN apk add --no-cache su-exec
+RUN apk add --no-cache su-exec sqlite-libs
 WORKDIR /app
 COPY --from=build /app/bin /app/bin
-RUN echo '#!/bin/sh' > /app/bin/clear-missing \
+# The bundled libe_sqlite3.so (from SQLitePCLRaw) targets glibc and fails on Alpine's musl.
+# Replace it with a symlink to Alpine's own musl-compiled libsqlite3 instead.
+RUN rm -f /app/bin/libe_sqlite3.so \
+ && ln -s /usr/lib/libsqlite3.so.0 /app/bin/e_sqlite3.so \
+ && echo '#!/bin/sh' > /app/bin/clear-missing \
  && echo 'dotnet /app/bin/wArrden.dll clear-missing "$@"' >> /app/bin/clear-missing \
  && echo '#!/bin/sh' > /app/bin/clear-upgrades \
  && echo 'dotnet /app/bin/wArrden.dll clear-upgrades "$@"' >> /app/bin/clear-upgrades \
