@@ -136,6 +136,12 @@ host.Services.UseScheduler(scheduler =>
         if (inst.QueueCleanup?.Enabled == true)
         {
             var rules = GetRulesForType(config.QueueCleanupRules, instanceType);
+            if (rules is null)
+            {
+                schedulerOutput.WriteWarning($"{instanceKey}.queue", "Queue cleanup is enabled but no rules are configured for this instance type — job will not be scheduled.");
+                return;
+            }
+
             scheduler
                 .ScheduleWithParams<QueueJob>(client, instanceType, opts.IsDryRun, rules)
                 .Cron(inst.QueueCleanup.Cron!)
