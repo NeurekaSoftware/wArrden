@@ -1,4 +1,6 @@
-# Optional: minimum log severity for console output. Default: info
+# Minimum log severity for console output.
+# Type: optional
+# Default: info
 # Values: debug | info | warning | error
 logLevel: info
 
@@ -7,8 +9,9 @@ instances:
     name: Movies
     url: http://radarr:7878
     apiKey: YOUR_RADARR_API_KEY
-    # Optional: limit searches/upgrades to specific indexers by name.
-    # When unset, all enabled indexers are used.
+    # Limit searches/upgrades to specific indexers by name.
+    # Type: optional
+    # Default: all enabled indexers
     # indexerNames:
     #   - NZBGeek
     #   - publicHD
@@ -30,8 +33,9 @@ instances:
     name: Series
     url: http://sonarr:8989
     apiKey: YOUR_SONARR_API_KEY
-    # Optional: limit searches/upgrades to specific indexers by name.
-    # When unset, all enabled indexers are used.
+    # Limit searches/upgrades to specific indexers by name.
+    # Type: optional
+    # Default: all enabled indexers
     # indexerNames:
     #   - NZBGeek
     #   - Rarbg
@@ -56,8 +60,9 @@ instances:
     url: http://lidarr:8686
     apiKey: YOUR_LIDARR_API_KEY
     apiVersion: "1"
-    # Optional: limit searches/upgrades to specific indexers by name.
-    # When unset, all enabled indexers are used.
+    # Limit searches/upgrades to specific indexers by name.
+    # Type: optional
+    # Default: all enabled indexers
     # indexerNames:
     #   - NZBGeek
     #   - publicHD
@@ -81,8 +86,9 @@ instances:
     name: Adult
     url: http://whisparr:6969
     apiKey: YOUR_WHISPARR_API_KEY
-    # Optional: limit searches/upgrades to specific indexers by name.
-    # When unset, all enabled indexers are used.
+    # Limit searches/upgrades to specific indexers by name.
+    # Type: optional
+    # Default: all enabled indexers
     # indexerNames:
     #   - NZBGeek
     missingSearch:
@@ -101,108 +107,503 @@ instances:
       enabled: true
       cron: "* * * * *"
 
+# Actions: remove | removeAndBlocklist | none
+#
+# The defaults below work for most setups — you don't need to change
+# anything unless the default actions don't match your preferences.
 queueCleanupRules:
   radarr:
-    - match: "Found matching movie via grab history"
+    # The file is a short sample/clip, not the full movie.
+    # Radarr: "Sample"
+    # Radarr: "Unable to determine if file is a sample"
+    - match: SAMPLE
       action: removeAndBlocklist
-    - match: "Not an upgrade for existing movie"
+
+    # No files in the download could be imported.
+    # Radarr: "No files found are eligible for import in {0}"
+    - match: NO_FILES_ELIGIBLE
+      action: removeAndBlocklist
+
+    # Download was matched by ID from grab history — manual import needed.
+    # Radarr: "Found matching movie via grab history, but release was matched to movie by ID."
+    - match: MATCHED_VIA_GRAB_HISTORY
+      action: removeAndBlocklist
+
+    # The movie was not in the release that was actually grabbed.
+    # Radarr: "Movie {0} was not found in the grabbed release: {1}"
+    - match: NOT_IN_GRABBED_RELEASE
+      action: removeAndBlocklist
+
+    # Release quality is equal to or lower than what you already have.
+    # Radarr: "Not an upgrade for existing movie file. Existing quality: {0}. New Quality {1}."
+    - match: NOT_QUALITY_UPGRADE
       action: remove
-    - match: "Not a Custom Format upgrade"
+
+    # Release revision number is not higher than existing.
+    # Radarr: "Not a quality revision upgrade for existing movie file(s)"
+    - match: NOT_REVISION_UPGRADE
       action: remove
-    - match: "No files found are eligible"
-      action: removeAndBlocklist
-    - match: "Movie file already imported"
+
+    # Custom format scores are not better than existing.
+    # Radarr: "Not a Custom Format upgrade for existing movie file(s). New: [{0}] ({1}) do not improve on Existing: [{2}] ({3})"
+    - match: NOT_CUSTOM_FORMAT_UPGRADE
       action: remove
-    - match: "No audio tracks detected"
+
+    # This exact movie file was already imported before.
+    # Radarr: "Movie file already imported at {0}"
+    - match: MOVIE_ALREADY_IMPORTED
+      action: remove
+
+    # The video file has no audio streams.
+    # Radarr: "No audio tracks detected"
+    - match: NO_AUDIO_TRACKS
       action: removeAndBlocklist
-    - match: "Sample"
+
+    # Download is a RAR/ZIP that wasn't unpacked.
+    # Radarr: "Found archive file, might need to be extracted"
+    - match: ARCHIVE_FILE
       action: removeAndBlocklist
-    - match: "Found archive file"
+
+    # Not enough disk space to import the file.
+    # Radarr: "Not enough free space"
+    - match: INSUFFICIENT_FREE_SPACE
       action: removeAndBlocklist
+
+    # File is still being extracted/unraring.
+    # Radarr: "File is still being unpacked"
+    - match: FILE_UNPACKING
+      action: remove
+
+    # Couldn't identify what movie this file is.
+    # Radarr: "Unable to parse file"
+    - match: UNABLE_TO_PARSE
+      action: none
+
+    # Something went wrong during import processing.
+    # Radarr: "Unexpected error processing file"
+    - match: UNEXPECTED_ERROR
+      action: none
+
+    # File is in use by another program, try again later.
+    # Radarr: "Locked file, try again later"
+    - match: LOCKED_FILE
+      action: none
+
+    # File type is not a supported video format.
+    # Radarr: "Invalid video file, unsupported extension: '{extension}'"
+    - match: UNSUPPORTED_EXTENSION
+      action: none
+
+    # Potentially harmful executable file found in download.
+    # Radarr: "Caution: Found executable file with extension: '{extension}'"
+    # Radarr: "Caution: Found potentially dangerous file with extension: {extension}"
+    - match: DANGEROUS_FILE
+      action: none
+
+    # Can't access the download folder — check permissions/mounts.
+    # Radarr: "Import failed, path does not exist or is not accessible by Radarr: {0}."
+    - match: IMPORT_PATH_INACCESSIBLE
+      action: none
+
   sonarr:
-    - match: "Found matching series via grab history"
+    # The file is a short sample/clip, not the full episode.
+    # Sonarr: "Sample"
+    # Sonarr: "Unable to determine if file is a sample"
+    - match: SAMPLE
       action: removeAndBlocklist
-    - match: "not found in the grabbed release"
+
+    # No files in the download could be imported.
+    # Sonarr: "No files found are eligible for import in {0}"
+    - match: NO_FILES_ELIGIBLE
       action: removeAndBlocklist
-    - match: "unexpected considering the"
+
+    # Download was matched by ID from grab history — manual import needed.
+    # Sonarr: "Found matching series via grab history, but release was matched to series by ID."
+    - match: MATCHED_VIA_GRAB_HISTORY
       action: removeAndBlocklist
-    - match: "Not an upgrade for existing episode"
+
+    # The episode was not in the release that was actually grabbed.
+    # Sonarr: "Episode {0} was not found in the grabbed release: {1}"
+    # Sonarr: "Episodes {0} were not found in the grabbed release: {1}"
+    - match: NOT_IN_GRABBED_RELEASE
+      action: removeAndBlocklist
+
+    # The episode doesn't belong in this folder (folder name mismatch).
+    # Sonarr: "Episode {0} was unexpected considering the {1} folder name"
+    # Sonarr: "Episodes {0} were unexpected considering the {1} folder name"
+    - match: EPISODE_UNEXPECTED_FOLDER
+      action: removeAndBlocklist
+
+    # Single file contains all episodes of the season — not supported as a single import.
+    # Sonarr: "Single episode file contains all episodes in seasons."
+    - match: FULL_SEASON_PACK
+      action: removeAndBlocklist
+
+    # Release quality is equal to or lower than what you already have.
+    # Sonarr: "Not an upgrade for existing episode file(s). Existing quality: {0}. New Quality {1}."
+    - match: NOT_QUALITY_UPGRADE
       action: remove
-    - match: "Not a Custom Format upgrade"
+
+    # Release revision number is not higher than existing (propers/repacks).
+    # Sonarr: "Not a quality revision upgrade for existing episode file(s)"
+    - match: NOT_REVISION_UPGRADE
       action: remove
-    - match: "No files found are eligible"
-      action: removeAndBlocklist
-    - match: "Episode file already imported"
+
+    # Custom format scores are not better than existing.
+    # Sonarr: "Not a Custom Format upgrade for existing episode file(s). New: [{0}] ({1}) do not improve on Existing: [{2}] ({3})"
+    - match: NOT_CUSTOM_FORMAT_UPGRADE
       action: remove
-    - match: "No audio tracks detected"
+
+    # The season/episode numbers don't match anything on the show.
+    # Sonarr: "Invalid season or episode"
+    - match: INVALID_SEASON_OR_EPISODE
       action: removeAndBlocklist
-    - match: "Invalid season or episode"
+
+    # This exact episode file was already imported before.
+    # Sonarr: "Episode file already imported at {0}"
+    - match: EPISODE_ALREADY_IMPORTED
+      action: remove
+
+    # The video file has no audio streams.
+    # Sonarr: "No audio tracks detected"
+    - match: NO_AUDIO_TRACKS
       action: removeAndBlocklist
-    - match: "all episodes in seasons"
+
+    # Download is a RAR/ZIP that wasn't unpacked.
+    # Sonarr: "Found archive file, might need to be extracted"
+    - match: ARCHIVE_FILE
       action: removeAndBlocklist
-    - match: "Sample"
+
+    # Not enough disk space to import the file.
+    # Sonarr: "Not enough free space"
+    - match: INSUFFICIENT_FREE_SPACE
       action: removeAndBlocklist
-    - match: "Found archive file"
-      action: removeAndBlocklist
+
+    # File is still being extracted/unraring.
+    # Sonarr: "File is still being unpacked"
+    - match: FILE_UNPACKING
+      action: remove
+
+    # Couldn't identify what show this file is.
+    # Sonarr: "Unable to parse file"
+    - match: UNABLE_TO_PARSE
+      action: none
+
+    # Something went wrong during import processing.
+    # Sonarr: "Unexpected error processing file"
+    - match: UNEXPECTED_ERROR
+      action: none
+
+    # File is in use by another program, try again later.
+    # Sonarr: "Locked file, try again later"
+    - match: LOCKED_FILE
+      action: none
+
+    # File type is not a supported video format.
+    # Sonarr: "Invalid video file, unsupported extension: '{0}'"
+    - match: UNSUPPORTED_EXTENSION
+      action: none
+
+    # Potentially harmful executable file found in download.
+    # Sonarr: "Caution: Found executable file with extension: '{0}'"
+    # Sonarr: "Caution: Found potentially dangerous file with extension: {0}"
+    - match: DANGEROUS_FILE
+      action: none
+
+    # Can't access the download folder — check permissions/mounts.
+    # Sonarr: "Import failed, path does not exist or is not accessible by Sonarr: {0}."
+    - match: IMPORT_PATH_INACCESSIBLE
+      action: none
+
+    # Episode aired recently and doesn't have a title yet.
+    # Sonarr: "Episode does not have a title and recently aired"
+    - match: TITLE_MISSING
+      action: none
+
+    # Episode title is still listed as TBA.
+    # Sonarr: "Episode has a TBA title and recently aired"
+    - match: TITLE_TBA
+      action: none
+
+    # File on disk already has more episodes than this one.
+    # Sonarr: "Episode file on disk contains more episodes than this file contains"
+    - match: EXISTING_FILE_MORE_EPISODES
+      action: none
+
+    # Episode is split across multiple separate files.
+    # Sonarr: "Single episode split into multiple files"
+    - match: SPLIT_EPISODE
+      action: none
+
+    # Anime episode is missing its absolute episode number.
+    # Sonarr: "Episode does not have an absolute episode number and recently aired"
+    - match: MISSING_ABSOLUTE_NUMBER
+      action: none
+
+    # TheXEM scene mapping hasn't been confirmed yet for this episode.
+    # Sonarr: "TheXEM mapping for this episode has not been confirmed yet."
+    - match: UNVERIFIED_SCENE_MAPPING
+      action: none
+
   lidarr:
-    - match: "No files found are eligible"
+    # The file is a short sample/clip, not the full album.
+    # Lidarr: "Sample"
+    # Lidarr: "Unable to determine if file is a sample"
+    - match: SAMPLE
       action: removeAndBlocklist
-    - match: "Album already imported at"
+
+    # No files in the download could be imported.
+    # Lidarr: "No files found are eligible for import in {0}"
+    - match: NO_FILES_ELIGIBLE
+      action: removeAndBlocklist
+
+    # Release quality is equal to or lower than what you already have.
+    # Lidarr: "Not an upgrade for existing track file(s). New Quality is {0}"
+    # Lidarr: "Not an upgrade for existing track file(s)"
+    # Lidarr: "Not an upgrade for existing album file(s)"
+    - match: NOT_QUALITY_UPGRADE
       action: remove
-    - match: "Not an upgrade for existing track file"
+
+    # Custom format scores are not better than existing.
+    # Lidarr: "Not a Custom Format upgrade for existing track file(s). New: [{0}] ({1}) do not improve on Existing: [{2}] ({3})"
+    - match: NOT_CUSTOM_FORMAT_UPGRADE
       action: remove
-    - match: "Not an upgrade for existing album file"
+
+    # This exact album was already imported before.
+    # Lidarr: "Album already imported at {0}"
+    - match: ALBUM_ALREADY_IMPORTED
       action: remove
-    - match: "Not a Custom Format upgrade"
+
+    # Not enough disk space to import the file.
+    # Lidarr: "Not enough free space"
+    - match: INSUFFICIENT_FREE_SPACE
+      action: removeAndBlocklist
+
+    # File is still being extracted/unraring.
+    # Lidarr: "File is still being unpacked"
+    - match: FILE_UNPACKING
       action: remove
-    - match: "Not enough free space"
-      action: removeAndBlocklist
-    - match: "File is still being unpacked"
+
+    # This release has fewer tracks than the existing one.
+    # Lidarr: "Has fewer tracks than existing release"
+    - match: FEWER_TRACKS
       action: remove
-    - match: "Has fewer tracks than existing release"
+
+    # Some tracks in the release don't match any expected tracks.
+    # Lidarr: "Has unmatched tracks"
+    - match: UNMATCHED_TRACKS
+      action: removeAndBlocklist
+
+    # Expected tracks are missing from this release.
+    # Lidarr: "Has missing tracks"
+    - match: MISSING_TRACKS
+      action: removeAndBlocklist
+
+    # This album release wasn't monitored/wanted.
+    # Lidarr: "Album release not requested"
+    - match: ALBUM_NOT_REQUESTED
+      action: removeAndBlocklist
+
+    # Your existing track file already contains more tracks.
+    # Lidarr: "Track file on disk contains more tracks than this file contains"
+    - match: EXISTING_FILE_MORE_TRACKS
       action: remove
-    - match: "Has unmatched tracks"
+
+    # The destination folder is not a configured root folder.
+    # Lidarr: "Destination folder {pathToCheck} is not in a Root Folder"
+    - match: DEST_FOLDER_NOT_ROOT
       action: removeAndBlocklist
-    - match: "Has missing tracks"
+
+    # Album metadata doesn't match closely enough to any known album.
+    # Lidarr: "Album match is not close enough"
+    - match: ALBUM_MATCH_NOT_CLOSE
       action: removeAndBlocklist
-    - match: "Album release not requested"
+
+    # None of the tracks could be matched to known tracks.
+    # Lidarr: "No tracks matched"
+    - match: NO_TRACKS_MATCHED
       action: removeAndBlocklist
-    - match: "Track file on disk contains more tracks"
-      action: remove
-    - match: "Destination folder"
+
+    # Individual track metadata doesn't match closely enough.
+    # Lidarr: "Track match is not close enough"
+    - match: TRACK_MATCH_NOT_CLOSE
       action: removeAndBlocklist
-    - match: "Sample"
+
+    # The file has no audio streams.
+    # Lidarr: "No audio tracks detected"
+    - match: NO_AUDIO_TRACKS
       action: removeAndBlocklist
-    - match: "No audio tracks detected"
+
+    # Download is a RAR/ZIP that wasn't unpacked.
+    # Lidarr: "Found archive file, might need to be extracted"
+    - match: ARCHIVE_FILE
       action: removeAndBlocklist
-    - match: "Album match is not close enough"
-      action: removeAndBlocklist
-    - match: "No tracks matched"
-      action: removeAndBlocklist
-    - match: "Track match is not close enough"
-      action: removeAndBlocklist
+
+    # Couldn't identify what artist/album this file is.
+    # Lidarr: "Unable to parse file"
+    - match: UNABLE_TO_PARSE
+      action: none
+
+    # Something went wrong during import processing.
+    # Lidarr: "Unexpected error processing file"
+    - match: UNEXPECTED_ERROR
+      action: none
+
+    # File is in use by another program, try again later.
+    # Lidarr: "Locked file, try again later"
+    - match: LOCKED_FILE
+      action: none
+
+    # File type is not a supported audio format.
+    # Lidarr: "Invalid audio file, unsupported extension: '{extension}'"
+    - match: UNSUPPORTED_EXTENSION
+      action: none
+
+    # Potentially harmful executable file found in download.
+    # Lidarr: "Caution: Found executable file"
+    - match: DANGEROUS_FILE
+      action: none
+
+    # Can't access the download folder — check permissions/mounts.
+    # Lidarr: "Import failed, path does not exist or is not accessible by Lidarr: {0}."
+    - match: IMPORT_PATH_INACCESSIBLE
+      action: none
+
   whisparr:
-    - match: "Found matching series via grab history"
+    # The file is a short sample/clip, not the full episode.
+    # Whisparr: "Sample"
+    # Whisparr: "Unable to determine if file is a sample"
+    - match: SAMPLE
       action: removeAndBlocklist
-    - match: "not found in the grabbed release"
+
+    # No files in the download could be imported.
+    # Whisparr: "No files found are eligible for import in {0}"
+    - match: NO_FILES_ELIGIBLE
       action: removeAndBlocklist
-    - match: "unexpected considering the"
+
+    # Download was matched by ID from grab history — manual import needed.
+    # Whisparr: "Found matching series via grab history, but release was matched to series by ID."
+    - match: MATCHED_VIA_GRAB_HISTORY
       action: removeAndBlocklist
-    - match: "Not an upgrade for existing episode"
+
+    # The episode was not in the release that was actually grabbed.
+    # Whisparr: "Episode {0} was not found in the grabbed release: {1}"
+    # Whisparr: "Episodes {0} were not found in the grabbed release: {1}"
+    - match: NOT_IN_GRABBED_RELEASE
+      action: removeAndBlocklist
+
+    # The episode doesn't belong in this folder (folder name mismatch).
+    # Whisparr: "Episode {0} was unexpected considering the {1} folder name"
+    # Whisparr: "Episodes {0} were unexpected considering the {1} folder name"
+    - match: EPISODE_UNEXPECTED_FOLDER
+      action: removeAndBlocklist
+
+    # Single file contains all episodes of the season — not supported as a single import.
+    # Whisparr: "Single episode file contains all episodes in seasons."
+    - match: FULL_SEASON_PACK
+      action: removeAndBlocklist
+
+    # Release quality is equal to or lower than what you already have.
+    # Whisparr: "Not an upgrade for existing episode file(s). Existing quality: {0}. New Quality {1}."
+    - match: NOT_QUALITY_UPGRADE
       action: remove
-    - match: "Not a Custom Format upgrade"
+
+    # Release revision number is not higher than existing (propers/repacks).
+    # Whisparr: "Not a quality revision upgrade for existing episode file(s)"
+    - match: NOT_REVISION_UPGRADE
       action: remove
-    - match: "No files found are eligible"
-      action: removeAndBlocklist
-    - match: "Episode file already imported"
+
+    # Custom format scores are not better than existing.
+    # Whisparr: "Not a Custom Format upgrade for existing episode file(s). New: [{0}] ({1}) do not improve on Existing: [{2}] ({3})"
+    - match: NOT_CUSTOM_FORMAT_UPGRADE
       action: remove
-    - match: "No audio tracks detected"
+
+    # The season/episode numbers don't match anything on the show.
+    # Whisparr: "Invalid season or episode"
+    - match: INVALID_SEASON_OR_EPISODE
       action: removeAndBlocklist
-    - match: "Invalid season or episode"
+
+    # This exact episode file was already imported before.
+    # Whisparr: "Episode file already imported at {0}"
+    - match: EPISODE_ALREADY_IMPORTED
+      action: remove
+
+    # The video file has no audio streams.
+    # Whisparr: "No audio tracks detected"
+    - match: NO_AUDIO_TRACKS
       action: removeAndBlocklist
-    - match: "all episodes in seasons"
+
+    # Download is a RAR/ZIP that wasn't unpacked.
+    # Whisparr: "Found archive file, might need to be extracted"
+    - match: ARCHIVE_FILE
       action: removeAndBlocklist
-    - match: "Sample"
+
+    # Not enough disk space to import the file.
+    # Whisparr: "Not enough free space"
+    - match: INSUFFICIENT_FREE_SPACE
       action: removeAndBlocklist
-    - match: "Found archive file"
-      action: removeAndBlocklist
+
+    # File is still being extracted/unraring.
+    # Whisparr: "File is still being unpacked"
+    - match: FILE_UNPACKING
+      action: remove
+
+    # Couldn't identify what show this file is.
+    # Whisparr: "Unable to parse file"
+    - match: UNABLE_TO_PARSE
+      action: none
+
+    # Something went wrong during import processing.
+    # Whisparr: "Unexpected error processing file"
+    - match: UNEXPECTED_ERROR
+      action: none
+
+    # File is in use by another program, try again later.
+    # Whisparr: "Locked file, try again later"
+    - match: LOCKED_FILE
+      action: none
+
+    # File type is not a supported video format.
+    # Whisparr: "Invalid video file, unsupported extension: '{0}'"
+    - match: UNSUPPORTED_EXTENSION
+      action: none
+
+    # Potentially harmful executable file found in download.
+    # Whisparr: "Caution: Found executable file"
+    - match: DANGEROUS_FILE
+      action: none
+
+    # Can't access the download folder — check permissions/mounts.
+    # Whisparr: "Import failed, path does not exist or is not accessible by Whisparr: {0}."
+    - match: IMPORT_PATH_INACCESSIBLE
+      action: none
+
+    # Episode aired recently and doesn't have a title yet.
+    # Whisparr: "Episode does not have a title and recently aired"
+    - match: TITLE_MISSING
+      action: none
+
+    # Episode title is still listed as TBA.
+    # Whisparr: "Episode has a TBA title and recently aired"
+    - match: TITLE_TBA
+      action: none
+
+    # File on disk already has more episodes than this one.
+    # Whisparr: "Episode file on disk contains more episodes than this file contains"
+    - match: EXISTING_FILE_MORE_EPISODES
+      action: none
+
+    # Episode is split across multiple separate files.
+    # Whisparr: "Single episode split into multiple files"
+    - match: SPLIT_EPISODE
+      action: none
+
+    # Anime episode is missing its absolute episode number.
+    # Whisparr: "Episode does not have an absolute episode number and recently aired"
+    - match: MISSING_ABSOLUTE_NUMBER
+      action: none
+
+    # TheXEM scene mapping hasn't been confirmed yet for this episode.
+    # Whisparr: "TheXEM mapping for this episode has not been confirmed yet."
+    - match: UNVERIFIED_SCENE_MAPPING
+      action: none

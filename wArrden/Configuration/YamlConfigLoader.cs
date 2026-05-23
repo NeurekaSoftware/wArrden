@@ -1,3 +1,4 @@
+using wArrden.Services;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -234,6 +235,8 @@ internal static class YamlConfigLoader
 
             if (string.IsNullOrWhiteSpace(rule.Match))
                 errors.Add($"{prefix}: 'match' must not be empty.");
+            else if (!QueueCleanupRuleMatchers.IsValidKey(rule.Match))
+                Console.Error.WriteLine($"Warning: {prefix}: '{rule.Match}' is not a known matcher key. It will be matched as a raw substring pattern. See README for available keys.");
 
             var action = rule.Action?.Trim();
             if (string.IsNullOrWhiteSpace(action))
@@ -241,9 +244,10 @@ internal static class YamlConfigLoader
                 errors.Add($"{prefix}: 'action' is required.");
             }
             else if (!string.Equals(action, "remove", StringComparison.OrdinalIgnoreCase) &&
-                     !string.Equals(action, "removeAndBlocklist", StringComparison.OrdinalIgnoreCase))
+                     !string.Equals(action, "removeAndBlocklist", StringComparison.OrdinalIgnoreCase) &&
+                     !string.Equals(action, "none", StringComparison.OrdinalIgnoreCase))
             {
-                errors.Add($"{prefix}: 'action' must be 'remove' or 'removeAndBlocklist', got '{rule.Action}'.");
+                errors.Add($"{prefix}: 'action' must be 'remove', 'removeAndBlocklist', or 'none', got '{rule.Action}'.");
             }
         }
     }

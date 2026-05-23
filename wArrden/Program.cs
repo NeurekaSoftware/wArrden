@@ -183,10 +183,13 @@ static List<QueueCleanupRule>? GetRulesForType(QueueCleanupRulesConfig? config, 
         _ => null
     };
     if (list is null || list.Count == 0) return null;
-    return list.Select(r => new QueueCleanupRule(
-        r.Match,
-        string.Equals(r.Action, "removeAndBlocklist", StringComparison.OrdinalIgnoreCase)
-    )).ToList();
+    return list
+        .Where(r => !string.Equals(r.Action, "none", StringComparison.OrdinalIgnoreCase))
+        .Select(r => new QueueCleanupRule(
+            r.Match,
+            string.Equals(r.Action, "removeAndBlocklist", StringComparison.OrdinalIgnoreCase)
+        ))
+        .ToList();
 }
 
 static List<InstanceConfig>? ResolveTargets(AppConfig config, string? instanceArg, OutputService output)

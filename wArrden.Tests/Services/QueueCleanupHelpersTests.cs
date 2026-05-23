@@ -69,12 +69,12 @@ public class QueueCleanupHelpersTests
     {
         var rules = new List<QueueCleanupRule>
         {
-            new("Not an upgrade for existing episode", false)
+            new("NOT_QUALITY_UPGRADE", false)
         };
 
-        var result = QueueCleanupService.MatchRule("This is NOT AN UPGRADE for existing episode here", rules);
+        var result = QueueCleanupService.MatchRule("This is Not an upgrade for existing episode file(s). Existing quality: HDTV-720p. New Quality HDTV-1080p.", rules, "sonarr");
         Assert.NotNull(result);
-        Assert.Equal("Not an upgrade for existing episode", result.Value.Label);
+        Assert.Equal("NOT_QUALITY_UPGRADE", result.Value.Label);
         Assert.False(result.Value.Blocklist);
     }
 
@@ -83,12 +83,12 @@ public class QueueCleanupHelpersTests
     {
         var rules = new List<QueueCleanupRule>
         {
-            new("Sample", true)
+            new("SAMPLE", true)
         };
 
-        var result = QueueCleanupService.MatchRule("This is a Sample file", rules);
+        var result = QueueCleanupService.MatchRule("This is a Sample file", rules, "sonarr");
         Assert.NotNull(result);
-        Assert.Equal("Sample", result.Value.Label);
+        Assert.Equal("SAMPLE", result.Value.Label);
         Assert.True(result.Value.Blocklist);
     }
 
@@ -97,10 +97,10 @@ public class QueueCleanupHelpersTests
     {
         var rules = new List<QueueCleanupRule>
         {
-            new("Not an upgrade for existing episode", false)
+            new("NOT_QUALITY_UPGRADE", false)
         };
 
-        var result = QueueCleanupService.MatchRule("Download completed successfully", rules);
+        var result = QueueCleanupService.MatchRule("Download completed successfully", rules, "sonarr");
         Assert.Null(result);
     }
 
@@ -109,13 +109,13 @@ public class QueueCleanupHelpersTests
     {
         var rules = new List<QueueCleanupRule>
         {
-            new("common text", false),
-            new("common", true)
+            new("NOT_QUALITY_UPGRADE", false),
+            new("NO_FILES_ELIGIBLE", true)
         };
 
-        var result = QueueCleanupService.MatchRule("this contains common text", rules);
+        var result = QueueCleanupService.MatchRule("Not an upgrade for existing episode file(s)", rules, "sonarr");
         Assert.NotNull(result);
-        Assert.Equal("common text", result.Value.Label);
+        Assert.Equal("NOT_QUALITY_UPGRADE", result.Value.Label);
     }
 
     [Fact]
@@ -123,18 +123,78 @@ public class QueueCleanupHelpersTests
     {
         var rules = new List<QueueCleanupRule>
         {
-            new("Sample", true)
+            new("SAMPLE", true)
         };
 
-        var result = QueueCleanupService.MatchRule("", rules);
+        var result = QueueCleanupService.MatchRule("", rules, "sonarr");
         Assert.Null(result);
     }
 
     [Fact]
     public void MatchRule_EmptyRules_ReturnsNull()
     {
-        var result = QueueCleanupService.MatchRule("Some message", new List<QueueCleanupRule>());
+        var result = QueueCleanupService.MatchRule("Some message", new List<QueueCleanupRule>(), "sonarr");
         Assert.Null(result);
+    }
+
+    [Fact]
+    public void MatchRule_UnknownKey_FallsBackToRawSubstring()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("some raw text", false)
+        };
+
+        var result = QueueCleanupService.MatchRule("this contains some raw text", rules, "sonarr");
+        Assert.NotNull(result);
+        Assert.Equal("some raw text", result.Value.Label);
+    }
+
+    [Fact]
+    public void MatchRule_KeyNotApplicableToArr_ReturnsNull()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("ALBUM_ALREADY_IMPORTED", true)
+        };
+
+        var result = QueueCleanupService.MatchRule("Album already imported", rules, "sonarr");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void MatchRule_RevisionUpgrade_FindsMatch()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("NOT_REVISION_UPGRADE", false)
+        };
+
+        var result = QueueCleanupService.MatchRule(
+            "Not a quality revision upgrade for existing movie file(s)", rules, "radarr");
+        Assert.NotNull(result);
+        Assert.Equal("NOT_REVISION_UPGRADE", result.Value.Label);
+    }
+
+    [Fact]
+    public void MatchRule_CrossArrKey_UsesCorrectPatterns()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("NOT_QUALITY_UPGRADE", false)
+        };
+
+        var radarrMatch = QueueCleanupService.MatchRule(
+            "Not an upgrade for existing movie file(s)", rules, "radarr");
+        Assert.NotNull(radarrMatch);
+
+        var sonarrMatch = QueueCleanupService.MatchRule(
+            "Not an upgrade for existing episode file(s)", rules, "sonarr");
+        Assert.NotNull(sonarrMatch);
+
+        var lidarrMatch = QueueCleanupService.MatchRule(
+            "Not an upgrade for existing album file(s)", rules, "lidarr");
+        Assert.NotNull(lidarrMatch);
     }
 
     [Fact]

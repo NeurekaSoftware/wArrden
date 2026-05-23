@@ -149,7 +149,7 @@ With `remove` action matches (stats before results):
  │  • Matched:       2
  │  • Result:        Removed 2
  └─ Results:
-    • The Boys (2019) - S01E01 - The Name of the Game  NOT_AN_UPGRADE
+    • The Boys (2019) - S01E01 - The Name of the Game  NOT_QUALITY_UPGRADE
     • Game of Thrones (2011) - S02E03 - Valar Morghulis  SAMPLE
 ```
 
@@ -163,7 +163,7 @@ With `removeAndBlocklist` action matches:
  │  • Matched:       4
  │  • Result:        Blocklisted 4
  └─ Results:
-    • Game of Thrones (2011) - S02E03 - Valar Morghulis  No files found are eligible
+    • Game of Thrones (2011) - S02E03 - Valar Morghulis  NO_FILES_ELIGIBLE
 ```
 
 With mixed actions:
@@ -176,9 +176,9 @@ With mixed actions:
  │  • Matched:       5
  │  • Result:        Removed 3, Blocklisted 2
  └─ Results:
-    • Euphoria.US.S01E02.1080p.AMZN.WEB-DL-Obfuscated  Unexpected error processing file
-    • Game of Thrones (2011) - S02E03 - Valar Morghulis  No files found are eligible
-    • The Boys (2019) - S01E01 - The Name of the Game  NOT_AN_UPGRADE
+    • Euphoria.US.S01E02.1080p.AMZN.WEB-DL-Obfuscated  UNEXPECTED_ERROR
+    • Game of Thrones (2011) - S02E03 - Valar Morghulis  NO_FILES_ELIGIBLE
+    • The Boys (2019) - S01E01 - The Name of the Game  NOT_QUALITY_UPGRADE
 ```
 
 **Rules:**
@@ -218,6 +218,52 @@ Year is only appended when greater than zero.
 ## Implementation
 
 Log output is handled by `OutputService` and `SearchOutputWriter` in `wArrden/Services/OutputService.cs`. Item title formatting is done in `SearchService.cs` and `QueueCleanupService.cs`. Queue cleanup rules are in `wArrden/Services/QueueCleanupRules.cs`. API models are in `wArrden/Clients/Models/`.
+
+## Config Example
+
+`config.example.yaml` is the authoritative reference for all configuration options. It must stay in sync with every code change that adds, removes, or renames a config field, matcher key, or action value.
+
+### Content Rules
+
+- `config.example.yaml` documents every valid configuration field, its type, default, and behavior through YAML comments.
+- Every `queueCleanupRules` matcher entry must include a plain-language description and the full arr warning message(s) it targets.
+- Every available matcher key is listed under each arr type it applies to, with one of three actions: `remove`, `removeAndBlocklist`, or `none`.
+- Matcher keys that are listed but recommended as inactive ship with `action: none`.
+
+### Comment Format
+
+Use these YAML comment conventions to keep the config self-documenting:
+
+**Simple key with enumerated choices:**
+```yaml
+# <description>
+# Type: optional
+# Default: <value>
+# Values: <choice1> | <choice2> | ...
+key: <default>
+```
+
+**Optional section (commented-out):**
+```yaml
+# <description>
+# Type: optional
+# Default: <what happens when unset>
+# key:
+#   - item
+```
+
+**Valid-choices reference:**
+```yaml
+# Actions: value1 | value2 | value3
+```
+
+**Matcher rule entry:**
+```yaml
+    # <plain-language description>
+    # <ArrName>: "<exact warning message>"
+    - match: KEY_NAME
+      action: remove
+```
 
 ## Build / Quality Checks
 

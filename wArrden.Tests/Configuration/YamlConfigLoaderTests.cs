@@ -832,10 +832,10 @@ instances:
         Assert.NotNull(config.QueueCleanupRules.Radarr);
         Assert.NotNull(config.QueueCleanupRules.Lidarr);
         Assert.NotNull(config.QueueCleanupRules.Whisparr);
-        Assert.Equal(12, config.QueueCleanupRules.Sonarr!.Count);
-        Assert.Equal(8, config.QueueCleanupRules.Radarr!.Count);
-        Assert.Equal(18, config.QueueCleanupRules.Lidarr!.Count);
-        Assert.Equal(12, config.QueueCleanupRules.Whisparr!.Count);
+        Assert.Equal(27, config.QueueCleanupRules.Sonarr!.Count);
+        Assert.Equal(18, config.QueueCleanupRules.Radarr!.Count);
+        Assert.Equal(24, config.QueueCleanupRules.Lidarr!.Count);
+        Assert.Equal(27, config.QueueCleanupRules.Whisparr!.Count);
     }
 
     [Fact]

@@ -52,7 +52,7 @@ public class QueueCleanupService
         foreach (var item in blocked)
         {
             var messages = CollectMessages(item);
-            var match = MatchRule(messages, rules);
+            var match = MatchRule(messages, rules, _instanceType);
             if (match is null)
                 continue;
 
@@ -103,12 +103,24 @@ public class QueueCleanupService
         return string.Join(" ", parts);
     }
 
-    internal static (string Label, bool Blocklist)? MatchRule(string messages, List<QueueCleanupRule> rules)
+    internal static (string Label, bool Blocklist)? MatchRule(string messages, List<QueueCleanupRule> rules, string arrType)
     {
         foreach (var rule in rules)
         {
-            if (messages.Contains(rule.Match, StringComparison.OrdinalIgnoreCase))
-                return (rule.Match, rule.Blocklist);
+            var patterns = QueueCleanupRuleMatchers.GetPatterns(rule.Match, arrType);
+            if (patterns is { Length: > 0 })
+            {
+                foreach (var pattern in patterns)
+                {
+                    if (messages.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                        return (rule.Match, rule.Blocklist);
+                }
+            }
+            else
+            {
+                if (messages.Contains(rule.Match, StringComparison.OrdinalIgnoreCase))
+                    return (rule.Match, rule.Blocklist);
+            }
         }
         return null;
     }

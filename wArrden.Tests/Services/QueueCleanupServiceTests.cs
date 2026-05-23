@@ -20,26 +20,26 @@ public class QueueCleanupServiceTests
 
     private static List<QueueCleanupRule> SonarrRules() => new()
     {
-        new("No files found are eligible", true),
-        new("Not an upgrade for existing episode", false),
+        new("NO_FILES_ELIGIBLE", true),
+        new("NOT_QUALITY_UPGRADE", false),
     };
 
     private static List<QueueCleanupRule> RadarrRules() => new()
     {
-        new("Not an upgrade for existing movie", false),
-        new("No files found are eligible", true),
+        new("NOT_QUALITY_UPGRADE", false),
+        new("NO_FILES_ELIGIBLE", true),
     };
 
     private static List<QueueCleanupRule> LidarrRules() => new()
     {
-        new("Not an upgrade for existing track file", false),
-        new("Has unmatched tracks", true),
+        new("NOT_QUALITY_UPGRADE", false),
+        new("UNMATCHED_TRACKS", true),
     };
 
     private static List<QueueCleanupRule> WhisparrRules() => new()
     {
-        new("Not an upgrade for existing episode", false),
-        new("No files found are eligible", true),
+        new("NOT_QUALITY_UPGRADE", false),
+        new("NO_FILES_ELIGIBLE", true),
     };
 
     [Fact]
