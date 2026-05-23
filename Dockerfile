@@ -15,11 +15,10 @@ ENV APP_VERSION=$APP_VERSION
 ENV PUID=$PUID
 ENV PGID=$PGID
 ENV PATH="/app/bin:$PATH"
-RUN apk add --no-cache su-exec e_sqlite3
+RUN apk add --no-cache su-exec
 WORKDIR /app
 COPY --from=build /app/bin /app/bin
-RUN rm -f /app/bin/libe_sqlite3.so \
- && echo '#!/bin/sh' > /app/bin/clear-missing \
+RUN echo '#!/bin/sh' > /app/bin/clear-missing \
  && echo 'dotnet /app/bin/wArrden.dll clear-missing "$@"' >> /app/bin/clear-missing \
  && echo '#!/bin/sh' > /app/bin/clear-upgrades \
  && echo 'dotnet /app/bin/wArrden.dll clear-upgrades "$@"' >> /app/bin/clear-upgrades \
