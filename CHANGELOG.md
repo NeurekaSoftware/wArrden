@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-05-22
+
+### Added
+- Add configurable log level (debug, info, warning, error) with tree-formatted console output
+
+### Changed
+- Rename queue cleanup Warnings label and distinguish remove vs blocklist actions in output
+
 ## [2.1.1] - 2026-05-22
 
 ### Fixed
@@ -65,7 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/2.1.1...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/2.1.2...HEAD
+[2.1.2]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.2
 [2.1.1]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.1
 [2.1.0]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.0
 [2.0.1]: https://code.neureka.dev/warrden/warrden/releases/tag/2.0.1
