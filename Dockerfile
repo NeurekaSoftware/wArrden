@@ -1,7 +1,5 @@
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG APP_VERSION
-ARG PUID
-ARG PGID
 ARG TARGETARCH
 WORKDIR /app
 COPY wArrden/wArrden.csproj .
@@ -9,7 +7,7 @@ RUN dotnet restore -r linux-$TARGETARCH
 COPY wArrden/ .
 RUN dotnet publish -c Release -r linux-$TARGETARCH -o /app/bin
 
-FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/runtime:10.0
+FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/runtime:10.0-alpine
 ARG APP_VERSION
 ARG PUID
 ARG PGID
@@ -17,9 +15,7 @@ ENV APP_VERSION=$APP_VERSION
 ENV PUID=$PUID
 ENV PGID=$PGID
 ENV PATH="/app/bin:$PATH"
-RUN apt-get update \
- && apt-get install -y --no-install-recommends gosu \
- && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache su-exec
 WORKDIR /app
 COPY --from=build /app/bin /app/bin
 RUN echo '#!/bin/sh' > /app/bin/clear-missing && \

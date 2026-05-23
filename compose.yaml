@@ -5,12 +5,13 @@ services:
     image: code.neureka.dev/warrden/warrden:1
     container_name: warrden
     environment:
-      - TZ=UTC
-      - PUID=1000
-      - PGID=1000
-      - DRY_RUN=false
-      - DATABASE_PATH=/app/data/warden.db
+      - APP_VERSION=latest
       - CONFIG_PATH=/app/data/config.yaml
+      - DATABASE_PATH=/app/data/warden.db
+      - DRY_RUN=false
+      - PGID=1000
+      - PUID=1000
+      - TZ=UTC
     networks:
       - warrden
     volumes:
