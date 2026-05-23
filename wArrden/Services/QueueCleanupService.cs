@@ -31,7 +31,7 @@ public class QueueCleanupService
         if (rules is null || rules.Count == 0)
         {
             _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
-                Array.Empty<(string, string)>(), _isDryRun);
+                Array.Empty<(string, string, bool)>(), _isDryRun);
             return 0;
         }
 
@@ -39,16 +39,16 @@ public class QueueCleanupService
             string.Equals(q.TrackedDownloadStatus, "warning", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        _output.WriteDebug($"{_client.Instance.ToLowerInvariant()}.queue", $"{blocked.Count} blocked items out of {queue.Count} total");
+        _output.WriteDebug($"{_client.Instance.ToLowerInvariant()}.queue", $"{blocked.Count} warning-status items out of {queue.Count} total");
 
         if (blocked.Count == 0)
         {
             _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
-                Array.Empty<(string, string)>(), _isDryRun);
+                Array.Empty<(string, string, bool)>(), _isDryRun);
             return 0;
         }
 
-        var matched = new List<(int Id, string Title, string Rule)>();
+        var matched = new List<(int Id, string Title, string Rule, bool Blocklist)>();
         foreach (var item in blocked)
         {
             var messages = CollectMessages(item);
@@ -73,7 +73,7 @@ public class QueueCleanupService
                 }
             }
 
-            matched.Add((item.Id, GetTitle(item), match.Value.Label));
+            matched.Add((item.Id, GetTitle(item), match.Value.Label, match.Value.Blocklist));
         }
 
         _output.WriteDebug($"{_client.Instance.ToLowerInvariant()}.queue", $"Matched {matched.Count} items to cleanup rules");
@@ -81,7 +81,7 @@ public class QueueCleanupService
         var sorted = matched.OrderBy(m => m.Title, StringComparer.OrdinalIgnoreCase).ToList();
 
         _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, sorted.Count,
-            sorted.Select(m => (m.Title, m.Rule)).ToList(), _isDryRun);
+            sorted.Select(m => (m.Title, m.Rule, m.Blocklist)).ToList(), _isDryRun);
         return matched.Count;
     }
 

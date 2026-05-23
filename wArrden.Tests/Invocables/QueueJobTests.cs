@@ -33,7 +33,7 @@ public class QueueJobTests
             Times.Never);
         _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        Assert.Contains("No blocked queue items detected", _writer.ToString());
+        Assert.Contains("No warning queue items detected", _writer.ToString());
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class QueueJobTests
             Times.Never);
         _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        Assert.Contains("Would blocklist", _writer.ToString());
+        Assert.Contains("Would remove", _writer.ToString());
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class QueueJobTests
         await job.Invoke();
 
         _clientMock.Verify(c => c.GetQueueAsync(It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Contains("No blocked queue items detected", _writer.ToString());
+        Assert.Contains("No warning queue items detected", _writer.ToString());
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public class QueueJobTests
         await job.Invoke();
 
         _clientMock.Verify(c => c.GetQueueAsync(It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Contains("No blocked queue items detected", _writer.ToString());
+        Assert.Contains("No warning queue items detected", _writer.ToString());
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class QueueJobTests
         await job.Invoke();
 
         _clientMock.Verify(c => c.GetQueueAsync(It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Contains("No blocked queue items detected", _writer.ToString());
+        Assert.Contains("No warning queue items detected", _writer.ToString());
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public class QueueJobTests
 
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-        Assert.Contains("Would blocklist", _writer.ToString());
+        Assert.Contains("Would remove", _writer.ToString());
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public class QueueJobTests
 
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-        Assert.Contains("Would blocklist", _writer.ToString());
+        Assert.Contains("Would remove", _writer.ToString());
     }
 
     [Fact]
@@ -207,6 +207,6 @@ public class QueueJobTests
 
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-        Assert.Contains("Would blocklist", _writer.ToString());
+        Assert.Contains("Would remove", _writer.ToString());
     }
 }

@@ -73,30 +73,30 @@ public class OutputServiceTests
     public void WriteQueueResult_NoMatches_ShowsNoBlocked()
     {
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
-            Array.Empty<(string, string)>(), false);
+            Array.Empty<(string, string, bool)>(), false);
 
         var output = _writer.ToString();
         Assert.Contains("Total Queue", output);
         Assert.Contains("150", output);
-        Assert.Contains("No blocked queue items detected", output);
+        Assert.Contains("No warning queue items detected", output);
     }
 
     [Fact]
     public void WriteQueueResult_WithMatches_Live()
     {
-        var items = new List<(string, string)>
+        var items = new List<(string, string, bool)>
         {
-            ("The Boys (2019) - S01E01", "NOT_AN_UPGRADE")
+            ("The Boys (2019) - S01E01", "NOT_AN_UPGRADE", false)
         };
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 1,
             items, false);
 
         var output = _writer.ToString();
-        Assert.Contains("Blocked", output);
+        Assert.Contains("Warnings", output);
         Assert.Contains("5", output);
         Assert.Contains("Matched", output);
-        Assert.Contains("Blocklisted 1", output);
+        Assert.Contains("Removed 1", output);
         Assert.Contains("The Boys", output);
         Assert.Contains("NOT_AN_UPGRADE", output);
     }
@@ -104,9 +104,39 @@ public class OutputServiceTests
     [Fact]
     public void WriteQueueResult_WithMatches_DryRun()
     {
-        var items = new List<(string, string)>
+        var items = new List<(string, string, bool)>
         {
-            ("Test Item", "SAMPLE")
+            ("Test Item", "SAMPLE", false)
+        };
+
+        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 2, 1,
+            items, true);
+
+        var output = _writer.ToString();
+        Assert.Contains("Would remove 1", output);
+    }
+
+    [Fact]
+    public void WriteQueueResult_WithBlocklistMatches_Live()
+    {
+        var items = new List<(string, string, bool)>
+        {
+            ("The Boys (2019) - S01E01", "No files found are eligible", true)
+        };
+
+        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 1,
+            items, false);
+
+        var output = _writer.ToString();
+        Assert.Contains("Blocklisted 1", output);
+    }
+
+    [Fact]
+    public void WriteQueueResult_WithBlocklistMatches_DryRun()
+    {
+        var items = new List<(string, string, bool)>
+        {
+            ("Test Item", "No files found are eligible", true)
         };
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 2, 1,
@@ -117,9 +147,25 @@ public class OutputServiceTests
     }
 
     [Fact]
+    public void WriteQueueResult_WithMixedActions_ShowsBoth()
+    {
+        var items = new List<(string, string, bool)>
+        {
+            ("Item One", "NOT_AN_UPGRADE", false),
+            ("Item Two", "No files found", true)
+        };
+
+        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 2,
+            items, false);
+
+        var output = _writer.ToString();
+        Assert.Contains("Removed 1, Blocklisted 1", output);
+    }
+
+    [Fact]
     public void WriteQueueResult_Overflow_ShowsPlusMore()
     {
-        var items = new List<(string, string)>(); // empty items, but matched > 0
+        var items = new List<(string, string, bool)>(); // empty items, but matched > 0
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 10, 5,
             items, false);
@@ -473,7 +519,7 @@ public class OutputServiceTests
     {
         _output.MinimumLevel = LogLevel.Warning;
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
-            Array.Empty<(string, string)>(), false);
+            Array.Empty<(string, string, bool)>(), false);
 
         var output = _writer.ToString();
         Assert.Empty(output);
@@ -484,7 +530,7 @@ public class OutputServiceTests
     {
         _output.MinimumLevel = LogLevel.Info;
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
-            Array.Empty<(string, string)>(), false);
+            Array.Empty<(string, string, bool)>(), false);
 
         var output = _writer.ToString();
         Assert.Contains("INF", output);

@@ -212,7 +212,7 @@ public class OutputService
     }
 
     public void WriteQueueResult(DateTime timestamp, string instance, int totalQueue, int blocked, int matched,
-        IReadOnlyList<(string Title, string Rule)> items, bool isDryRun)
+        IReadOnlyList<(string Title, string Rule, bool Blocklist)> items, bool isDryRun)
     {
         if (!ShouldLog(LogLevel.Info)) return;
 
@@ -224,18 +224,26 @@ public class OutputService
         {
             Out.WriteLine(" └─ Stats:");
             Out.WriteLine($"    • Total Queue:   {totalQueue}");
-            Out.WriteLine("    • Result:        No blocked queue items detected");
+            Out.WriteLine("    • Result:        No warning queue items detected");
         }
         else
         {
-            var verb = isDryRun ? "Would blocklist" : "Blocklisted";
+            var removedCount = items.Count(i => !i.Blocklist);
+            var blocklistedCount = items.Count(i => i.Blocklist);
+            var parts = new List<string>();
+            if (removedCount > 0)
+                parts.Add(isDryRun ? $"Would remove {removedCount}" : $"Removed {removedCount}");
+            if (blocklistedCount > 0)
+                parts.Add(isDryRun ? $"Would blocklist {blocklistedCount}" : $"Blocklisted {blocklistedCount}");
+            var resultText = string.Join(", ", parts);
+
             Out.WriteLine(" ├─ Stats:");
             Out.WriteLine($" │  • Total Queue:   {totalQueue}");
-            Out.WriteLine($" │  • Blocked:       {blocked}");
+            Out.WriteLine($" │  • Warnings:      {blocked}");
             Out.WriteLine($" │  • Matched:       {matched}");
-            Out.WriteLine($" │  • Result:        {verb} {matched}");
+            Out.WriteLine($" │  • Result:        {resultText}");
             Out.WriteLine(" └─ Results:");
-            foreach (var (title, rule) in items)
+            foreach (var (title, rule, _) in items)
                 Out.WriteLine($"    • {title}  {rule}");
             if (items.Count < matched)
                 Out.WriteLine($"    +{matched - items.Count} more");

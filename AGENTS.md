@@ -130,32 +130,64 @@ When items are searched, stats come before results:
 
 ### Info (INF) — Queue Cleanup Job (queue)
 
-No blocked items:
+No warning-status items:
 
 ```
 [07:45:01 INF] [sonarr.queue]
  └─ Stats:
     • Total Queue:   150
-    • Result:        No blocked queue items detected
+    • Result:        No warning queue items detected
 ```
 
-With matches (stats before results):
+With `remove` action matches (stats before results):
 
 ```
 [07:45:01 INF] [sonarr.queue]
  ├─ Stats:
  │  • Total Queue:   150
- │  • Blocked:       5
+ │  • Warnings:      5
  │  • Matched:       2
- │  • Result:        Blocklisted 2
+ │  • Result:        Removed 2
  └─ Results:
     • The Boys (2019) - S01E01 - The Name of the Game  NOT_AN_UPGRADE
     • Game of Thrones (2011) - S02E03 - Valar Morghulis  SAMPLE
 ```
 
+With `removeAndBlocklist` action matches:
+
+```
+[07:45:01 INF] [sonarr.queue]
+ ├─ Stats:
+ │  • Total Queue:   80
+ │  • Warnings:      8
+ │  • Matched:       4
+ │  • Result:        Blocklisted 4
+ └─ Results:
+    • Game of Thrones (2011) - S02E03 - Valar Morghulis  No files found are eligible
+```
+
+With mixed actions:
+
+```
+[07:45:01 INF] [sonarr.queue]
+ ├─ Stats:
+ │  • Total Queue:   100
+ │  • Warnings:      10
+ │  • Matched:       5
+ │  • Result:        Removed 3, Blocklisted 2
+ └─ Results:
+    • Euphoria.US.S01E02.1080p.AMZN.WEB-DL-Obfuscated  Unexpected error processing file
+    • Game of Thrones (2011) - S02E03 - Valar Morghulis  No files found are eligible
+    • The Boys (2019) - S01E01 - The Name of the Game  NOT_AN_UPGRADE
+```
+
 **Rules:**
 - Stats always come before Results
-- `Result` field: `"Blocklisted N"` or `"Would blocklist N"` (dry run) or `"No blocked queue items detected"`
+- `Warnings` is the count of queue items with `TrackedDownloadStatus == "warning"`
+- `Matched` is the subset of Warnings whose error messages matched a configured rule
+- `Result` reflects the actions taken per match: `"Removed N"`, `"Blocklisted N"`, or `"Removed N, Blocklisted M"` for mixed actions
+- Dry-run prefix: `"Would remove N"`, `"Would blocklist N"`, `"Would remove N, Would blocklist M"`
+- With no warnings: `"No warning queue items detected"`
 
 ## Item Display Format
 

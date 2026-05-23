@@ -54,7 +54,7 @@ public class QueueCleanupServiceTests
 
         Assert.Equal(0, result);
         var output = _writer.ToString();
-        Assert.Contains("No blocked queue items detected", output);
+        Assert.Contains("No warning queue items detected", output);
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -334,7 +334,7 @@ public class QueueCleanupServiceTests
         Assert.Equal(1, result);
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-        Assert.Contains("Would blocklist", _writer.ToString());
+        Assert.Contains("Would remove", _writer.ToString());
     }
 
     [Fact]
@@ -461,7 +461,7 @@ public class QueueCleanupServiceTests
         Assert.Equal(1, result);
         _clientMock.Verify(c => c.DeleteQueueItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-        Assert.Contains("Would blocklist", _writer.ToString());
+        Assert.Contains("Would remove", _writer.ToString());
     }
 
     [Fact]
