@@ -64,7 +64,6 @@ public class OutputService
                 var prefix = isLastWarning ? " └─" : " ├─";
                 w.WriteLine($"{prefix} {config.Warnings[i]}");
             }
-            w.WriteLine();
         }
 
         w.WriteLine();
