@@ -5,6 +5,17 @@ using Coravel.Invocable;
 
 namespace wArrden.Invocables;
 
+public sealed record SearchJobParams(
+    IArrClient Client,
+    string SearchKind,
+    string InstanceType,
+    int MaxResults,
+    string Cooldown,
+    string SearchType,
+    bool IsDryRun,
+    List<string>? IndexerNames
+);
+
 public class SearchJob : IInvocable
 {
     private readonly SearchService _search;
@@ -18,19 +29,18 @@ public class SearchJob : IInvocable
     private readonly bool _isDryRun;
     private readonly List<string>? _indexerNames;
 
-    public SearchJob(SearchService search, OutputService output, IArrClient client,
-        string searchKind, string instanceType, int maxResults, string cooldownStr, string searchType = "", bool isDryRun = false, List<string>? indexerNames = null)
+    public SearchJob(SearchService search, OutputService output, SearchJobParams p)
     {
         _search = search;
         _output = output;
-        _client = client;
-        _searchKind = searchKind;
-        _instanceType = instanceType;
-        _maxResults = maxResults;
-        _cooldown = DurationParser.Parse(cooldownStr);
-        _searchType = searchType;
-        _isDryRun = isDryRun;
-        _indexerNames = indexerNames;
+        _client = p.Client;
+        _searchKind = p.SearchKind;
+        _instanceType = p.InstanceType;
+        _maxResults = p.MaxResults;
+        _cooldown = DurationParser.Parse(p.Cooldown);
+        _searchType = p.SearchType;
+        _isDryRun = p.IsDryRun;
+        _indexerNames = p.IndexerNames;
     }
 
     public async Task Invoke()
