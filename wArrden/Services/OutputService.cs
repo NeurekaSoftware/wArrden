@@ -18,7 +18,7 @@ public class OutputService
     private TimeZoneInfo _timeZone = TimeZoneInfo.Utc;
 
     public TextWriter Out { get; set; } = Console.Out;
-    public TextWriter Error { get; set; } = Console.Error;
+    public TextWriter Error { get; set; } = Console.Out;
     public LogLevel MinimumLevel { get; set; } = LogLevel.Info;
     public TimeZoneInfo TimeZone { get => _timeZone; set => _timeZone = value; }
 

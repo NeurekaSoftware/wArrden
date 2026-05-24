@@ -20,7 +20,7 @@ var configPath = GetEnv("CONFIG_PATH") ?? "data/config.yaml";
 
 if (!File.Exists(configPath))
 {
-    Console.Error.WriteLine($"Error: Config file not found: {configPath}");
+    new OutputService { MinimumLevel = wArrden.Services.LogLevel.Error }.WriteError("cli", $"Config file not found: {configPath}");
     Environment.Exit(1);
     return;
 }
@@ -32,8 +32,9 @@ try
 }
 catch (ConfigurationException ex)
 {
+    var errorOutput = new OutputService { MinimumLevel = wArrden.Services.LogLevel.Error };
     foreach (var error in ex.Errors)
-        Console.Error.WriteLine($"Config error: {error}");
+        errorOutput.WriteError("warden.config", error);
     Environment.Exit(1);
     return;
 }
@@ -341,8 +342,7 @@ static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
         }
         catch (Exception ex)
         {
-            warning = $"Invalid timezone '{tzId}' — falling back to UTC";
-            Console.Error.WriteLine($"Warning: {warning}: {ex.Message}");
+            warning = $"Invalid timezone '{tzId}' — falling back to UTC: {ex.Message}";
         }
     }
 

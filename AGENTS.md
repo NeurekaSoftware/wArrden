@@ -17,11 +17,13 @@ Configured via `logLevel` in `config.yaml`. The value sets the minimum severity 
 
 All log messages write to `stdout` (`Console.Out`).
 
+**`Console.Error` (`stderr`) is forbidden for any log output.** Every log message must go through `OutputService` methods (`WriteDebug`, `WriteWarning`, `WriteError`), which write exclusively to `Out` (`Console.Out`). Never call `Console.Error.WriteLine` or `Console.WriteLine` directly for log output.
+
 ## Output Streams
 
 - **DEBUG / INFO / WARN / ERROR** → `Console.Out` (`OutputService.Out`)
 
-All log levels write to a single stream. Docker and other container runtimes read stdout and stderr through separate pipes and merge them without preserving write order, which causes tree-structured output to interleave when messages are split across streams. Writing everything to stdout avoids this.
+All log levels write to a single stream. Docker and other container runtimes read stdout and stderr through separate pipes and merge them without preserving write order, which causes tree-structured output to interleave when messages are split across streams. Writing everything to stdout avoids this. Do not split log output across `stdout` and `stderr`.
 
 ## Log Format Rules
 
