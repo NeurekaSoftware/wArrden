@@ -2,11 +2,11 @@
 
 ## Purpose
 
-wArrden is a scheduled job runner that searches for missing/upgrade items and cleans stuck queue entries on Sonarr/Radarr instances. This file enforces output formatting standards for all log output shown in the console.
+wArrden is a scheduled job runner that searches for missing/upgrade items and cleans stuck queue entries on Sonarr/Radarr instances. This file defines console log output formatting standards.
 
-## Log Level Threshold
+## Log Level & Output
 
-Configured via `logLevel` in `config.yaml`. The value sets the minimum severity for console output:
+Set via `logLevel` in `config.yaml`:
 
 | `logLevel` | Messages Shown |
 |---|---|
@@ -15,17 +15,13 @@ Configured via `logLevel` in `config.yaml`. The value sets the minimum severity 
 | `warning` | WARN + ERROR |
 | `error` | ERROR only (least verbose) |
 
-All log messages write to `stdout` (`Console.Out`).
-
-**`Console.Error` (`stderr`) is forbidden for any log output.** Every log message must go through `OutputService` methods (`WriteDebug`, `WriteWarning`, `WriteError`), which write exclusively to `Out` (`Console.Out`). Never call `Console.Error.WriteLine` or `Console.WriteLine` directly for log output.
-
-## Output Streams
-
-- **DEBUG / INFO / WARN / ERROR** → `Console.Out` (`OutputService.Out`)
-
-All log levels write to a single stream. Docker and other container runtimes read stdout and stderr through separate pipes and merge them without preserving write order, which causes tree-structured output to interleave when messages are split across streams. Writing everything to stdout avoids this. Do not split log output across `stdout` and `stderr`.
+All log messages go through `OutputService` methods (`WriteDebug`, `WriteWarning`, `WriteError`) to `Console.Out`. **`Console.Error` (`stderr`) and direct `Console.WriteLine` calls are forbidden for log output.** Containers (Docker, etc.) read stdout/stderr through separate pipes and merge them without preserving write order, which would cause tree-structured output to interleave. Writing everything to a single stream avoids this.
 
 ## Log Format Rules
+
+### Shared Rules
+
+- **Stats always come before Results** in all info-level job output.
 
 ### Header
 
@@ -126,7 +122,6 @@ When items are searched, stats come before results:
 ```
 
 **Rules:**
-- Stats always come before Results
 - Full stats are shown even when no wanted items are found
 - `Result` field: `"No wanted items found"` (0 total), `"No search performed"` (0 searched), or `"Searched N"`
 - For Radarr, use `"Fetching wanted movies"` instead of `"Fetching wanted episodes"`
@@ -185,7 +180,6 @@ With mixed actions:
 ```
 
 **Rules:**
-- Stats always come before Results
 - `Warnings` is the count of queue items with `TrackedDownloadStatus == "warning"`
 - `Matched` is the subset of Warnings whose error messages matched a configured rule
 - `Result` reflects the actions taken per match: `"Removed N"`, `"Blocklisted N"`, or `"Removed N, Blocklisted M"` for mixed actions
@@ -218,9 +212,12 @@ Examples:
 
 Year is only appended when greater than zero.
 
-## Implementation
+## Source Files
 
-Log output is handled by `OutputService` and `SearchOutputWriter` in `wArrden/Services/OutputService.cs`. Item title formatting is done in `SearchService.cs` and `QueueCleanupService.cs`. Queue cleanup rules are in `wArrden/Services/QueueCleanupRules.cs`. API models are in `wArrden/Clients/Models/`.
+- Log output: `OutputService`, `SearchOutputWriter` → `wArrden/Services/OutputService.cs`
+- Item title formatting: `SearchService.cs`, `QueueCleanupService.cs`
+- Queue cleanup rules: `wArrden/Services/QueueCleanupRules.cs`
+- API models: `wArrden/Clients/Models/`
 
 ## Config Example
 
@@ -267,19 +264,3 @@ key: <default>
     - match: KEY_NAME
       action: remove
 ```
-
-## Build / Quality Checks
-
-```bash
-dotnet build wArrden
-dotnet test wArrden.Tests
-```
-
-## Unit Tests
-
-- Tests live in `wArrden.Tests/` using **xUnit** and **Moq**.
-- After any code change to `wArrden/`, run `dotnet test wArrden.Tests` and verify all tests pass before committing.
-- EF Core tests targeting the real SQLite provider use `Microsoft.Data.Sqlite` in-memory mode (shared cache) — never the InMemory provider, which does not support `ExecuteDeleteAsync`.
-- Internal members are exposed to the test project via `InternalsVisibleTo` in `wArrden.csproj`.
-- New public/internal methods must have corresponding unit tests.
-- Integration points (HTTP clients, scheduling) are mocked; pure logic (parsing, rule matching, title formatting, cooldown filtering) is tested directly.
