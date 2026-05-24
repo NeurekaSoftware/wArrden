@@ -343,6 +343,7 @@ static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
         catch (Exception ex)
         {
             warning = $"Invalid timezone '{tzId}' — falling back to UTC: {ex.Message}";
+            return TimeZoneInfo.Utc;
         }
     }
 
