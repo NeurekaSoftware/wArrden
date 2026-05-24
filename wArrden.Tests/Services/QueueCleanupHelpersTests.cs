@@ -138,7 +138,7 @@ public class QueueCleanupHelpersTests
     }
 
     [Fact]
-    public void MatchRule_UnknownKey_FallsBackToRawSubstring()
+    public void MatchRule_UnknownKey_ReturnsNull()
     {
         var rules = new List<QueueCleanupRule>
         {
@@ -146,8 +146,7 @@ public class QueueCleanupHelpersTests
         };
 
         var result = QueueCleanupService.MatchRule("this contains some raw text", rules, "sonarr");
-        Assert.NotNull(result);
-        Assert.Equal("some raw text", result.Value.Label);
+        Assert.Null(result);
     }
 
     [Fact]

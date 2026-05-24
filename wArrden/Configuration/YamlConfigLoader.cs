@@ -236,7 +236,7 @@ internal static class YamlConfigLoader
             if (string.IsNullOrWhiteSpace(rule.Match))
                 errors.Add($"{prefix}: 'match' must not be empty.");
             else if (!QueueCleanupRuleMatchers.IsValidKey(rule.Match))
-                config.Warnings.Add($"{prefix}: '{rule.Match}' is not a known matcher key. It will be matched as a raw substring pattern. See README for available keys.");
+                config.Warnings.Add($"{prefix}: '{rule.Match}' is not a known matcher key and will be skipped. See config.example.yaml for available keys.");
 
             var action = rule.Action?.Trim();
             if (string.IsNullOrWhiteSpace(action))

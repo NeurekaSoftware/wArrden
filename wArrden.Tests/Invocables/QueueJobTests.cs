@@ -52,7 +52,7 @@ public class QueueJobTests
 
         var rules = new List<QueueCleanupRule>
         {
-            new("Not an upgrade for existing episode", false)
+            new("NOT_QUALITY_UPGRADE", false)
         };
         var job = new QueueJob(_output, _clientMock.Object, "sonarr", true, rules);
 
@@ -145,7 +145,7 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
 
-        var rules = new List<QueueCleanupRule> { new("Not an upgrade for existing movie", false) };
+        var rules = new List<QueueCleanupRule> { new("NOT_QUALITY_UPGRADE", false) };
         var job = new QueueJob(_output, _clientMock.Object, "radarr", true, rules);
 
         await job.Invoke();
@@ -169,7 +169,7 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
 
-        var rules = new List<QueueCleanupRule> { new("Not an upgrade for existing track file", false) };
+        var rules = new List<QueueCleanupRule> { new("NOT_QUALITY_UPGRADE", false) };
         var job = new QueueJob(_output, _clientMock.Object, "lidarr", true, rules);
 
         await job.Invoke();
@@ -200,7 +200,7 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
 
-        var rules = new List<QueueCleanupRule> { new("Not an upgrade for existing episode", false) };
+        var rules = new List<QueueCleanupRule> { new("NOT_QUALITY_UPGRADE", false) };
         var job = new QueueJob(_output, _clientMock.Object, "whisparr", true, rules);
 
         await job.Invoke();

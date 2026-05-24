@@ -858,18 +858,48 @@ instances:
             {
                 Sonarr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Sample", Action = "removeAndBlocklist" },
-                    new() { Match = "Not an upgrade", Action = "remove" }
+                    new() { Match = "SAMPLE", Action = "removeAndBlocklist" },
+                    new() { Match = "NOT_QUALITY_UPGRADE", Action = "remove" }
                 },
                 Radarr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Sample", Action = "removeAndBlocklist" }
+                    new() { Match = "SAMPLE", Action = "removeAndBlocklist" }
                 }
             }
         };
         var errors = YamlConfigLoader.Validate(config);
 
         Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_QueueCleanupRules_UnknownKey_Warns()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Sonarr = new List<QueueCleanupRuleConfig>
+                {
+                    new() { Match = "SOME_UNKNOWN_KEY", Action = "remove" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+        Assert.Contains(config.Warnings, w => w.Contains("not a known matcher key") && w.Contains("skipped"));
     }
 
     [Fact]
@@ -950,7 +980,7 @@ instances:
             {
                 Sonarr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Sample", Action = "delete" }
+                    new() { Match = "SAMPLE", Action = "delete" }
                 }
             }
         };
@@ -979,7 +1009,7 @@ instances:
             {
                 Sonarr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Sample", Action = "" }
+                    new() { Match = "SAMPLE", Action = "" }
                 }
             }
         };
@@ -1207,14 +1237,14 @@ instances:
       cron: '* * * * *'
 queueCleanupRules:
   lidarr:
-    - match: Not an upgrade for existing track file
+    - match: NOT_QUALITY_UPGRADE
       action: remove
-    - match: Sample
+    - match: SAMPLE
       action: removeAndBlocklist
   whisparr:
-    - match: Not an upgrade for existing episode
+    - match: NOT_QUALITY_UPGRADE
       action: remove
-    - match: Sample
+    - match: SAMPLE
       action: removeAndBlocklist
 ");
 
@@ -1222,10 +1252,10 @@ queueCleanupRules:
 
             Assert.NotNull(config.QueueCleanupRules);
             Assert.Equal(2, config.QueueCleanupRules!.Lidarr!.Count);
-            Assert.Equal("Not an upgrade for existing track file", config.QueueCleanupRules.Lidarr[0].Match);
+            Assert.Equal("NOT_QUALITY_UPGRADE", config.QueueCleanupRules.Lidarr[0].Match);
             Assert.Equal("remove", config.QueueCleanupRules.Lidarr[0].Action);
             Assert.Equal(2, config.QueueCleanupRules.Whisparr!.Count);
-            Assert.Equal("Not an upgrade for existing episode", config.QueueCleanupRules.Whisparr[0].Match);
+            Assert.Equal("NOT_QUALITY_UPGRADE", config.QueueCleanupRules.Whisparr[0].Match);
             Assert.Equal("remove", config.QueueCleanupRules.Whisparr[0].Action);
         }
         finally
@@ -1428,7 +1458,7 @@ queueCleanupRules:
             {
                 Lidarr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Sample", Action = "delete" }
+                    new() { Match = "SAMPLE", Action = "delete" }
                 }
             }
         };
@@ -1458,7 +1488,7 @@ queueCleanupRules:
             {
                 Lidarr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Sample", Action = "" }
+                    new() { Match = "SAMPLE", Action = "" }
                 }
             }
         };
@@ -1488,7 +1518,7 @@ queueCleanupRules:
             {
                 Lidarr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Valid", Action = "remove" },
+                    new() { Match = "SAMPLE", Action = "remove" },
                     new() { Match = "", Action = "remove" }
                 }
             }
@@ -1548,7 +1578,7 @@ queueCleanupRules:
             {
                 Whisparr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Sample", Action = "delete" }
+                    new() { Match = "SAMPLE", Action = "delete" }
                 }
             }
         };
@@ -1577,7 +1607,7 @@ queueCleanupRules:
             {
                 Whisparr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Sample", Action = "" }
+                    new() { Match = "SAMPLE", Action = "" }
                 }
             }
         };
@@ -1606,7 +1636,7 @@ queueCleanupRules:
             {
                 Whisparr = new List<QueueCleanupRuleConfig>
                 {
-                    new() { Match = "Valid", Action = "remove" },
+                    new() { Match = "SAMPLE", Action = "remove" },
                     new() { Match = "", Action = "remove" }
                 }
             }

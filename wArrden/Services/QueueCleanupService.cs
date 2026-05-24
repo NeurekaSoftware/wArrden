@@ -116,11 +116,6 @@ public class QueueCleanupService
                         return (rule.Match, rule.Blocklist);
                 }
             }
-            else
-            {
-                if (messages.Contains(rule.Match, StringComparison.OrdinalIgnoreCase))
-                    return (rule.Match, rule.Blocklist);
-            }
         }
         return null;
     }
