@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-05-23
+
+### Added
+- Add named matcher keys for queue cleanup rules with configurable actions
+- Add color-coded log output using ANSI escape codes
+
+### Changed
+- Rename log level markers from DBG/WRN/ERR to DEBUG/WARN/ERROR
+
+### Fixed
+- Fix crash when queue cleanup is scheduled for an instance type with no rules configured
+- Fix log output appearing out of order in Docker due to stdout/stderr interleaving
+
 ## [2.1.3] - 2026-05-23
 
 ### Changed
@@ -81,8 +94,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/2.1.3...HEAD
-[2.1.3]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.3
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/3.0.0...HEAD
+[3.0.0]: https://code.neureka.dev/warrden/warrden/releases/tag/3.0.0
+[2.1.3]: https://code.neureka.dev/warrden/warrden/compare/2.1.3...3.0.0
 [2.1.2]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.2
 [2.1.1]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.1
 [2.1.0]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.0
