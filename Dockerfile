@@ -15,7 +15,7 @@ ENV APP_VERSION=$APP_VERSION
 ENV PUID=$PUID
 ENV PGID=$PGID
 ENV PATH="/app/bin:$PATH"
-RUN apk add --no-cache su-exec sqlite-libs
+RUN apk add --no-cache su-exec sqlite-libs tzdata
 WORKDIR /app
 COPY --from=build /app/bin /app/bin
 # The bundled libe_sqlite3.so (from SQLitePCLRaw) targets glibc and fails on Alpine's musl.

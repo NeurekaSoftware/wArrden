@@ -330,14 +330,19 @@ static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
 {
     if (!string.IsNullOrWhiteSpace(tzId))
     {
+        // Strip Docker-style colon prefix (e.g. ":America/Los_Angeles")
+        if (tzId.StartsWith(':'))
+            tzId = tzId[1..];
+
         try
         {
             warning = null;
             return TimeZoneInfo.FindSystemTimeZoneById(tzId);
         }
-        catch
+        catch (Exception ex)
         {
             warning = $"Invalid timezone '{tzId}' — falling back to UTC";
+            Console.Error.WriteLine($"Warning: {warning}: {ex.Message}");
         }
     }
 

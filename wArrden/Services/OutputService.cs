@@ -133,16 +133,6 @@ public class OutputService
         w.WriteLine($"{childPrefix} └─ {"whisparr".PadRight(LabelPad)}{whisparrCount} matcher(s)");
     }
 
-    private static TimeZoneInfo ResolveTimezone(string? tzId)
-    {
-        if (!string.IsNullOrWhiteSpace(tzId))
-        {
-            try { return TimeZoneInfo.FindSystemTimeZoneById(tzId); }
-            catch { }
-        }
-        return TimeZoneInfo.Utc;
-    }
-
     private static string GetTimezoneDisplayId(TimeZoneInfo tz, string? configuredId)
     {
         if (!string.IsNullOrWhiteSpace(configuredId))
