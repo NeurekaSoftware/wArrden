@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-05-24
+
+### Added
+- Validate instance API keys at startup, with automatic disable of unreachable instances
+
+### Changed
+- Reduce memory allocations across HTTP clients, search, and queue cleanup paths
+
+### Fixed
+- Route all log output through OutputService to prevent stdout/stderr interleaving in containers
+- Respect TZ environment variable for log timestamps, defaulting to UTC when unset
+- Install tzdata package in Docker Alpine image for timezone support
+- Restore invalid timezone warning display on startup
+- Remove double line break after config warnings in startup banner
+- Wrap SearchJob parameters to resolve dependency injection constructor ambiguity
+
 ## [3.0.0] - 2026-05-23
 
 ### Added
@@ -94,7 +110,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/3.0.0...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/3.1.0...HEAD
+[3.1.0]: https://code.neureka.dev/warrden/warrden/compare/3.0.0...3.1.0
 [3.0.0]: https://code.neureka.dev/warrden/warrden/releases/tag/3.0.0
 [2.1.3]: https://code.neureka.dev/warrden/warrden/compare/2.1.3...3.0.0
 [2.1.2]: https://code.neureka.dev/warrden/warrden/releases/tag/2.1.2
