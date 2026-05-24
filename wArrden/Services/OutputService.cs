@@ -61,16 +61,14 @@ public class OutputService
         if (config.Warnings.Count > 0)
         {
             w.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Error.WriteLine($"[{ts} WARN] [warden.config]");
+            Console.Error.WriteLine($"\x1b[33m[{ts} WARN] [warden.config]\x1b[0m");
             for (int i = 0; i < config.Warnings.Count; i++)
             {
                 var isLastWarning = i == config.Warnings.Count - 1;
                 var prefix = isLastWarning ? " └─" : " ├─";
-                Console.Error.WriteLine($"{prefix} {config.Warnings[i]}");
+                Console.Error.WriteLine($"\x1b[33m{prefix} {config.Warnings[i]}\x1b[0m");
             }
             Console.Error.WriteLine();
-            Console.ResetColor();
         }
 
         w.WriteLine();
@@ -210,32 +208,32 @@ public class OutputService
 
     private static void WriteLogLine(TextWriter writer, string level, string context, string message, string? detail)
     {
-        SetConsoleColor(level);
+        var color = AnsiColorForLevel(level);
         var ts = FormatTimestamp(DateTime.Now);
-        writer.WriteLine($"[{ts} {level}] [{context}]");
+
+        writer.WriteLine($"{color}[{ts} {level}] [{context}]\x1b[0m");
 
         if (detail is null)
         {
-            writer.WriteLine($" └─ {message}");
+            writer.WriteLine($"{color} └─ {message}\x1b[0m");
         }
         else
         {
-            writer.WriteLine($" ├─ {message}");
-            writer.WriteLine($" └─ {detail}");
+            writer.WriteLine($"{color} ├─ {message}\x1b[0m");
+            writer.WriteLine($"{color} └─ {detail}\x1b[0m");
         }
 
         writer.WriteLine();
-        Console.ResetColor();
     }
 
-    private static void SetConsoleColor(string level)
+    private static string AnsiColorForLevel(string level)
     {
-        Console.ForegroundColor = level switch
+        return level switch
         {
-            "DEBUG" => ConsoleColor.Gray,
-            "WARN" => ConsoleColor.Yellow,
-            "ERROR" => ConsoleColor.Red,
-            _ => Console.ForegroundColor
+            "DEBUG" => "\x1b[90m",
+            "WARN" => "\x1b[33m",
+            "ERROR" => "\x1b[31m",
+            _ => string.Empty
         };
     }
 
