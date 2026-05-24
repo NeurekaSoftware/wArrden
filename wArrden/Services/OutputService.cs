@@ -61,14 +61,14 @@ public class OutputService
         if (config.Warnings.Count > 0)
         {
             w.WriteLine();
-            Console.Error.WriteLine($"\x1b[33m[{ts} WARN] [warden.config]\x1b[0m");
+            w.WriteLine($"\x1b[33m[{ts} WARN] [warden.config]\x1b[0m");
             for (int i = 0; i < config.Warnings.Count; i++)
             {
                 var isLastWarning = i == config.Warnings.Count - 1;
                 var prefix = isLastWarning ? " └─" : " ├─";
-                Console.Error.WriteLine($"\x1b[33m{prefix} {config.Warnings[i]}\x1b[0m");
+                w.WriteLine($"{prefix} {config.Warnings[i]}");
             }
-            Console.Error.WriteLine();
+            w.WriteLine();
         }
 
         w.WriteLine();
@@ -215,12 +215,12 @@ public class OutputService
 
         if (detail is null)
         {
-            writer.WriteLine($"{color} └─ {message}\x1b[0m");
+            writer.WriteLine($" └─ {message}");
         }
         else
         {
-            writer.WriteLine($"{color} ├─ {message}\x1b[0m");
-            writer.WriteLine($"{color} └─ {detail}\x1b[0m");
+            writer.WriteLine($" ├─ {message}");
+            writer.WriteLine($" └─ {detail}");
         }
 
         writer.WriteLine();
