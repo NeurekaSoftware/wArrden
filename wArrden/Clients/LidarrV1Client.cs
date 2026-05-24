@@ -141,4 +141,17 @@ public class LidarrV1Client : IArrClient
 
     Task IArrClient.TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct)
         => throw new NotSupportedException("Lidarr does not support movie search.");
+
+    public async Task<bool> ValidateApiKeyAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var response = await _http.GetAsync($"{_baseUrl}/api", ct);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

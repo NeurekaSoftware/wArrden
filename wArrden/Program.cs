@@ -93,6 +93,40 @@ using (var scope = host.Services.CreateScope())
     await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL");
 }
 
+var disabledInstances = new HashSet<string>();
+
+foreach (var inst in config.Instances)
+{
+    IArrClient? validationClient = null;
+    try
+    {
+        validationClient = inst switch
+        {
+            { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
+        };
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var isValid = await validationClient.ValidateApiKeyAsync(cts.Token);
+        if (!isValid)
+        {
+            config.Warnings.Add($"API key validation failed for {inst.Name} ({inst.Url}) — instance disabled.");
+            disabledInstances.Add(inst.InstanceKey);
+        }
+    }
+    catch (Exception ex)
+    {
+        config.Warnings.Add($"Could not connect to {inst.Name} ({inst.Url}): {ex.Message} — instance disabled.");
+        disabledInstances.Add(inst.InstanceKey);
+    }
+    finally
+    {
+        validationClient?.Dispose();
+    }
+}
+
 var schedulerOutput = host.Services.GetRequiredService<OutputService>();
 var clients = new List<IArrClient>(config.Instances.Count);
 
@@ -100,6 +134,9 @@ host.Services.UseScheduler(scheduler =>
 {
     foreach (var inst in config.Instances)
     {
+        if (disabledInstances.Contains(inst.InstanceKey))
+            continue;
+
         var client = inst switch
         {
             { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),

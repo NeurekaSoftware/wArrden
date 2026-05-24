@@ -138,4 +138,17 @@ public class SonarrV3Client : IArrClient
 
     Task IArrClient.TriggerArtistSearchAsync(int artistId, CancellationToken ct)
         => throw new NotSupportedException("Sonarr does not support artist search.");
+
+    public async Task<bool> ValidateApiKeyAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var response = await _http.GetAsync($"{_baseUrl}/api", ct);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

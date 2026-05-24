@@ -22,4 +22,5 @@ public interface IArrClient : IDisposable
     Task TriggerArtistSearchAsync(int artistId, CancellationToken ct);
     Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct);
     Task<IReadOnlyList<IndexerResource>> GetIndexersAsync(CancellationToken ct);
+    Task<bool> ValidateApiKeyAsync(CancellationToken ct);
 }
