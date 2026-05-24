@@ -2,7 +2,7 @@ name: warrden
 
 services:
   warrden:
-    image: code.neureka.dev/warrden/warrden:latest
+    image: code.neureka.dev/warrden/warrden:3
     container_name: warrden
     environment:
       - APP_VERSION=latest
