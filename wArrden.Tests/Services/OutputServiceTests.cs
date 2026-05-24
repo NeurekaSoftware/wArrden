@@ -73,7 +73,7 @@ public class OutputServiceTests
     public void WriteQueueResult_NoMatches_ShowsNoBlocked()
     {
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
-            Array.Empty<(string, string, bool)>(), false);
+            Array.Empty<(int, string, string, bool)>(), false);
 
         var output = _writer.ToString();
         Assert.Contains("Total Queue", output);
@@ -84,9 +84,9 @@ public class OutputServiceTests
     [Fact]
     public void WriteQueueResult_WithMatches_Live()
     {
-        var items = new List<(string, string, bool)>
+        var items = new List<(int, string, string, bool)>
         {
-            ("The Boys (2019) - S01E01", "NOT_AN_UPGRADE", false)
+            (0, "The Boys (2019) - S01E01", "NOT_AN_UPGRADE", false)
         };
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 1,
@@ -104,9 +104,9 @@ public class OutputServiceTests
     [Fact]
     public void WriteQueueResult_WithMatches_DryRun()
     {
-        var items = new List<(string, string, bool)>
+        var items = new List<(int, string, string, bool)>
         {
-            ("Test Item", "SAMPLE", false)
+            (0, "Test Item", "SAMPLE", false)
         };
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 2, 1,
@@ -119,9 +119,9 @@ public class OutputServiceTests
     [Fact]
     public void WriteQueueResult_WithBlocklistMatches_Live()
     {
-        var items = new List<(string, string, bool)>
+        var items = new List<(int, string, string, bool)>
         {
-            ("The Boys (2019) - S01E01", "No files found are eligible", true)
+            (0, "The Boys (2019) - S01E01", "No files found are eligible", true)
         };
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 1,
@@ -134,9 +134,9 @@ public class OutputServiceTests
     [Fact]
     public void WriteQueueResult_WithBlocklistMatches_DryRun()
     {
-        var items = new List<(string, string, bool)>
+        var items = new List<(int, string, string, bool)>
         {
-            ("Test Item", "No files found are eligible", true)
+            (0, "Test Item", "No files found are eligible", true)
         };
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 2, 1,
@@ -149,10 +149,10 @@ public class OutputServiceTests
     [Fact]
     public void WriteQueueResult_WithMixedActions_ShowsBoth()
     {
-        var items = new List<(string, string, bool)>
+        var items = new List<(int, string, string, bool)>
         {
-            ("Item One", "NOT_AN_UPGRADE", false),
-            ("Item Two", "No files found", true)
+            (0, "Item One", "NOT_AN_UPGRADE", false),
+            (0, "Item Two", "No files found", true)
         };
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 2,
@@ -165,7 +165,7 @@ public class OutputServiceTests
     [Fact]
     public void WriteQueueResult_Overflow_ShowsPlusMore()
     {
-        var items = new List<(string, string, bool)>(); // empty items, but matched > 0
+        var items = new List<(int, string, string, bool)>(); // empty items, but matched > 0
 
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 10, 5,
             items, false);
@@ -504,7 +504,7 @@ public class OutputServiceTests
     {
         _output.MinimumLevel = LogLevel.Warning;
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
-            Array.Empty<(string, string, bool)>(), false);
+            Array.Empty<(int, string, string, bool)>(), false);
 
         var output = _writer.ToString();
         Assert.Empty(output);
@@ -515,7 +515,7 @@ public class OutputServiceTests
     {
         _output.MinimumLevel = LogLevel.Info;
         _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
-            Array.Empty<(string, string, bool)>(), false);
+            Array.Empty<(int, string, string, bool)>(), false);
 
         var output = _writer.ToString();
         Assert.Contains("INFO", output);

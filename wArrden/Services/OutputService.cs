@@ -34,25 +34,18 @@ public class OutputService
 
         w.WriteLine($"[{ts} INFO] [system.startup]");
 
-        var sections = new List<Action<string, string>>(config.Instances.Count + 2);
-        foreach (var inst in config.Instances)
+        for (int i = 0; i < config.Instances.Count + 2; i++)
         {
-            var instCopy = inst;
-            sections.Add((rootPrefix, childPrefix) =>
-                WriteInstanceSection(w, rootPrefix, childPrefix, instCopy));
-        }
-        sections.Add((rootPrefix, childPrefix) =>
-            WriteRuntimeSection(w, rootPrefix, childPrefix, opts, tz, now));
-        sections.Add((rootPrefix, childPrefix) =>
-            WriteQueueCleanupRulesSection(w, rootPrefix, childPrefix, config));
-
-        for (int i = 0; i < sections.Count; i++)
-        {
-            var isLast = i == sections.Count - 1;
+            var isLast = i == config.Instances.Count + 1;
             var rootPrefix = isLast ? " └─" : " ├─";
             var childPrefix = isLast ? "    " : " │  ";
 
-            sections[i](rootPrefix, childPrefix);
+            if (i < config.Instances.Count)
+                WriteInstanceSection(w, rootPrefix, childPrefix, config.Instances[i]);
+            else if (i == config.Instances.Count)
+                WriteRuntimeSection(w, rootPrefix, childPrefix, opts, tz, now);
+            else
+                WriteQueueCleanupRulesSection(w, rootPrefix, childPrefix, config);
 
             if (!isLast)
                 w.WriteLine(" │");
@@ -160,10 +153,17 @@ public class OutputService
 
     private static string GetTimeZoneAbbreviation(string displayName)
     {
-        return new string(displayName
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Select(w => char.ToUpper(w[0]))
-            .ToArray());
+        var span = displayName.AsSpan();
+        Span<char> buffer = stackalloc char[8];
+        var pos = 0;
+        foreach (var range in span.Split(' '))
+        {
+            if (pos >= buffer.Length) break;
+            var word = span[range];
+            if (!word.IsEmpty)
+                buffer[pos++] = char.ToUpper(word[0]);
+        }
+        return new string(buffer[..pos]);
     }
 
     private static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
@@ -238,7 +238,7 @@ public class OutputService
     }
 
     public void WriteQueueResult(DateTime timestamp, string instance, int totalQueue, int blocked, int matched,
-        IReadOnlyList<(string Title, string Rule, bool Blocklist)> items, bool isDryRun)
+        IReadOnlyList<(int Id, string Title, string Rule, bool Blocklist)> items, bool isDryRun)
     {
         if (!ShouldLog(LogLevel.Info)) return;
 
@@ -256,12 +256,16 @@ public class OutputService
         {
             var removedCount = items.Count(i => !i.Blocklist);
             var blocklistedCount = items.Count(i => i.Blocklist);
-            var parts = new List<string>();
-            if (removedCount > 0)
-                parts.Add(isDryRun ? $"Would remove {removedCount}" : $"Removed {removedCount}");
-            if (blocklistedCount > 0)
-                parts.Add(isDryRun ? $"Would blocklist {blocklistedCount}" : $"Blocklisted {blocklistedCount}");
-            var resultText = string.Join(", ", parts);
+            var resultText = (isDryRun, removedCount > 0, blocklistedCount > 0) switch
+            {
+                (true, true, true) => $"Would remove {removedCount}, Would blocklist {blocklistedCount}",
+                (false, true, true) => $"Removed {removedCount}, Blocklisted {blocklistedCount}",
+                (true, true, false) => $"Would remove {removedCount}",
+                (false, true, false) => $"Removed {removedCount}",
+                (true, false, true) => $"Would blocklist {blocklistedCount}",
+                (false, false, true) => $"Blocklisted {blocklistedCount}",
+                _ => ""
+            };
 
             Out.WriteLine(" ├─ Stats:");
             Out.WriteLine($" │  • Total Queue:   {totalQueue}");
@@ -269,13 +273,18 @@ public class OutputService
             Out.WriteLine($" │  • Matched:       {matched}");
             Out.WriteLine($" │  • Result:        {resultText}");
             Out.WriteLine(" └─ Results:");
-            foreach (var (title, rule, _) in items)
+            foreach (var (_, title, rule, _) in items)
                 Out.WriteLine($"    • {title}  {rule}");
             if (items.Count < matched)
                 Out.WriteLine($"    +{matched - items.Count} more");
         }
 
         Out.WriteLine();
+    }
+
+    public SearchOutputWriter CreateSearchWriter(string instance, string job, int maxResults)
+    {
+        return new SearchOutputWriter(instance, job, maxResults, Out, ShouldLog(LogLevel.Info));
     }
 
     public virtual async Task RunSearchWithOutput(string instance, string job, int maxResults,

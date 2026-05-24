@@ -32,7 +32,7 @@ public class QueueCleanupService
         if (rules is null || rules.Count == 0)
         {
             _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
-                Array.Empty<(string, string, bool)>(), _isDryRun);
+                Array.Empty<(int, string, string, bool)>(), _isDryRun);
             return 0;
         }
 
@@ -45,7 +45,7 @@ public class QueueCleanupService
         if (blocked.Count == 0)
         {
             _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
-                Array.Empty<(string, string, bool)>(), _isDryRun);
+                Array.Empty<(int, string, string, bool)>(), _isDryRun);
             return 0;
         }
 
@@ -78,10 +78,10 @@ public class QueueCleanupService
 
         _output.WriteDebug($"{instanceKey}.queue", $"Matched {matched.Count} items to cleanup rules");
 
-        matched.Sort((a, b) => string.Compare(a.Title, b.Title, StringComparison.OrdinalIgnoreCase));
+        matched.Sort(CompareByTitle);
 
         _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, matched.Count,
-            matched.Select(m => (m.Title, m.Rule, m.Blocklist)).ToList(), _isDryRun);
+            matched, _isDryRun);
         return matched.Count;
     }
 
@@ -119,6 +119,10 @@ public class QueueCleanupService
 
         return null;
     }
+
+    private static int CompareByTitle((int Id, string Title, string Rule, bool Blocklist) a,
+        (int Id, string Title, string Rule, bool Blocklist) b)
+        => string.Compare(a.Title, b.Title, StringComparison.OrdinalIgnoreCase);
 
     internal static string GetTitle(QueueResource item)
     {

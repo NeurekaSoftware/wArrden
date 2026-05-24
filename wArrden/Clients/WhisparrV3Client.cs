@@ -33,7 +33,7 @@ public class WhisparrV3Client : IArrClient
         using var response = await _http.GetAsync(
             $"{_baseUrl}/api/v3/queue?includeUnknownSeriesItems=true&includeSeries=true&includeEpisode=true", ct);
         response.EnsureSuccessStatusCode();
-        var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<QueueResource>>(cancellationToken: ct);
+        var paging = await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.WantedPagingResourceQueueResource, ct);
         return (IReadOnlyList<QueueResource>?)paging?.Records ?? Array.Empty<QueueResource>();
     }
 
@@ -63,7 +63,7 @@ public class WhisparrV3Client : IArrClient
 
     private async Task<IReadOnlyList<WantedEpisodeResource>> FetchAllWantedPagesAsync(string type, CancellationToken ct)
     {
-        var all = new List<WantedEpisodeResource>();
+        var all = new List<WantedEpisodeResource>(capacity: 100);
         var page = 1;
         const int pageSize = 100;
 
@@ -73,12 +73,9 @@ public class WhisparrV3Client : IArrClient
             using var response = await _http.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
-            var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<WantedEpisodeResource>>(cancellationToken: ct);
+            var paging = await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.WantedPagingResourceWantedEpisodeResource, ct);
             if (paging?.Records is { Count: > 0 })
-            {
-                all.Capacity = paging.TotalRecords;
                 all.AddRange(paging.Records);
-            }
 
             if (paging == null || all.Count >= paging.TotalRecords)
                 break;
@@ -86,7 +83,6 @@ public class WhisparrV3Client : IArrClient
             page++;
         }
 
-        all.RemoveAll(e => !e.Monitored);
         return all;
     }
 
@@ -118,7 +114,7 @@ public class WhisparrV3Client : IArrClient
     {
         using var response = await _http.GetAsync($"{_baseUrl}/api/v3/indexer", ct);
         response.EnsureSuccessStatusCode();
-        return (IReadOnlyList<IndexerResource>?)await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct) ?? Array.Empty<IndexerResource>();
+        return (IReadOnlyList<IndexerResource>?)await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.IndexerResourceArray, ct) ?? Array.Empty<IndexerResource>();
     }
 
     public async Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct)

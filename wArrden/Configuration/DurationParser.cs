@@ -19,15 +19,16 @@ internal static partial class DurationParser
 
         foreach (Match match in matches)
         {
-            var value = int.Parse(match.Groups[1].Value);
-            var unit = match.Groups[2].Value.ToLowerInvariant();
+            var valueSpan = match.Groups[1].ValueSpan;
+            var value = int.Parse(valueSpan);
+            var unit = char.ToLowerInvariant(match.Groups[2].ValueSpan[0]);
 
             span = unit switch
             {
-                "d" => span.Add(TimeSpan.FromDays(value)),
-                "h" => span.Add(TimeSpan.FromHours(value)),
-                "m" => span.Add(TimeSpan.FromMinutes(value)),
-                "s" => span.Add(TimeSpan.FromSeconds(value)),
+                'd' => span.Add(TimeSpan.FromDays(value)),
+                'h' => span.Add(TimeSpan.FromHours(value)),
+                'm' => span.Add(TimeSpan.FromMinutes(value)),
+                's' => span.Add(TimeSpan.FromSeconds(value)),
                 _ => throw new ArgumentException($"Unknown duration unit: '{unit}'")
             };
         }

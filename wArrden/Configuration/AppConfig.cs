@@ -34,7 +34,8 @@ public class InstanceConfig
     public JobConfig? UpgradeSearch { get; set; }
     public JobConfig? QueueCleanup { get; set; }
 
-    public string InstanceKey => Name.ToLowerInvariant();
+    private string? _instanceKey;
+    public string InstanceKey => _instanceKey ??= Name.ToLowerInvariant();
     public bool IsSonarr => string.Equals(Type, "sonarr", StringComparison.OrdinalIgnoreCase);
     public bool IsRadarr => string.Equals(Type, "radarr", StringComparison.OrdinalIgnoreCase);
     public bool IsLidarr => string.Equals(Type, "lidarr", StringComparison.OrdinalIgnoreCase);

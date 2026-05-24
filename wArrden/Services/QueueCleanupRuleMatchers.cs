@@ -121,7 +121,7 @@ public static class QueueCleanupRuleMatchers
     public static string[]? GetPatterns(string key, string arrType)
     {
         if (Registry.TryGetValue(key, out var arrDict)
-            && arrDict.TryGetValue(arrType.ToLowerInvariant(), out var patterns))
+            && arrDict.TryGetValue(arrType, out var patterns))
         {
             return patterns;
         }

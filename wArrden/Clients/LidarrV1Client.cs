@@ -33,7 +33,7 @@ public class LidarrV1Client : IArrClient
         using var response = await _http.GetAsync(
             $"{_baseUrl}/api/v1/queue?includeUnknownArtistItems=true&includeArtist=true&includeAlbum=true", ct);
         response.EnsureSuccessStatusCode();
-        var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<QueueResource>>(cancellationToken: ct);
+        var paging = await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.WantedPagingResourceQueueResource, ct);
         return (IReadOnlyList<QueueResource>?)paging?.Records ?? Array.Empty<QueueResource>();
     }
 
@@ -55,7 +55,7 @@ public class LidarrV1Client : IArrClient
     {
         using var response = await _http.GetAsync($"{_baseUrl}/api/v1/indexer", ct);
         response.EnsureSuccessStatusCode();
-        return (IReadOnlyList<IndexerResource>?)await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct) ?? Array.Empty<IndexerResource>();
+        return (IReadOnlyList<IndexerResource>?)await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.IndexerResourceArray, ct) ?? Array.Empty<IndexerResource>();
     }
 
     public async Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct)
@@ -76,7 +76,7 @@ public class LidarrV1Client : IArrClient
 
     private async Task<IReadOnlyList<WantedAlbumResource>> FetchAllWantedAlbumPagesAsync(string type, CancellationToken ct)
     {
-        var all = new List<WantedAlbumResource>();
+        var all = new List<WantedAlbumResource>(capacity: 100);
         var page = 1;
         const int pageSize = 100;
 
@@ -86,12 +86,9 @@ public class LidarrV1Client : IArrClient
             using var response = await _http.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
-            var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<WantedAlbumResource>>(cancellationToken: ct);
+            var paging = await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.WantedPagingResourceWantedAlbumResource, ct);
             if (paging?.Records is { Count: > 0 })
-            {
-                all.Capacity = paging.TotalRecords;
                 all.AddRange(paging.Records);
-            }
 
             if (paging == null || all.Count >= paging.TotalRecords)
                 break;
@@ -99,7 +96,6 @@ public class LidarrV1Client : IArrClient
             page++;
         }
 
-        all.RemoveAll(a => !a.Monitored);
         return all;
     }
 

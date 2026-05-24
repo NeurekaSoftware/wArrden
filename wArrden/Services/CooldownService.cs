@@ -8,7 +8,7 @@ public interface ICooldownService
 {
     Task CleanExpiredAsync(string instance, string category, TimeSpan cooldown, CancellationToken ct);
     Task<HashSet<int>> GetCooldownIdsAsync(string instance, string category, CancellationToken ct);
-    Task MarkSearchedAsync(string instance, string category, int[] itemIds, CancellationToken ct);
+    Task MarkSearchedAsync(string instance, string category, IReadOnlyList<int> itemIds, CancellationToken ct);
     Task<int> ClearAllAsync(string category, string? instance, CancellationToken ct);
 }
 
@@ -42,17 +42,19 @@ public class CooldownService : ICooldownService
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<WardenDbContext>();
 
-        var ids = await db.CooldownEntries
+        var ids = new HashSet<int>();
+        await foreach (var itemId in db.CooldownEntries
             .Where(e => e.Instance == instance && e.Category == category)
             .Select(e => e.ItemId)
-            .ToListAsync(ct);
+            .AsAsyncEnumerable())
+            ids.Add(itemId);
 
         _output.WriteDebug($"{instance.ToLowerInvariant()}.cooldown", $"{ids.Count} items on cooldown for {category}");
 
-        return new HashSet<int>(ids);
+        return ids;
     }
 
-    public async Task MarkSearchedAsync(string instance, string category, int[] itemIds, CancellationToken ct)
+    public async Task MarkSearchedAsync(string instance, string category, IReadOnlyList<int> itemIds, CancellationToken ct)
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<WardenDbContext>();
@@ -69,7 +71,7 @@ public class CooldownService : ICooldownService
         await db.CooldownEntries.AddRangeAsync(entries, ct);
         await db.SaveChangesAsync(ct);
 
-        _output.WriteDebug($"{instance.ToLowerInvariant()}.cooldown", $"Marked {itemIds.Length} items as searched for {category}");
+        _output.WriteDebug($"{instance.ToLowerInvariant()}.cooldown", $"Marked {itemIds.Count} items as searched for {category}");
     }
 
     public async Task<int> ClearAllAsync(string category, string? instance, CancellationToken ct)

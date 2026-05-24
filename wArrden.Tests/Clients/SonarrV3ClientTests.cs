@@ -34,13 +34,12 @@ public class SonarrV3ClientTests
     }
 
     [Fact]
-    public async Task GetWantedMissingEpisodes_FiltersOutUnmonitoredItems()
+    public async Task GetWantedMissingEpisodes_UsesServerSideMonitoringFilter()
     {
         var json = BuildEpisodePage(new[]
         {
             (1, "Monitored Ep", true),
-            (2, "Unmonitored Ep", false),
-            (3, "Another Monitored", true)
+            (2, "Another Monitored", true)
         });
         var handler = new FakeHttpMessageHandler(json);
         var client = new SonarrV3Client("http://localhost", "key", "Sonarr", handler);
@@ -49,18 +48,14 @@ public class SonarrV3ClientTests
 
         Assert.Equal(2, result.Count);
         Assert.All(result, e => Assert.True(e.Monitored));
-        Assert.Contains(result, e => e.Id == 1);
-        Assert.Contains(result, e => e.Id == 3);
-        Assert.DoesNotContain(result, e => e.Id == 2);
     }
 
     [Fact]
-    public async Task GetWantedCutoffEpisodes_FiltersOutUnmonitoredItems()
+    public async Task GetWantedCutoffEpisodes_UsesServerSideMonitoringFilter()
     {
         var json = BuildEpisodePage(new[]
         {
-            (1, "Monitored Ep", true),
-            (2, "Unmonitored Ep", false)
+            (1, "Monitored Ep", true)
         });
         var handler = new FakeHttpMessageHandler(json);
         var client = new SonarrV3Client("http://localhost", "key", "Sonarr", handler);
@@ -73,13 +68,9 @@ public class SonarrV3ClientTests
     }
 
     [Fact]
-    public async Task GetWantedMissingEpisodes_AllUnmonitored_ReturnsEmptyList()
+    public async Task GetWantedMissingEpisodes_EmptyPage_ReturnsEmptyResults()
     {
-        var json = BuildEpisodePage(new[]
-        {
-            (1, "Unmonitored 1", false),
-            (2, "Unmonitored 2", false)
-        });
+        var json = EmptyEpisodePageJson;
         var handler = new FakeHttpMessageHandler(json);
         var client = new SonarrV3Client("http://localhost", "key", "Sonarr", handler);
 

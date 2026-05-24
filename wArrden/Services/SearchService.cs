@@ -17,94 +17,82 @@ public class SearchService
 
     public virtual async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
-            async progress =>
-            {
-                if (string.Equals(searchType, "season", StringComparison.OrdinalIgnoreCase))
-                {
-                    await RunSeasonSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                        () => client.GetWantedMissingEpisodesAsync(ct), indexerNames, progress, ct);
-                }
-                else
-                {
-                    await RunEpisodeSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                        () => client.GetWantedMissingEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), indexerNames, progress, ct);
-                }
-            });
+        var progress = _output.CreateSearchWriter(client.Instance, "Missing Search", maxResults);
+        progress.WriteHeader();
+        if (string.Equals(searchType, "season", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunSeasonSearch(client, "Missing", cooldown, maxResults, isDryRun,
+                () => client.GetWantedMissingEpisodesAsync(ct), indexerNames, progress, ct);
+        }
+        else
+        {
+            await RunEpisodeSearch(client, "Missing", cooldown, maxResults, isDryRun,
+                () => client.GetWantedMissingEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), indexerNames, progress, ct);
+        }
     }
 
     public virtual async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
-            async progress =>
-            {
-                if (string.Equals(searchType, "season", StringComparison.OrdinalIgnoreCase))
-                {
-                    await RunSeasonSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                        () => client.GetWantedCutoffEpisodesAsync(ct), indexerNames, progress, ct);
-                }
-                else
-                {
-                    await RunEpisodeSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                        () => client.GetWantedCutoffEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), indexerNames, progress, ct);
-                }
-            });
+        var progress = _output.CreateSearchWriter(client.Instance, "Upgrade Search", maxResults);
+        progress.WriteHeader();
+        if (string.Equals(searchType, "season", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunSeasonSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+                () => client.GetWantedCutoffEpisodesAsync(ct), indexerNames, progress, ct);
+        }
+        else
+        {
+            await RunEpisodeSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+                () => client.GetWantedCutoffEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), indexerNames, progress, ct);
+        }
     }
 
     public virtual async Task SearchMissingMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
-            async progress =>
-            {
-                await RunMovieSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                    () => client.GetWantedMissingMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), indexerNames, progress, ct);
-            });
+        var progress = _output.CreateSearchWriter(client.Instance, "Missing Search", maxResults);
+        progress.WriteHeader();
+        await RunMovieSearch(client, "Missing", cooldown, maxResults, isDryRun,
+            () => client.GetWantedMissingMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), indexerNames, progress, ct);
     }
 
     public virtual async Task SearchUpgradeMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
-            async progress =>
-            {
-                await RunMovieSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                    () => client.GetWantedCutoffMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), indexerNames, progress, ct);
-            });
+        var progress = _output.CreateSearchWriter(client.Instance, "Upgrade Search", maxResults);
+        progress.WriteHeader();
+        await RunMovieSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+            () => client.GetWantedCutoffMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), indexerNames, progress, ct);
     }
 
     public virtual async Task SearchMissingAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
-            async progress =>
-            {
-                if (string.Equals(searchType, "artist", StringComparison.OrdinalIgnoreCase))
-                {
-                    await RunArtistSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                        () => client.GetWantedMissingAlbumsAsync(ct), indexerNames, progress, ct);
-                }
-                else
-                {
-                    await RunAlbumSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                        () => client.GetWantedMissingAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, progress, ct);
-                }
-            });
+        var progress = _output.CreateSearchWriter(client.Instance, "Missing Search", maxResults);
+        progress.WriteHeader();
+        if (string.Equals(searchType, "artist", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunArtistSearch(client, "Missing", cooldown, maxResults, isDryRun,
+                () => client.GetWantedMissingAlbumsAsync(ct), indexerNames, progress, ct);
+        }
+        else
+        {
+            await RunAlbumSearch(client, "Missing", cooldown, maxResults, isDryRun,
+                () => client.GetWantedMissingAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, progress, ct);
+        }
     }
 
     public virtual async Task SearchUpgradeAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
-        await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
-            async progress =>
-            {
-                if (string.Equals(searchType, "artist", StringComparison.OrdinalIgnoreCase))
-                {
-                    await RunArtistSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                        () => client.GetWantedCutoffAlbumsAsync(ct), indexerNames, progress, ct);
-                }
-                else
-                {
-                    await RunAlbumSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                        () => client.GetWantedCutoffAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, progress, ct);
-                }
-            });
+        var progress = _output.CreateSearchWriter(client.Instance, "Upgrade Search", maxResults);
+        progress.WriteHeader();
+        if (string.Equals(searchType, "artist", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunArtistSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+                () => client.GetWantedCutoffAlbumsAsync(ct), indexerNames, progress, ct);
+        }
+        else
+        {
+            await RunAlbumSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
+                () => client.GetWantedCutoffAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, progress, ct);
+        }
     }
 
     private async Task RunEpisodeSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
@@ -134,7 +122,7 @@ public class SearchService
         foreach (var e in wanted)
             if (!cooldownIds.Contains(e.Id))
                 eligible.Add(e);
-        Shuffle(eligible);
+        Shuffle(eligible, maxResults);
         var selected = eligible
             .Take(maxResults)
             .OrderBy(e => e.Series?.Title ?? "")
@@ -185,9 +173,7 @@ public class SearchService
             }
         }
 
-        var ids = new int[selected.Count];
-        for (int i = 0; i < selected.Count; i++)
-            ids[i] = selected[i].Id;
+        var ids = selected.Select(s => s.Id).ToArray();
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }
@@ -231,7 +217,7 @@ public class SearchService
         foreach (var s in seasons)
             if (!cooldownIds.Contains(s.SeasonKey))
                 eligible.Add(s);
-        Shuffle(eligible);
+        Shuffle(eligible, maxResults);
         var selected = eligible
             .Take(maxResults)
             .OrderBy(s => s.Series?.Title ?? "")
@@ -281,9 +267,7 @@ public class SearchService
             }
         }
 
-        var seasonKeys = new int[selected.Count];
-        for (int i = 0; i < selected.Count; i++)
-            seasonKeys[i] = selected[i].SeasonKey;
+        var seasonKeys = selected.Select(s => s.SeasonKey).ToArray();
         await _cooldown.MarkSearchedAsync(client.Instance, seasonCategory, seasonKeys, ct);
         progress.WriteTrailer();
     }
@@ -317,7 +301,7 @@ public class SearchService
         foreach (var a in wanted)
             if (!cooldownIds.Contains(a.Id))
                 eligible.Add(a);
-        Shuffle(eligible);
+        Shuffle(eligible, maxResults);
         var selected = eligible
             .Take(maxResults)
             .OrderBy(a => a.Artist?.ArtistName ?? "")
@@ -365,9 +349,7 @@ public class SearchService
             }
         }
 
-        var ids = new int[selected.Count];
-        for (int i = 0; i < selected.Count; i++)
-            ids[i] = selected[i].Id;
+        var ids = selected.Select(s => s.Id).ToArray();
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }
@@ -410,7 +392,7 @@ public class SearchService
         foreach (var a in artists)
             if (!cooldownIds.Contains(a.ArtistId))
                 eligible.Add(a);
-        Shuffle(eligible);
+        Shuffle(eligible, maxResults);
         var selected = eligible
             .Take(maxResults)
             .OrderBy(a => a.Artist?.ArtistName ?? "")
@@ -456,9 +438,7 @@ public class SearchService
             }
         }
 
-        var artistIds = new int[selected.Count];
-        for (int i = 0; i < selected.Count; i++)
-            artistIds[i] = selected[i].ArtistId;
+        var artistIds = selected.Select(s => s.ArtistId).ToArray();
         await _cooldown.MarkSearchedAsync(client.Instance, artistCategory, artistIds, ct);
         progress.WriteTrailer();
     }
@@ -492,7 +472,7 @@ public class SearchService
         foreach (var m in wanted)
             if (!cooldownIds.Contains(m.Id))
                 eligible.Add(m);
-        Shuffle(eligible);
+        Shuffle(eligible, maxResults);
         var selected = eligible
             .Take(maxResults)
             .OrderBy(m => m.Title ?? "")
@@ -541,9 +521,7 @@ public class SearchService
             }
         }
 
-        var ids = new int[selected.Count];
-        for (int i = 0; i < selected.Count; i++)
-            ids[i] = selected[i].Id;
+        var ids = selected.Select(s => s.Id).ToArray();
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }
@@ -561,12 +539,13 @@ public class SearchService
             configuredNames.Contains(i.Name));
     }
 
-    private static void Shuffle<T>(List<T> list)
+    private static void Shuffle<T>(List<T> list, int count)
     {
         var rng = Random.Shared;
-        for (int i = list.Count - 1; i > 0; i--)
+        var n = Math.Min(count, list.Count);
+        for (int i = 0; i < n; i++)
         {
-            var j = rng.Next(i + 1);
+            var j = rng.Next(i, list.Count);
             (list[i], list[j]) = (list[j], list[i]);
         }
     }

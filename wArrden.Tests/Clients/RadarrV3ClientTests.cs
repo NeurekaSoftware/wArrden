@@ -34,13 +34,12 @@ public class RadarrV3ClientTests
     }
 
     [Fact]
-    public async Task GetWantedMissingMovies_FiltersOutUnmonitoredItems()
+    public async Task GetWantedMissingMovies_UsesServerSideMonitoringFilter()
     {
         var json = BuildMoviePage(new[]
         {
             (1, "Monitored Movie", true, 2020),
-            (2, "Unmonitored Movie", false, 2021),
-            (3, "Another Monitored", true, 2022)
+            (2, "Another Monitored", true, 2022)
         });
         var handler = new FakeHttpMessageHandler(json);
         var client = new RadarrV3Client("http://localhost", "key", "Radarr", handler);
@@ -49,18 +48,14 @@ public class RadarrV3ClientTests
 
         Assert.Equal(2, result.Count);
         Assert.All(result, m => Assert.True(m.Monitored));
-        Assert.Contains(result, m => m.Id == 1);
-        Assert.Contains(result, m => m.Id == 3);
-        Assert.DoesNotContain(result, m => m.Id == 2);
     }
 
     [Fact]
-    public async Task GetWantedCutoffMovies_FiltersOutUnmonitoredItems()
+    public async Task GetWantedCutoffMovies_UsesServerSideMonitoringFilter()
     {
         var json = BuildMoviePage(new[]
         {
-            (1, "Monitored Movie", true, 2020),
-            (2, "Unmonitored Movie", false, 2021)
+            (1, "Monitored Movie", true, 2020)
         });
         var handler = new FakeHttpMessageHandler(json);
         var client = new RadarrV3Client("http://localhost", "key", "Radarr", handler);
@@ -73,13 +68,9 @@ public class RadarrV3ClientTests
     }
 
     [Fact]
-    public async Task GetWantedMissingMovies_AllUnmonitored_ReturnsEmptyList()
+    public async Task GetWantedMissingMovies_EmptyPage_ReturnsEmptyResults()
     {
-        var json = BuildMoviePage(new[]
-        {
-            (1, "Unmonitored 1", false, 2020),
-            (2, "Unmonitored 2", false, 2021)
-        });
+        var json = EmptyMoviePageJson;
         var handler = new FakeHttpMessageHandler(json);
         var client = new RadarrV3Client("http://localhost", "key", "Radarr", handler);
 
