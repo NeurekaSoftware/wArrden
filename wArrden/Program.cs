@@ -43,6 +43,11 @@ var logLevelLabel = config.LogLevel ?? "info";
 startupOutput.WriteDebug("warden.config", $"Loaded config from {configPath}");
 startupOutput.WriteDebug("warden.config", $"Log level set to {logLevelLabel}");
 
+var startupTimeZone = ResolveTimezone(opts.Timezone, out var tzWarning);
+if (tzWarning is not null)
+    config.Warnings.Add(tzWarning);
+startupOutput.TimeZone = startupTimeZone;
+
 var dbPath = Path.GetFullPath(opts.DatabasePath);
 var dbDir = Path.GetDirectoryName(dbPath);
 if (dbDir is not null)
@@ -81,7 +86,7 @@ builder.Services.AddDbContextPool<WardenDbContext>(o => o.UseSqlite($"Data Sourc
 builder.Services.AddSingleton(opts);
 builder.Services.AddScheduler();
 builder.Services.AddSingleton<ICooldownService, CooldownService>();
-builder.Services.AddSingleton(new OutputService { MinimumLevel = ParseLogLevel(config.LogLevel) });
+builder.Services.AddSingleton(new OutputService { MinimumLevel = ParseLogLevel(config.LogLevel), TimeZone = startupTimeZone });
 builder.Services.AddSingleton<SearchService>();
 
 var host = builder.Build();
@@ -204,7 +209,7 @@ lifetime.ApplicationStopping.Register(() =>
         client.Dispose();
 });
 
-OutputService.WriteBanner(config, opts);
+OutputService.WriteBanner(config, opts, startupTimeZone);
 
 await host.RunAsync();
 
@@ -286,7 +291,7 @@ static async Task RunClearCooldownsCommand(string dbPath, string category, List<
         output.WriteDebug($"cli.{targets[0].Name.ToLowerInvariant()}.clear", $"Cleared {count} cooldown entries for {inst.Name}");
     }
 
-    var tz = ResolveTimezone(opts.Timezone);
+    var tz = ResolveTimezone(opts.Timezone, out _);
     var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
     var ts = FormatTimestamp(now);
 
@@ -321,14 +326,23 @@ static async Task RunClearCooldownsCommand(string dbPath, string category, List<
     Console.WriteLine();
 }
 
-static TimeZoneInfo ResolveTimezone(string? tzId)
+static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
 {
     if (!string.IsNullOrWhiteSpace(tzId))
     {
-        try { return TimeZoneInfo.FindSystemTimeZoneById(tzId); }
-        catch { }
+        try
+        {
+            warning = null;
+            return TimeZoneInfo.FindSystemTimeZoneById(tzId);
+        }
+        catch
+        {
+            warning = $"Invalid timezone '{tzId}' — falling back to UTC";
+        }
     }
-    return TimeZoneInfo.Local;
+
+    warning = null;
+    return TimeZoneInfo.Utc;
 }
 
 static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");

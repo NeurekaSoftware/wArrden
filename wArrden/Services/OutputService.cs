@@ -15,11 +15,14 @@ public class OutputService
     private const int BoxWidth = 58;
     private const int LabelPad = 18;
 
+    private TimeZoneInfo _timeZone = TimeZoneInfo.Utc;
+
     public TextWriter Out { get; set; } = Console.Out;
     public TextWriter Error { get; set; } = Console.Error;
     public LogLevel MinimumLevel { get; set; } = LogLevel.Info;
+    public TimeZoneInfo TimeZone { get => _timeZone; set => _timeZone = value; }
 
-    public static void WriteBanner(AppConfig config, WardenOptions opts, TextWriter? writer = null)
+    public static void WriteBanner(AppConfig config, WardenOptions opts, TimeZoneInfo timeZone, TextWriter? writer = null)
     {
         var w = writer ?? Console.Out;
         var bar = new string('━', BoxWidth);
@@ -28,7 +31,7 @@ public class OutputService
         w.WriteLine($"┗{bar}┛");
         w.WriteLine();
 
-        var tz = ResolveTimezone(opts.Timezone);
+        var tz = timeZone;
         var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
         var ts = FormatTimestamp(now);
 
@@ -137,7 +140,7 @@ public class OutputService
             try { return TimeZoneInfo.FindSystemTimeZoneById(tzId); }
             catch { }
         }
-        return TimeZoneInfo.Local;
+        return TimeZoneInfo.Utc;
     }
 
     private static string GetTimezoneDisplayId(TimeZoneInfo tz, string? configuredId)
@@ -168,62 +171,64 @@ public class OutputService
 
     private static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
 
+    private DateTime GetNow() => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timeZone);
+
     public virtual void WriteDebug(string context, string message)
     {
         if (!ShouldLog(LogLevel.Debug)) return;
-        WriteLogLine(Out, "DEBUG", context, message, null);
+        WriteLogLine("DEBUG", context, message, null);
     }
 
     public virtual void WriteDebug(string context, string message, string detail)
     {
         if (!ShouldLog(LogLevel.Debug)) return;
-        WriteLogLine(Out, "DEBUG", context, message, detail);
+        WriteLogLine("DEBUG", context, message, detail);
     }
 
     public virtual void WriteWarning(string context, string message)
     {
         if (!ShouldLog(LogLevel.Warning)) return;
-        WriteLogLine(Out, "WARN", context, message, null);
+        WriteLogLine("WARN", context, message, null);
     }
 
     public virtual void WriteWarning(string context, string message, string detail)
     {
         if (!ShouldLog(LogLevel.Warning)) return;
-        WriteLogLine(Out, "WARN", context, message, detail);
+        WriteLogLine("WARN", context, message, detail);
     }
 
     public virtual void WriteError(string context, string message)
     {
         if (!ShouldLog(LogLevel.Error)) return;
-        WriteLogLine(Out, "ERROR", context, message, null);
+        WriteLogLine("ERROR", context, message, null);
     }
 
     public virtual void WriteError(string context, string message, Exception ex)
     {
         if (!ShouldLog(LogLevel.Error)) return;
-        WriteLogLine(Out, "ERROR", context, message, $"{ex.GetType().Name}: {ex.Message}");
+        WriteLogLine("ERROR", context, message, $"{ex.GetType().Name}: {ex.Message}");
     }
 
     private bool ShouldLog(LogLevel level) => level >= MinimumLevel;
 
-    private static void WriteLogLine(TextWriter writer, string level, string context, string message, string? detail)
+    private void WriteLogLine(string level, string context, string message, string? detail)
     {
         var color = AnsiColorForLevel(level);
-        var ts = FormatTimestamp(DateTime.Now);
+        var ts = FormatTimestamp(GetNow());
 
-        writer.WriteLine($"{color}[{ts} {level}] [{context}]\x1b[0m");
+        Out.WriteLine($"{color}[{ts} {level}] [{context}]\x1b[0m");
 
         if (detail is null)
         {
-            writer.WriteLine($" └─ {message}");
+            Out.WriteLine($" └─ {message}");
         }
         else
         {
-            writer.WriteLine($" ├─ {message}");
-            writer.WriteLine($" └─ {detail}");
+            Out.WriteLine($" ├─ {message}");
+            Out.WriteLine($" └─ {detail}");
         }
 
-        writer.WriteLine();
+        Out.WriteLine();
     }
 
     private static string AnsiColorForLevel(string level)
@@ -237,12 +242,12 @@ public class OutputService
         };
     }
 
-    public void WriteQueueResult(DateTime timestamp, string instance, int totalQueue, int blocked, int matched,
+    public void WriteQueueResult(string instance, int totalQueue, int blocked, int matched,
         IReadOnlyList<(int Id, string Title, string Rule, bool Blocklist)> items, bool isDryRun)
     {
         if (!ShouldLog(LogLevel.Info)) return;
 
-        var ts = FormatTimestamp(timestamp);
+        var ts = FormatTimestamp(GetNow());
         var label = InstanceJobLabel(instance, "Queue Cleanup");
         Out.WriteLine($"[{ts} INFO] [{label}]");
 
@@ -284,13 +289,13 @@ public class OutputService
 
     public SearchOutputWriter CreateSearchWriter(string instance, string job, int maxResults)
     {
-        return new SearchOutputWriter(instance, job, maxResults, Out, ShouldLog(LogLevel.Info));
+        return new SearchOutputWriter(instance, job, maxResults, _timeZone, Out, ShouldLog(LogLevel.Info));
     }
 
     public virtual async Task RunSearchWithOutput(string instance, string job, int maxResults,
         Func<SearchOutputWriter, Task> searchLogic)
     {
-        var output = new SearchOutputWriter(instance, job, maxResults, Out, ShouldLog(LogLevel.Info));
+        var output = new SearchOutputWriter(instance, job, maxResults, _timeZone, Out, ShouldLog(LogLevel.Info));
         output.WriteHeader();
         await searchLogic(output);
     }
@@ -302,12 +307,14 @@ public class OutputService
         private readonly string _job;
         private readonly int _maxResults;
         private readonly bool _shouldLog;
+        private readonly TimeZoneInfo _timeZone;
 
-        internal SearchOutputWriter(string instance, string job, int maxResults, TextWriter writer, bool shouldLog = true)
+        internal SearchOutputWriter(string instance, string job, int maxResults, TimeZoneInfo timeZone, TextWriter writer, bool shouldLog = true)
         {
             _instance = instance;
             _job = job;
             _maxResults = maxResults;
+            _timeZone = timeZone;
             _writer = writer;
             _shouldLog = shouldLog;
         }
@@ -315,7 +322,7 @@ public class OutputService
         public virtual void WriteHeader()
         {
             if (!_shouldLog) return;
-            var ts = FormatTimestamp(DateTime.Now);
+            var ts = FormatTimestamp(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timeZone));
             var label = InstanceJobLabel(_instance, _job);
             _writer.WriteLine($"[{ts} INFO] [{label}]");
         }

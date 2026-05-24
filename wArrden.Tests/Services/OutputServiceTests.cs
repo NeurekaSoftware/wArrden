@@ -20,7 +20,7 @@ public class OutputServiceTests
         var config = new AppConfig();
         var opts = new WardenOptions();
 
-        OutputService.WriteBanner(config, opts, _writer);
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer);
 
         var output = _writer.ToString();
         Assert.Contains("wArrden", output);
@@ -44,7 +44,7 @@ public class OutputServiceTests
         };
         var opts = new WardenOptions();
 
-        OutputService.WriteBanner(config, opts, _writer);
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer);
 
         var output = _writer.ToString();
         Assert.Contains("Series", output);
@@ -58,7 +58,7 @@ public class OutputServiceTests
         var config = new AppConfig();
         var opts = new WardenOptions { DryRun = "true" };
 
-        OutputService.WriteBanner(config, opts, _writer);
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer);
 
         var output = _writer.ToString();
         Assert.Contains("Runtime", output);
@@ -72,7 +72,7 @@ public class OutputServiceTests
     [Fact]
     public void WriteQueueResult_NoMatches_ShowsNoBlocked()
     {
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
+        _output.WriteQueueResult("TestSonarr", 150, 0, 0,
             Array.Empty<(int, string, string, bool)>(), false);
 
         var output = _writer.ToString();
@@ -89,7 +89,7 @@ public class OutputServiceTests
             (0, "The Boys (2019) - S01E01", "NOT_AN_UPGRADE", false)
         };
 
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 1,
+        _output.WriteQueueResult("TestSonarr", 150, 5, 1,
             items, false);
 
         var output = _writer.ToString();
@@ -109,7 +109,7 @@ public class OutputServiceTests
             (0, "Test Item", "SAMPLE", false)
         };
 
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 2, 1,
+        _output.WriteQueueResult("TestSonarr", 150, 2, 1,
             items, true);
 
         var output = _writer.ToString();
@@ -124,7 +124,7 @@ public class OutputServiceTests
             (0, "The Boys (2019) - S01E01", "No files found are eligible", true)
         };
 
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 1,
+        _output.WriteQueueResult("TestSonarr", 150, 5, 1,
             items, false);
 
         var output = _writer.ToString();
@@ -139,7 +139,7 @@ public class OutputServiceTests
             (0, "Test Item", "No files found are eligible", true)
         };
 
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 2, 1,
+        _output.WriteQueueResult("TestSonarr", 150, 2, 1,
             items, true);
 
         var output = _writer.ToString();
@@ -155,7 +155,7 @@ public class OutputServiceTests
             (0, "Item Two", "No files found", true)
         };
 
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 5, 2,
+        _output.WriteQueueResult("TestSonarr", 150, 5, 2,
             items, false);
 
         var output = _writer.ToString();
@@ -167,7 +167,7 @@ public class OutputServiceTests
     {
         var items = new List<(int, string, string, bool)>(); // empty items, but matched > 0
 
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 10, 5,
+        _output.WriteQueueResult("TestSonarr", 150, 10, 5,
             items, false);
 
         var output = _writer.ToString();
@@ -181,7 +181,7 @@ public class OutputServiceTests
     public void InstanceJobLabel_MapsCorrectly(string job, string expectedSuffix)
     {
         var writer = new OutputService.SearchOutputWriter(
-            "Sonarr", job, 10, _writer);
+            "Sonarr", job, 10, TimeZoneInfo.Utc, _writer);
         writer.WriteHeader();
 
         var output = _writer.ToString();
@@ -192,7 +192,7 @@ public class OutputServiceTests
     public void WriteStats_NoWantedItems_ShowsCorrectResult()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.WriteStats(0, 0, 0, 0, true);
 
         var output = _writer.ToString();
@@ -203,7 +203,7 @@ public class OutputServiceTests
     public void WriteStats_NoSearchPerformed_ShowsCorrectResult()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.WriteStats(5, 5, 0, 0, true);
 
         var output = _writer.ToString();
@@ -214,7 +214,7 @@ public class OutputServiceTests
     public void WriteStats_SearchedItems_ShowsCorrectResult()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.WriteStats(8, 2, 6, 3, false);
 
         var output = _writer.ToString();
@@ -225,7 +225,7 @@ public class OutputServiceTests
     public void WriteStats_IsLast_UsesFinalTreeConnector()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.WriteStats(5, 0, 5, 3, true);
 
         var output = _writer.ToString();
@@ -236,7 +236,7 @@ public class OutputServiceTests
     public void WriteStats_NotLast_UsesIntermediateTreeConnector()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.WriteStats(5, 0, 5, 3, false);
 
         var output = _writer.ToString();
@@ -261,7 +261,7 @@ public class OutputServiceTests
         };
         var opts = new WardenOptions();
 
-        OutputService.WriteBanner(config, opts, _writer);
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer);
 
         var output = _writer.ToString();
         Assert.Contains("(episode)", output);
@@ -285,7 +285,7 @@ public class OutputServiceTests
         };
         var opts = new WardenOptions();
 
-        OutputService.WriteBanner(config, opts, _writer);
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer);
 
         var output = _writer.ToString();
         Assert.DoesNotContain("(episode)", output);
@@ -295,7 +295,7 @@ public class OutputServiceTests
     public void SearchOutputWriter_SetPhase_WritesPhaseLine()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.SetPhase("Fetching wanted episodes");
 
         var output = _writer.ToString();
@@ -306,7 +306,7 @@ public class OutputServiceTests
     public void SearchOutputWriter_WriteItem_WritesFormattedItem()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.StartResults();
         writer.WriteItem("The Boys (2019) - S01E01 - The Name of the Game");
 
@@ -318,7 +318,7 @@ public class OutputServiceTests
     public void SearchOutputWriter_StartResults_WritesResultsHeader()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.StartResults();
 
         var output = _writer.ToString();
@@ -329,7 +329,7 @@ public class OutputServiceTests
     public void SearchOutputWriter_WriteTrailer_WritesTrailerLine()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer);
         writer.WriteTrailer();
 
         var output = _writer.ToString();
@@ -354,7 +354,7 @@ public class OutputServiceTests
         };
         var opts = new WardenOptions();
 
-        OutputService.WriteBanner(config, opts, _writer);
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer);
 
         var output = _writer.ToString();
         Assert.Contains("(episode)", output);
@@ -379,7 +379,7 @@ public class OutputServiceTests
         };
         var opts = new WardenOptions();
 
-        OutputService.WriteBanner(config, opts, _writer);
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer);
 
         var output = _writer.ToString();
         Assert.Contains("(album)", output);
@@ -503,7 +503,7 @@ public class OutputServiceTests
     public void WriteQueueResult_Suppressed_WhenMinimumIsWarning()
     {
         _output.MinimumLevel = LogLevel.Warning;
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
+        _output.WriteQueueResult("TestSonarr", 150, 0, 0,
             Array.Empty<(int, string, string, bool)>(), false);
 
         var output = _writer.ToString();
@@ -514,7 +514,7 @@ public class OutputServiceTests
     public void WriteQueueResult_Shown_WhenMinimumIsInfo()
     {
         _output.MinimumLevel = LogLevel.Info;
-        _output.WriteQueueResult(DateTime.Now, "TestSonarr", 150, 0, 0,
+        _output.WriteQueueResult("TestSonarr", 150, 0, 0,
             Array.Empty<(int, string, string, bool)>(), false);
 
         var output = _writer.ToString();
@@ -525,7 +525,7 @@ public class OutputServiceTests
     public void SearchOutputWriter_Suppressed_WhenShouldLogIsFalse()
     {
         var writer = new OutputService.SearchOutputWriter(
-            "test", "Missing Search", 10, _writer, shouldLog: false);
+            "test", "Missing Search", 10, TimeZoneInfo.Utc, _writer, shouldLog: false);
         writer.WriteHeader();
         writer.SetPhase("Testing");
         writer.WriteStats(5, 0, 5, 3, true);

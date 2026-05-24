@@ -31,7 +31,7 @@ public class QueueCleanupService
 
         if (rules is null || rules.Count == 0)
         {
-            _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
+            _output.WriteQueueResult(_client.Instance, queue.Count, 0, 0,
                 Array.Empty<(int, string, string, bool)>(), _isDryRun);
             return 0;
         }
@@ -44,7 +44,7 @@ public class QueueCleanupService
 
         if (blocked.Count == 0)
         {
-            _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, 0, 0,
+            _output.WriteQueueResult(_client.Instance, queue.Count, 0, 0,
                 Array.Empty<(int, string, string, bool)>(), _isDryRun);
             return 0;
         }
@@ -80,7 +80,7 @@ public class QueueCleanupService
 
         matched.Sort(CompareByTitle);
 
-        _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, matched.Count,
+        _output.WriteQueueResult(_client.Instance, queue.Count, blocked.Count, matched.Count,
             matched, _isDryRun);
         return matched.Count;
     }
