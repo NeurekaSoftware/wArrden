@@ -15,12 +15,13 @@ Configured via `logLevel` in `config.yaml`. The value sets the minimum severity 
 | `warning` | WARN + ERROR |
 | `error` | ERROR only (least verbose) |
 
-Debug and Info messages write to `stdout`. Warning and Error messages write to `stderr`.
+All log messages write to `stdout` (`Console.Out`).
 
 ## Output Streams
 
-- **DEBUG / INFO** → `Console.Out` (`OutputService.Out`)
-- **WARN / ERROR** → `Console.Error` (`OutputService.Error`)
+- **DEBUG / INFO / WARN / ERROR** → `Console.Out` (`OutputService.Out`)
+
+All log levels write to a single stream. Docker and other container runtimes read stdout and stderr through separate pipes and merge them without preserving write order, which causes tree-structured output to interleave when messages are split across streams. Writing everything to stdout avoids this.
 
 ## Log Format Rules
 

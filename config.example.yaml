@@ -107,10 +107,11 @@ instances:
       enabled: true
       cron: "* * * * *"
 
-# Actions: remove | removeAndBlocklist | none
-#
+
 # The defaults below work for most setups — you don't need to change
 # anything unless the default actions don't match your preferences.
+#
+# Actions: remove | removeAndBlocklist | none
 queueCleanupRules:
   radarr:
     # The file is a short sample/clip, not the full movie.

@@ -183,25 +183,25 @@ public class OutputService
     public virtual void WriteWarning(string context, string message)
     {
         if (!ShouldLog(LogLevel.Warning)) return;
-        WriteLogLine(Error, "WARN", context, message, null);
+        WriteLogLine(Out, "WARN", context, message, null);
     }
 
     public virtual void WriteWarning(string context, string message, string detail)
     {
         if (!ShouldLog(LogLevel.Warning)) return;
-        WriteLogLine(Error, "WARN", context, message, detail);
+        WriteLogLine(Out, "WARN", context, message, detail);
     }
 
     public virtual void WriteError(string context, string message)
     {
         if (!ShouldLog(LogLevel.Error)) return;
-        WriteLogLine(Error, "ERROR", context, message, null);
+        WriteLogLine(Out, "ERROR", context, message, null);
     }
 
     public virtual void WriteError(string context, string message, Exception ex)
     {
         if (!ShouldLog(LogLevel.Error)) return;
-        WriteLogLine(Error, "ERROR", context, message, $"{ex.GetType().Name}: {ex.Message}");
+        WriteLogLine(Out, "ERROR", context, message, $"{ex.GetType().Name}: {ex.Message}");
     }
 
     private bool ShouldLog(LogLevel level) => level >= MinimumLevel;

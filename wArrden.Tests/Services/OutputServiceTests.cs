@@ -412,62 +412,51 @@ public class OutputServiceTests
     }
 
     [Fact]
-    public void WriteWarning_MessageOnly_WritesToError()
+    public void WriteWarning_MessageOnly_WritesFormattedLine()
     {
-        var errorWriter = new StringWriter();
-        _output.Error = errorWriter;
-
         _output.WriteWarning("series.missing", "No enabled indexers");
 
-        var error = errorWriter.ToString();
-        Assert.Contains("WARN", error);
-        Assert.Contains("series.missing", error);
-        Assert.Contains("└─ No enabled indexers", error);
+        var output = _writer.ToString();
+        Assert.Contains("WARN", output);
+        Assert.Contains("series.missing", output);
+        Assert.Contains("└─ No enabled indexers", output);
     }
 
     [Fact]
-    public void WriteWarning_WithDetail_WritesToErrorTree()
+    public void WriteWarning_WithDetail_WritesTreeStructure()
     {
-        var errorWriter = new StringWriter();
-        _output.Error = errorWriter;
-
         _output.WriteWarning("series.missing", "Search trigger failed", "HttpRequestException: Connection refused");
 
-        var error = errorWriter.ToString();
-        Assert.Contains("WARN", error);
-        Assert.Contains("series.missing", error);
-        Assert.Contains("├─ Search trigger failed", error);
-        Assert.Contains("└─ HttpRequestException: Connection refused", error);
+        var output = _writer.ToString();
+        Assert.Contains("WARN", output);
+        Assert.Contains("series.missing", output);
+        Assert.Contains("├─ Search trigger failed", output);
+        Assert.Contains("└─ HttpRequestException: Connection refused", output);
     }
 
     [Fact]
-    public void WriteError_MessageOnly_WritesToError()
+    public void WriteError_MessageOnly_WritesFormattedLine()
     {
-        var errorWriter = new StringWriter();
-        _output.Error = errorWriter;
-
         _output.WriteError("warden.scheduler", "Task failed");
 
-        var error = errorWriter.ToString();
-        Assert.Contains("ERROR", error);
-        Assert.Contains("warden.scheduler", error);
-        Assert.Contains("└─ Task failed", error);
+        var output = _writer.ToString();
+        Assert.Contains("ERROR", output);
+        Assert.Contains("warden.scheduler", output);
+        Assert.Contains("└─ Task failed", output);
     }
 
     [Fact]
     public void WriteError_WithException_WritesExceptionDetail()
     {
-        var errorWriter = new StringWriter();
-        _output.Error = errorWriter;
         var ex = new InvalidOperationException("Unknown instance type: foo");
 
         _output.WriteError("warden.scheduler", "Scheduled task error", ex);
 
-        var error = errorWriter.ToString();
-        Assert.Contains("ERROR", error);
-        Assert.Contains("warden.scheduler", error);
-        Assert.Contains("├─ Scheduled task error", error);
-        Assert.Contains("└─ InvalidOperationException: Unknown instance type: foo", error);
+        var output = _writer.ToString();
+        Assert.Contains("ERROR", output);
+        Assert.Contains("warden.scheduler", output);
+        Assert.Contains("├─ Scheduled task error", output);
+        Assert.Contains("└─ InvalidOperationException: Unknown instance type: foo", output);
     }
 
     [Fact]
@@ -493,25 +482,21 @@ public class OutputServiceTests
     [Fact]
     public void WriteWarning_Suppressed_WhenMinimumIsError()
     {
-        var errorWriter = new StringWriter();
-        _output.Error = errorWriter;
         _output.MinimumLevel = LogLevel.Error;
 
         _output.WriteWarning("warden.core", "Should not appear");
 
-        Assert.Empty(errorWriter.ToString());
+        Assert.Empty(_writer.ToString());
     }
 
     [Fact]
     public void WriteError_Shown_WhenMinimumIsError()
     {
-        var errorWriter = new StringWriter();
-        _output.Error = errorWriter;
         _output.MinimumLevel = LogLevel.Error;
 
         _output.WriteError("warden.core", "Should appear");
 
-        Assert.Contains("ERROR", errorWriter.ToString());
+        Assert.Contains("ERROR", _writer.ToString());
     }
 
     [Fact]
