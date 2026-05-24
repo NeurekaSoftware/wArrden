@@ -5,6 +5,7 @@ public class AppConfig
     public string? LogLevel { get; set; }
     public List<InstanceConfig> Instances { get; set; } = new();
     public QueueCleanupRulesConfig? QueueCleanupRules { get; set; }
+    public List<string> Warnings { get; set; } = new();
 }
 
 public class QueueCleanupRulesConfig

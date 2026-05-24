@@ -117,7 +117,7 @@ internal static class YamlConfigLoader
             (i.QueueCleanup?.Enabled == true ? 1 : 0));
 
         if (enabledJobs == 0)
-            Console.Error.WriteLine("Warning: No jobs are enabled across any instance.");
+            config.Warnings.Add("No jobs are enabled across any instance.");
 
         return errors;
     }
@@ -211,20 +211,20 @@ internal static class YamlConfigLoader
                 presentTypes.Add(inst.Type);
         }
 
-        ValidateRuleList(errors, rules.Sonarr, "sonarr", presentTypes);
-        ValidateRuleList(errors, rules.Radarr, "radarr", presentTypes);
-        ValidateRuleList(errors, rules.Lidarr, "lidarr", presentTypes);
-        ValidateRuleList(errors, rules.Whisparr, "whisparr", presentTypes);
+        ValidateRuleList(errors, config, rules.Sonarr, "sonarr", presentTypes);
+        ValidateRuleList(errors, config, rules.Radarr, "radarr", presentTypes);
+        ValidateRuleList(errors, config, rules.Lidarr, "lidarr", presentTypes);
+        ValidateRuleList(errors, config, rules.Whisparr, "whisparr", presentTypes);
     }
 
-    private static void ValidateRuleList(List<string> errors, List<QueueCleanupRuleConfig>? list, string type, HashSet<string> presentTypes)
+    private static void ValidateRuleList(List<string> errors, AppConfig config, List<QueueCleanupRuleConfig>? list, string type, HashSet<string> presentTypes)
     {
         if (!presentTypes.Contains(type))
             return;
 
         if (list is null || list.Count == 0)
         {
-            Console.Error.WriteLine($"Warning: queueCleanupRules.{type} is empty; no queue warnings will be matched for {type} instances.");
+            config.Warnings.Add($"queueCleanupRules.{type} is empty; no queue warnings will be matched for {type} instances.");
             return;
         }
 
@@ -236,7 +236,7 @@ internal static class YamlConfigLoader
             if (string.IsNullOrWhiteSpace(rule.Match))
                 errors.Add($"{prefix}: 'match' must not be empty.");
             else if (!QueueCleanupRuleMatchers.IsValidKey(rule.Match))
-                Console.Error.WriteLine($"Warning: {prefix}: '{rule.Match}' is not a known matcher key. It will be matched as a raw substring pattern. See README for available keys.");
+                config.Warnings.Add($"{prefix}: '{rule.Match}' is not a known matcher key. It will be matched as a raw substring pattern. See README for available keys.");
 
             var action = rule.Action?.Trim();
             if (string.IsNullOrWhiteSpace(action))

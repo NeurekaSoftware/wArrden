@@ -245,7 +245,7 @@ static async Task RunClearCooldownsCommand(string dbPath, string category, List<
         ? $"cli.{targets[0].Name.ToLowerInvariant()}.{jobKey}"
         : $"cli.{jobKey}";
 
-    Console.WriteLine($"[{ts} INF] [{headerLabel}]");
+    Console.WriteLine($"[{ts} INFO] [{headerLabel}]");
 
     var typeLabel = category == "Missing" ? "Missing" : "Upgrade";
     var lines = new List<string> { $" ├─ Type:       {typeLabel}" };

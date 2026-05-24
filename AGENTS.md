@@ -10,17 +10,17 @@ Configured via `logLevel` in `config.yaml`. The value sets the minimum severity 
 
 | `logLevel` | Messages Shown |
 |---|---|
-| `debug` | DBG + INF + WRN + ERR (most verbose) |
-| `info` (default) | INF + WRN + ERR |
-| `warning` | WRN + ERR |
-| `error` | ERR only (least verbose) |
+| `debug` | DEBUG + INFO + WARN + ERROR (most verbose) |
+| `info` (default) | INFO + WARN + ERROR |
+| `warning` | WARN + ERROR |
+| `error` | ERROR only (least verbose) |
 
 Debug and Info messages write to `stdout`. Warning and Error messages write to `stderr`.
 
 ## Output Streams
 
-- **DBG / INF** → `Console.Out` (`OutputService.Out`)
-- **WRN / ERR** → `Console.Error` (`OutputService.Error`)
+- **DEBUG / INFO** → `Console.Out` (`OutputService.Out`)
+- **WARN / ERROR** → `Console.Error` (`OutputService.Error`)
 
 ## Log Format Rules
 
@@ -34,7 +34,7 @@ Every log entry starts with a header line:
 
 Where:
 - `HH:mm:ss` is the 24-hour timestamp of invocation
-- `LVL` is the three-letter log level marker: `DBG`, `INF`, `WRN`, or `ERR`
+- `LVL` is the log level marker: `DEBUG`, `INFO`, `WARN`, or `ERROR`
 - `context` is `instance.job` for job output, or a system context like `warden.config`, `warden.scheduler`, `cli`
 
 ### Tree Structure
@@ -47,50 +47,50 @@ All log output uses Unicode box-drawing characters to form a tree:
 - `    ` — spacing for nested content under final parent
 - ` • ` — bullet for list items
 
-### Debug (DBG)
+### Debug (DEBUG)
 
 Single message:
 
 ```
-[07:45:01 DBG] [warden.config]
+[07:45:01 DEBUG] [warden.config]
  └─ Loaded config from data/config.yaml
 ```
 
 With detail:
 
 ```
-[07:45:01 DBG] [series.missing]
+[07:45:01 DEBUG] [series.missing]
  ├─ Fetched 45 wanted episodes
  └─ Cooldown filter: 12 on cooldown, 33 eligible, 3 selected
 ```
 
-### Warning (WRN)
+### Warning (WARN)
 
 ```
-[07:45:01 WRN] [series.missing]
+[07:45:01 WARN] [series.missing]
  └─ No enabled indexers — search skipped
 
-[07:45:01 WRN] [series.missing]
+[07:45:01 WARN] [series.missing]
  ├─ Search trigger failed for The Boys (2019) - S01E01 - The Name of the Game
  └─ HttpRequestException: Connection refused (192.168.1.100:8989)
 ```
 
-### Error (ERR)
+### Error (ERROR)
 
 ```
-[07:45:01 ERR] [series.missing]
+[07:45:01 ERROR] [series.missing]
  ├─ Missing search job failed
  └─ HttpRequestException: No route to host
 
-[07:45:01 ERR] [warden.scheduler]
+[07:45:01 ERROR] [warden.scheduler]
  ├─ Scheduled task error
  └─ InvalidOperationException: Unknown instance type: unknown
 ```
 
-### Info (INF) — Search Jobs (missing / upgrade)
+### Info (INFO) — Search Jobs (missing / upgrade)
 
 ```
-[07:45:01 INF] [sonarr.missing]
+[07:45:01 INFO] [sonarr.missing]
  ├─ Cleaning cooldown entries
  ├─ Fetching wanted episodes
  ├─ Applying cooldown filters
@@ -105,7 +105,7 @@ With detail:
 When items are searched, stats come before results:
 
 ```
-[07:45:01 INF] [sonarr.missing]
+[07:45:01 INFO] [sonarr.missing]
  ├─ Cleaning cooldown entries
  ├─ Fetching wanted episodes
  ├─ Applying cooldown filters
@@ -128,12 +128,12 @@ When items are searched, stats come before results:
 - `Result` field: `"No wanted items found"` (0 total), `"No search performed"` (0 searched), or `"Searched N"`
 - For Radarr, use `"Fetching wanted movies"` instead of `"Fetching wanted episodes"`
 
-### Info (INF) — Queue Cleanup Job (queue)
+### Info (INFO) — Queue Cleanup Job (queue)
 
 No warning-status items:
 
 ```
-[07:45:01 INF] [sonarr.queue]
+[07:45:01 INFO] [sonarr.queue]
  └─ Stats:
     • Total Queue:   150
     • Result:        No warning queue items detected
@@ -142,7 +142,7 @@ No warning-status items:
 With `remove` action matches (stats before results):
 
 ```
-[07:45:01 INF] [sonarr.queue]
+[07:45:01 INFO] [sonarr.queue]
  ├─ Stats:
  │  • Total Queue:   150
  │  • Warnings:      5
@@ -156,7 +156,7 @@ With `remove` action matches (stats before results):
 With `removeAndBlocklist` action matches:
 
 ```
-[07:45:01 INF] [sonarr.queue]
+[07:45:01 INFO] [sonarr.queue]
  ├─ Stats:
  │  • Total Queue:   80
  │  • Warnings:      8
@@ -169,7 +169,7 @@ With `removeAndBlocklist` action matches:
 With mixed actions:
 
 ```
-[07:45:01 INF] [sonarr.queue]
+[07:45:01 INFO] [sonarr.queue]
  ├─ Stats:
  │  • Total Queue:   100
  │  • Warnings:      10

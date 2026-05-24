@@ -32,7 +32,7 @@ public class OutputService
         var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
         var ts = FormatTimestamp(now);
 
-        w.WriteLine($"[{ts} INF] [system.startup]");
+        w.WriteLine($"[{ts} INFO] [system.startup]");
 
         var sections = new List<Action<string, string>>();
         foreach (var inst in config.Instances)
@@ -58,8 +58,23 @@ public class OutputService
                 w.WriteLine(" │");
         }
 
+        if (config.Warnings.Count > 0)
+        {
+            w.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Error.WriteLine($"[{ts} WARN] [warden.config]");
+            for (int i = 0; i < config.Warnings.Count; i++)
+            {
+                var isLastWarning = i == config.Warnings.Count - 1;
+                var prefix = isLastWarning ? " └─" : " ├─";
+                Console.Error.WriteLine($"{prefix} {config.Warnings[i]}");
+            }
+            Console.Error.WriteLine();
+            Console.ResetColor();
+        }
+
         w.WriteLine();
-        w.WriteLine($"[{ts} INF] [system.ready] wArrden initialized");
+        w.WriteLine($"[{ts} INFO] [system.ready] wArrden initialized");
         w.WriteLine();
     }
 
@@ -158,43 +173,44 @@ public class OutputService
     public virtual void WriteDebug(string context, string message)
     {
         if (!ShouldLog(LogLevel.Debug)) return;
-        WriteLogLine(Out, "DBG", context, message, null);
+        WriteLogLine(Out, "DEBUG", context, message, null);
     }
 
     public virtual void WriteDebug(string context, string message, string detail)
     {
         if (!ShouldLog(LogLevel.Debug)) return;
-        WriteLogLine(Out, "DBG", context, message, detail);
+        WriteLogLine(Out, "DEBUG", context, message, detail);
     }
 
     public virtual void WriteWarning(string context, string message)
     {
         if (!ShouldLog(LogLevel.Warning)) return;
-        WriteLogLine(Error, "WRN", context, message, null);
+        WriteLogLine(Error, "WARN", context, message, null);
     }
 
     public virtual void WriteWarning(string context, string message, string detail)
     {
         if (!ShouldLog(LogLevel.Warning)) return;
-        WriteLogLine(Error, "WRN", context, message, detail);
+        WriteLogLine(Error, "WARN", context, message, detail);
     }
 
     public virtual void WriteError(string context, string message)
     {
         if (!ShouldLog(LogLevel.Error)) return;
-        WriteLogLine(Error, "ERR", context, message, null);
+        WriteLogLine(Error, "ERROR", context, message, null);
     }
 
     public virtual void WriteError(string context, string message, Exception ex)
     {
         if (!ShouldLog(LogLevel.Error)) return;
-        WriteLogLine(Error, "ERR", context, message, $"{ex.GetType().Name}: {ex.Message}");
+        WriteLogLine(Error, "ERROR", context, message, $"{ex.GetType().Name}: {ex.Message}");
     }
 
     private bool ShouldLog(LogLevel level) => level >= MinimumLevel;
 
     private static void WriteLogLine(TextWriter writer, string level, string context, string message, string? detail)
     {
+        SetConsoleColor(level);
         var ts = FormatTimestamp(DateTime.Now);
         writer.WriteLine($"[{ts} {level}] [{context}]");
 
@@ -209,6 +225,18 @@ public class OutputService
         }
 
         writer.WriteLine();
+        Console.ResetColor();
+    }
+
+    private static void SetConsoleColor(string level)
+    {
+        Console.ForegroundColor = level switch
+        {
+            "DEBUG" => ConsoleColor.Gray,
+            "WARN" => ConsoleColor.Yellow,
+            "ERROR" => ConsoleColor.Red,
+            _ => Console.ForegroundColor
+        };
     }
 
     public void WriteQueueResult(DateTime timestamp, string instance, int totalQueue, int blocked, int matched,
@@ -218,7 +246,7 @@ public class OutputService
 
         var ts = FormatTimestamp(timestamp);
         var label = InstanceJobLabel(instance, "Queue Cleanup");
-        Out.WriteLine($"[{ts} INF] [{label}]");
+        Out.WriteLine($"[{ts} INFO] [{label}]");
 
         if (matched == 0)
         {
@@ -282,7 +310,7 @@ public class OutputService
             if (!_shouldLog) return;
             var ts = FormatTimestamp(DateTime.Now);
             var label = InstanceJobLabel(_instance, _job);
-            _writer.WriteLine($"[{ts} INF] [{label}]");
+            _writer.WriteLine($"[{ts} INFO] [{label}]");
         }
 
         public virtual void SetPhase(string phase)

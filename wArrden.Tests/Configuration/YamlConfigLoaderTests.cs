@@ -1013,37 +1013,27 @@ instances:
     [Fact]
     public void Validate_QueueCleanupRules_EmptySonarrList_Warns()
     {
-        var originalError = Console.Error;
-        var stderr = new StringWriter();
-        Console.SetError(stderr);
-        try
+        var config = new AppConfig
         {
-            var config = new AppConfig
+            Instances = new List<InstanceConfig>
             {
-                Instances = new List<InstanceConfig>
+                new()
                 {
-                    new()
-                    {
-                        Type = "sonarr",
-                        Name = "Series",
-                        Url = "http://localhost:8989",
-                        ApiKey = "abc123",
-                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
-                    }
-                },
-                QueueCleanupRules = new QueueCleanupRulesConfig { Sonarr = new List<QueueCleanupRuleConfig>() }
-            };
-            var errors = YamlConfigLoader.Validate(config);
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig { Sonarr = new List<QueueCleanupRuleConfig>() }
+        };
+        var errors = YamlConfigLoader.Validate(config);
 
-            Assert.Empty(errors);
-            var warning = stderr.ToString();
-            Assert.Contains("queueCleanupRules.sonarr", warning);
-            Assert.Contains("empty", warning);
-        }
-        finally
-        {
-            Console.SetError(originalError);
-        }
+        Assert.Empty(errors);
+        var warning = Assert.Single(config.Warnings);
+        Assert.Contains("queueCleanupRules.sonarr", warning);
+        Assert.Contains("empty", warning);
     }
 
     [Fact]
@@ -1247,38 +1237,28 @@ queueCleanupRules:
     [Fact]
     public void Validate_QueueCleanupRules_EmptyLidarrList_Warns()
     {
-        var originalError = Console.Error;
-        var stderr = new StringWriter();
-        Console.SetError(stderr);
-        try
+        var config = new AppConfig
         {
-            var config = new AppConfig
+            Instances = new List<InstanceConfig>
             {
-                Instances = new List<InstanceConfig>
+                new()
                 {
-                    new()
-                    {
-                        Type = "lidarr",
-                        Name = "Music",
-                        Url = "http://localhost:8686",
-                        ApiKey = "abc123",
-                        ApiVersion = "1",
-                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
-                    }
-                },
-                QueueCleanupRules = new QueueCleanupRulesConfig { Lidarr = new List<QueueCleanupRuleConfig>() }
-            };
-            var errors = YamlConfigLoader.Validate(config);
+                    Type = "lidarr",
+                    Name = "Music",
+                    Url = "http://localhost:8686",
+                    ApiKey = "abc123",
+                    ApiVersion = "1",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig { Lidarr = new List<QueueCleanupRuleConfig>() }
+        };
+        var errors = YamlConfigLoader.Validate(config);
 
-            Assert.Empty(errors);
-            var warning = stderr.ToString();
-            Assert.Contains("queueCleanupRules.lidarr", warning);
-            Assert.Contains("empty", warning);
-        }
-        finally
-        {
-            Console.SetError(originalError);
-        }
+        Assert.Empty(errors);
+        var warning = Assert.Single(config.Warnings);
+        Assert.Contains("queueCleanupRules.lidarr", warning);
+        Assert.Contains("empty", warning);
     }
 
     [Fact]
@@ -1640,147 +1620,104 @@ queueCleanupRules:
     [Fact]
     public void Validate_QueueCleanupRules_EmptyWhisparrList_Warns()
     {
-        var originalError = Console.Error;
-        var stderr = new StringWriter();
-        Console.SetError(stderr);
-        try
+        var config = new AppConfig
         {
-            var config = new AppConfig
+            Instances = new List<InstanceConfig>
             {
-                Instances = new List<InstanceConfig>
+                new()
                 {
-                    new()
-                    {
-                        Type = "whisparr",
-                        Name = "Adult",
-                        Url = "http://localhost:6969",
-                        ApiKey = "abc123",
-                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
-                    }
-                },
-                QueueCleanupRules = new QueueCleanupRulesConfig { Whisparr = new List<QueueCleanupRuleConfig>() }
-            };
-            var errors = YamlConfigLoader.Validate(config);
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig { Whisparr = new List<QueueCleanupRuleConfig>() }
+        };
+        var errors = YamlConfigLoader.Validate(config);
 
-            Assert.Empty(errors);
-            var warning = stderr.ToString();
-            Assert.Contains("queueCleanupRules.whisparr", warning);
-            Assert.Contains("empty", warning);
-        }
-        finally
-        {
-            Console.SetError(originalError);
-        }
+        Assert.Empty(errors);
+        var warning = Assert.Single(config.Warnings);
+        Assert.Contains("queueCleanupRules.whisparr", warning);
+        Assert.Contains("empty", warning);
     }
 
     [Fact]
     public void Validate_QueueCleanupRules_EmptyLidarrList_NoLidarrInstance_NoWarning()
     {
-        var originalError = Console.Error;
-        var stderr = new StringWriter();
-        Console.SetError(stderr);
-        try
+        var config = new AppConfig
         {
-            var config = new AppConfig
+            Instances = new List<InstanceConfig>
             {
-                Instances = new List<InstanceConfig>
+                new()
                 {
-                    new()
-                    {
-                        Type = "sonarr",
-                        Name = "Series",
-                        Url = "http://localhost:8989",
-                        ApiKey = "abc123",
-                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
-                    }
-                },
-                QueueCleanupRules = new QueueCleanupRulesConfig { Lidarr = new List<QueueCleanupRuleConfig>() }
-            };
-            var errors = YamlConfigLoader.Validate(config);
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig { Lidarr = new List<QueueCleanupRuleConfig>() }
+        };
+        var errors = YamlConfigLoader.Validate(config);
 
-            Assert.Empty(errors);
-            var output = stderr.ToString();
-            Assert.DoesNotContain("queueCleanupRules.lidarr", output);
-        }
-        finally
-        {
-            Console.SetError(originalError);
-        }
+        Assert.Empty(errors);
+        Assert.DoesNotContain(config.Warnings, w => w.Contains("queueCleanupRules.lidarr"));
     }
 
     [Fact]
     public void Validate_QueueCleanupRules_EmptyWhisparrList_NoWhisparrInstance_NoWarning()
     {
-        var originalError = Console.Error;
-        var stderr = new StringWriter();
-        Console.SetError(stderr);
-        try
+        var config = new AppConfig
         {
-            var config = new AppConfig
+            Instances = new List<InstanceConfig>
             {
-                Instances = new List<InstanceConfig>
+                new()
                 {
-                    new()
-                    {
-                        Type = "sonarr",
-                        Name = "Series",
-                        Url = "http://localhost:8989",
-                        ApiKey = "abc123",
-                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
-                    }
-                },
-                QueueCleanupRules = new QueueCleanupRulesConfig { Whisparr = new List<QueueCleanupRuleConfig>() }
-            };
-            var errors = YamlConfigLoader.Validate(config);
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig { Whisparr = new List<QueueCleanupRuleConfig>() }
+        };
+        var errors = YamlConfigLoader.Validate(config);
 
-            Assert.Empty(errors);
-            var output = stderr.ToString();
-            Assert.DoesNotContain("queueCleanupRules.whisparr", output);
-        }
-        finally
-        {
-            Console.SetError(originalError);
-        }
+        Assert.Empty(errors);
+        Assert.DoesNotContain(config.Warnings, w => w.Contains("queueCleanupRules.whisparr"));
     }
 
     [Fact]
     public void Validate_QueueCleanupRules_SonarrPresentLidarrAbsent_OnlySonarrWarns()
     {
-        var originalError = Console.Error;
-        var stderr = new StringWriter();
-        Console.SetError(stderr);
-        try
+        var config = new AppConfig
         {
-            var config = new AppConfig
+            Instances = new List<InstanceConfig>
             {
-                Instances = new List<InstanceConfig>
+                new()
                 {
-                    new()
-                    {
-                        Type = "sonarr",
-                        Name = "Series",
-                        Url = "http://localhost:8989",
-                        ApiKey = "abc123",
-                        QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
-                    }
-                },
-                QueueCleanupRules = new QueueCleanupRulesConfig
-                {
-                    Sonarr = new List<QueueCleanupRuleConfig>(),
-                    Lidarr = new List<QueueCleanupRuleConfig>()
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
-            };
-            var errors = YamlConfigLoader.Validate(config);
+            },
+            QueueCleanupRules = new QueueCleanupRulesConfig
+            {
+                Sonarr = new List<QueueCleanupRuleConfig>(),
+                Lidarr = new List<QueueCleanupRuleConfig>()
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
 
-            Assert.Empty(errors);
-            var output = stderr.ToString();
-            Assert.Contains("queueCleanupRules.sonarr", output);
-            Assert.DoesNotContain("queueCleanupRules.lidarr", output);
-        }
-        finally
-        {
-            Console.SetError(originalError);
-        }
+        Assert.Empty(errors);
+        Assert.Contains(config.Warnings, w => w.Contains("queueCleanupRules.sonarr"));
+        Assert.DoesNotContain(config.Warnings, w => w.Contains("queueCleanupRules.lidarr"));
     }
 
     [Fact]

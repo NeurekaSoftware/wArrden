@@ -393,7 +393,7 @@ public class OutputServiceTests
         _output.WriteDebug("warden.config", "Loaded config");
 
         var output = _writer.ToString();
-        Assert.Contains("DBG", output);
+        Assert.Contains("DEBUG", output);
         Assert.Contains("warden.config", output);
         Assert.Contains("└─ Loaded config", output);
     }
@@ -405,7 +405,7 @@ public class OutputServiceTests
         _output.WriteDebug("series.missing", "Fetched 45 episodes", "12 on cooldown, 33 eligible");
 
         var output = _writer.ToString();
-        Assert.Contains("DBG", output);
+        Assert.Contains("DEBUG", output);
         Assert.Contains("series.missing", output);
         Assert.Contains("├─ Fetched 45 episodes", output);
         Assert.Contains("└─ 12 on cooldown, 33 eligible", output);
@@ -420,7 +420,7 @@ public class OutputServiceTests
         _output.WriteWarning("series.missing", "No enabled indexers");
 
         var error = errorWriter.ToString();
-        Assert.Contains("WRN", error);
+        Assert.Contains("WARN", error);
         Assert.Contains("series.missing", error);
         Assert.Contains("└─ No enabled indexers", error);
     }
@@ -434,7 +434,7 @@ public class OutputServiceTests
         _output.WriteWarning("series.missing", "Search trigger failed", "HttpRequestException: Connection refused");
 
         var error = errorWriter.ToString();
-        Assert.Contains("WRN", error);
+        Assert.Contains("WARN", error);
         Assert.Contains("series.missing", error);
         Assert.Contains("├─ Search trigger failed", error);
         Assert.Contains("└─ HttpRequestException: Connection refused", error);
@@ -449,7 +449,7 @@ public class OutputServiceTests
         _output.WriteError("warden.scheduler", "Task failed");
 
         var error = errorWriter.ToString();
-        Assert.Contains("ERR", error);
+        Assert.Contains("ERROR", error);
         Assert.Contains("warden.scheduler", error);
         Assert.Contains("└─ Task failed", error);
     }
@@ -464,7 +464,7 @@ public class OutputServiceTests
         _output.WriteError("warden.scheduler", "Scheduled task error", ex);
 
         var error = errorWriter.ToString();
-        Assert.Contains("ERR", error);
+        Assert.Contains("ERROR", error);
         Assert.Contains("warden.scheduler", error);
         Assert.Contains("├─ Scheduled task error", error);
         Assert.Contains("└─ InvalidOperationException: Unknown instance type: foo", error);
@@ -487,7 +487,7 @@ public class OutputServiceTests
         _output.WriteDebug("warden.core", "Should appear");
 
         var output = _writer.ToString();
-        Assert.Contains("DBG", output);
+        Assert.Contains("DEBUG", output);
     }
 
     [Fact]
@@ -511,7 +511,7 @@ public class OutputServiceTests
 
         _output.WriteError("warden.core", "Should appear");
 
-        Assert.Contains("ERR", errorWriter.ToString());
+        Assert.Contains("ERROR", errorWriter.ToString());
     }
 
     [Fact]
@@ -533,7 +533,7 @@ public class OutputServiceTests
             Array.Empty<(string, string, bool)>(), false);
 
         var output = _writer.ToString();
-        Assert.Contains("INF", output);
+        Assert.Contains("INFO", output);
     }
 
     [Fact]
