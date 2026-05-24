@@ -34,7 +34,7 @@ public class OutputService
 
         w.WriteLine($"[{ts} INFO] [system.startup]");
 
-        var sections = new List<Action<string, string>>();
+        var sections = new List<Action<string, string>>(config.Instances.Count + 2);
         foreach (var inst in config.Instances)
         {
             var instCopy = inst;

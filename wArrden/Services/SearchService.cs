@@ -7,6 +7,7 @@ public class SearchService
 {
     private readonly ICooldownService _cooldown;
     private readonly OutputService _output;
+    private readonly int[] _triggerIds = new int[1];
 
     public SearchService(ICooldownService cooldown, OutputService output)
     {
@@ -129,7 +130,10 @@ public class SearchService
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, category, ct);
 
-        var eligible = wanted.Where(e => !cooldownIds.Contains(e.Id)).ToList();
+        var eligible = new List<WantedEpisodeResource>(wanted.Count);
+        foreach (var e in wanted)
+            if (!cooldownIds.Contains(e.Id))
+                eligible.Add(e);
         Shuffle(eligible);
         var selected = eligible
             .Take(maxResults)
@@ -142,9 +146,11 @@ public class SearchService
         _output.WriteDebug($"{inst}.missing",
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
+        var eligibleCount = eligible.Count;
+
         if (selected.Count == 0 || isDryRun)
         {
-            progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
+            progress.WriteStats(wanted.Count, onCooldown, eligibleCount,
                 isDryRun ? 0 : selected.Count, true);
             return;
         }
@@ -154,12 +160,12 @@ public class SearchService
         {
             _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
-            progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            progress.WriteStats(wanted.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
 
         progress.SetPhase($"Searching {selected.Count} items");
-        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, false);
+        progress.WriteStats(wanted.Count, onCooldown, eligibleCount, selected.Count, false);
         progress.StartResults();
 
         foreach (var ep in selected)
@@ -170,7 +176,8 @@ public class SearchService
 
             progress.WriteItem(title);
 
-            try { await triggerSearch(new[] { ep.Id }); }
+            _triggerIds[0] = ep.Id;
+            try { await triggerSearch(_triggerIds); }
             catch (Exception ex)
             {
                 _output.WriteWarning($"{inst}.missing",
@@ -178,7 +185,10 @@ public class SearchService
             }
         }
 
-        await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(e => e.Id).ToArray(), ct);
+        var ids = new int[selected.Count];
+        for (int i = 0; i < selected.Count; i++)
+            ids[i] = selected[i].Id;
+        await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }
 
@@ -217,7 +227,10 @@ public class SearchService
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, seasonCategory, ct);
 
-        var eligible = seasons.Where(s => !cooldownIds.Contains(s.SeasonKey)).ToList();
+        var eligible = new List<SeasonGroup>(seasons.Count);
+        foreach (var s in seasons)
+            if (!cooldownIds.Contains(s.SeasonKey))
+                eligible.Add(s);
         Shuffle(eligible);
         var selected = eligible
             .Take(maxResults)
@@ -229,9 +242,11 @@ public class SearchService
         _output.WriteDebug($"{inst}.missing",
             $"Season cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
+        var eligibleCount = eligible.Count;
+
         if (selected.Count == 0 || isDryRun)
         {
-            progress.WriteStats(seasons.Count, onCooldown, eligible.Count,
+            progress.WriteStats(seasons.Count, onCooldown, eligibleCount,
                 isDryRun ? 0 : selected.Count, true);
             return;
         }
@@ -241,12 +256,12 @@ public class SearchService
         {
             _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
-            progress.WriteStats(seasons.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            progress.WriteStats(seasons.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
 
         progress.SetPhase($"Searching {selected.Count} seasons");
-        progress.WriteStats(seasons.Count, onCooldown, eligible.Count, selected.Count, false);
+        progress.WriteStats(seasons.Count, onCooldown, eligibleCount, selected.Count, false);
         progress.StartResults();
 
         foreach (var s in selected)
@@ -266,12 +281,14 @@ public class SearchService
             }
         }
 
-        await _cooldown.MarkSearchedAsync(client.Instance, seasonCategory,
-            selected.Select(s => s.SeasonKey).ToArray(), ct);
+        var seasonKeys = new int[selected.Count];
+        for (int i = 0; i < selected.Count; i++)
+            seasonKeys[i] = selected[i].SeasonKey;
+        await _cooldown.MarkSearchedAsync(client.Instance, seasonCategory, seasonKeys, ct);
         progress.WriteTrailer();
     }
 
-    private sealed record SeasonGroup(int SeriesId, int SeasonNumber, WantedEpisodeSeriesResource? Series, int SeasonKey);
+    private readonly record struct SeasonGroup(int SeriesId, int SeasonNumber, WantedEpisodeSeriesResource? Series, int SeasonKey);
 
     private async Task RunAlbumSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedAlbumResource>>> getWanted, Func<int[], Task> triggerSearch,
@@ -296,7 +313,10 @@ public class SearchService
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, category, ct);
 
-        var eligible = wanted.Where(a => !cooldownIds.Contains(a.Id)).ToList();
+        var eligible = new List<WantedAlbumResource>(wanted.Count);
+        foreach (var a in wanted)
+            if (!cooldownIds.Contains(a.Id))
+                eligible.Add(a);
         Shuffle(eligible);
         var selected = eligible
             .Take(maxResults)
@@ -308,9 +328,11 @@ public class SearchService
         _output.WriteDebug($"{inst}.missing",
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
+        var eligibleCount = eligible.Count;
+
         if (selected.Count == 0 || isDryRun)
         {
-            progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
+            progress.WriteStats(wanted.Count, onCooldown, eligibleCount,
                 isDryRun ? 0 : selected.Count, true);
             return;
         }
@@ -320,12 +342,12 @@ public class SearchService
         {
             _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
-            progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            progress.WriteStats(wanted.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
 
         progress.SetPhase($"Searching {selected.Count} items");
-        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, false);
+        progress.WriteStats(wanted.Count, onCooldown, eligibleCount, selected.Count, false);
         progress.StartResults();
 
         foreach (var a in selected)
@@ -334,7 +356,8 @@ public class SearchService
 
             progress.WriteItem(title);
 
-            try { await triggerSearch(new[] { a.Id }); }
+            _triggerIds[0] = a.Id;
+            try { await triggerSearch(_triggerIds); }
             catch (Exception ex)
             {
                 _output.WriteWarning($"{inst}.missing",
@@ -342,7 +365,10 @@ public class SearchService
             }
         }
 
-        await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(a => a.Id).ToArray(), ct);
+        var ids = new int[selected.Count];
+        for (int i = 0; i < selected.Count; i++)
+            ids[i] = selected[i].Id;
+        await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }
 
@@ -380,7 +406,10 @@ public class SearchService
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, artistCategory, ct);
 
-        var eligible = artists.Where(a => !cooldownIds.Contains(a.ArtistId)).ToList();
+        var eligible = new List<ArtistGroup>(artists.Count);
+        foreach (var a in artists)
+            if (!cooldownIds.Contains(a.ArtistId))
+                eligible.Add(a);
         Shuffle(eligible);
         var selected = eligible
             .Take(maxResults)
@@ -391,9 +420,11 @@ public class SearchService
         _output.WriteDebug($"{inst}.missing",
             $"Artist cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
+        var eligibleCount = eligible.Count;
+
         if (selected.Count == 0 || isDryRun)
         {
-            progress.WriteStats(artists.Count, onCooldown, eligible.Count,
+            progress.WriteStats(artists.Count, onCooldown, eligibleCount,
                 isDryRun ? 0 : selected.Count, true);
             return;
         }
@@ -403,12 +434,12 @@ public class SearchService
         {
             _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
-            progress.WriteStats(artists.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            progress.WriteStats(artists.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
 
         progress.SetPhase($"Searching {selected.Count} artists");
-        progress.WriteStats(artists.Count, onCooldown, eligible.Count, selected.Count, false);
+        progress.WriteStats(artists.Count, onCooldown, eligibleCount, selected.Count, false);
         progress.StartResults();
 
         foreach (var a in selected)
@@ -425,12 +456,14 @@ public class SearchService
             }
         }
 
-        await _cooldown.MarkSearchedAsync(client.Instance, artistCategory,
-            selected.Select(a => a.ArtistId).ToArray(), ct);
+        var artistIds = new int[selected.Count];
+        for (int i = 0; i < selected.Count; i++)
+            artistIds[i] = selected[i].ArtistId;
+        await _cooldown.MarkSearchedAsync(client.Instance, artistCategory, artistIds, ct);
         progress.WriteTrailer();
     }
 
-    private sealed record ArtistGroup(int ArtistId, WantedAlbumArtistResource? Artist);
+    private readonly record struct ArtistGroup(int ArtistId, WantedAlbumArtistResource? Artist);
 
     private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedMovieResource>>> getWanted, Func<int[], Task> triggerSearch,
@@ -455,7 +488,10 @@ public class SearchService
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, category, ct);
 
-        var eligible = wanted.Where(m => !cooldownIds.Contains(m.Id)).ToList();
+        var eligible = new List<WantedMovieResource>(wanted.Count);
+        foreach (var m in wanted)
+            if (!cooldownIds.Contains(m.Id))
+                eligible.Add(m);
         Shuffle(eligible);
         var selected = eligible
             .Take(maxResults)
@@ -466,9 +502,11 @@ public class SearchService
         _output.WriteDebug($"{inst}.missing",
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
+        var eligibleCount = eligible.Count;
+
         if (selected.Count == 0 || isDryRun)
         {
-            progress.WriteStats(wanted.Count, onCooldown, eligible.Count,
+            progress.WriteStats(wanted.Count, onCooldown, eligibleCount,
                 isDryRun ? 0 : selected.Count, true);
             return;
         }
@@ -478,12 +516,12 @@ public class SearchService
         {
             _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
-            progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
+            progress.WriteStats(wanted.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
 
         progress.SetPhase($"Searching {selected.Count} items");
-        progress.WriteStats(wanted.Count, onCooldown, eligible.Count, selected.Count, false);
+        progress.WriteStats(wanted.Count, onCooldown, eligibleCount, selected.Count, false);
         progress.StartResults();
 
         foreach (var m in selected)
@@ -494,7 +532,8 @@ public class SearchService
 
             progress.WriteItem(title);
 
-            try { await triggerSearch(new[] { m.Id }); }
+            _triggerIds[0] = m.Id;
+            try { await triggerSearch(_triggerIds); }
             catch (Exception ex)
             {
                 _output.WriteWarning($"{inst}.missing",
@@ -502,7 +541,10 @@ public class SearchService
             }
         }
 
-        await _cooldown.MarkSearchedAsync(client.Instance, category, selected.Select(m => m.Id).ToArray(), ct);
+        var ids = new int[selected.Count];
+        for (int i = 0; i < selected.Count; i++)
+            ids[i] = selected[i].Id;
+        await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }
 

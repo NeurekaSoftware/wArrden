@@ -23,10 +23,11 @@ public class QueueCleanupService
 
     public async Task<int> CleanAsync(CancellationToken ct)
     {
+        var instanceKey = _client.Instance.ToLowerInvariant();
         var rules = _rules;
 
         var queue = await _client.GetQueueAsync(ct);
-        _output.WriteDebug($"{_client.Instance.ToLowerInvariant()}.queue", $"Fetched {queue.Count} queue items");
+        _output.WriteDebug($"{instanceKey}.queue", $"Fetched {queue.Count} queue items");
 
         if (rules is null || rules.Count == 0)
         {
@@ -39,7 +40,7 @@ public class QueueCleanupService
             string.Equals(q.TrackedDownloadStatus, "warning", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        _output.WriteDebug($"{_client.Instance.ToLowerInvariant()}.queue", $"{blocked.Count} warning-status items out of {queue.Count} total");
+        _output.WriteDebug($"{instanceKey}.queue", $"{blocked.Count} warning-status items out of {queue.Count} total");
 
         if (blocked.Count == 0)
         {
@@ -48,7 +49,7 @@ public class QueueCleanupService
             return 0;
         }
 
-        var matched = new List<(int Id, string Title, string Rule, bool Blocklist)>();
+        var matched = new List<(int Id, string Title, string Rule, bool Blocklist)>(blocked.Count);
         foreach (var item in blocked)
         {
             var match = MatchRule(item, rules, _arrType);
@@ -66,7 +67,7 @@ public class QueueCleanupService
                 }
                 catch (Exception ex)
                 {
-                    _output.WriteWarning($"{_client.Instance.ToLowerInvariant()}.queue",
+                    _output.WriteWarning($"{instanceKey}.queue",
                         $"Failed to remove queue item {item.Id} — {GetTitle(item)}", ex.Message);
                     continue;
                 }
@@ -75,12 +76,12 @@ public class QueueCleanupService
             matched.Add((item.Id, GetTitle(item), match.Value.Label, match.Value.Blocklist));
         }
 
-        _output.WriteDebug($"{_client.Instance.ToLowerInvariant()}.queue", $"Matched {matched.Count} items to cleanup rules");
+        _output.WriteDebug($"{instanceKey}.queue", $"Matched {matched.Count} items to cleanup rules");
 
-        var sorted = matched.OrderBy(m => m.Title, StringComparer.OrdinalIgnoreCase).ToList();
+        matched.Sort((a, b) => string.Compare(a.Title, b.Title, StringComparison.OrdinalIgnoreCase));
 
-        _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, sorted.Count,
-            sorted.Select(m => (m.Title, m.Rule, m.Blocklist)).ToList(), _isDryRun);
+        _output.WriteQueueResult(DateTime.Now, _client.Instance, queue.Count, blocked.Count, matched.Count,
+            matched.Select(m => (m.Title, m.Rule, m.Blocklist)).ToList(), _isDryRun);
         return matched.Count;
     }
 

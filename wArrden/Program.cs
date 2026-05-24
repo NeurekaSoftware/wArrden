@@ -94,7 +94,7 @@ using (var scope = host.Services.CreateScope())
 }
 
 var schedulerOutput = host.Services.GetRequiredService<OutputService>();
-var clients = new List<IArrClient>();
+var clients = new List<IArrClient>(config.Instances.Count);
 
 host.Services.UseScheduler(scheduler =>
 {
@@ -237,7 +237,7 @@ static async Task RunClearCooldownsCommand(string dbPath, string category, List<
 
     var cooldown = scope.ServiceProvider.GetRequiredService<ICooldownService>();
 
-    var counts = new List<(string Instance, int Count)>();
+    var counts = new List<(string Instance, int Count)>(targets.Count);
     foreach (var inst in targets)
     {
         var count = await cooldown.ClearAllAsync(category, inst.Name, CancellationToken.None);
