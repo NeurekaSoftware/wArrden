@@ -14,7 +14,7 @@ public class SearchService
         _output = output;
     }
 
-    public virtual async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, List<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
             async progress =>
@@ -32,7 +32,7 @@ public class SearchService
             });
     }
 
-    public virtual async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, List<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
             async progress =>
@@ -50,7 +50,7 @@ public class SearchService
             });
     }
 
-    public virtual async Task SearchMissingMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, List<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchMissingMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
             async progress =>
@@ -60,7 +60,7 @@ public class SearchService
             });
     }
 
-    public virtual async Task SearchUpgradeMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, List<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchUpgradeMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
             async progress =>
@@ -70,7 +70,7 @@ public class SearchService
             });
     }
 
-    public virtual async Task SearchMissingAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, List<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchMissingAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Missing Search", maxResults,
             async progress =>
@@ -88,7 +88,7 @@ public class SearchService
             });
     }
 
-    public virtual async Task SearchUpgradeAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, List<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchUpgradeAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
         await _output.RunSearchWithOutput(client.Instance, "Upgrade Search", maxResults,
             async progress =>
@@ -108,15 +108,17 @@ public class SearchService
 
     private async Task RunEpisodeSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedEpisodeResource>>> getWanted, Func<int[], Task> triggerSearch,
-        List<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
+        var inst = client.Instance.ToLowerInvariant();
+
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
 
         progress.SetPhase("Fetching wanted episodes");
         var wanted = await getWanted();
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Fetched {wanted.Count} wanted episodes");
+        _output.WriteDebug($"{inst}.missing", $"Fetched {wanted.Count} wanted episodes");
 
         if (wanted.Count == 0)
         {
@@ -137,7 +139,7 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+        _output.WriteDebug($"{inst}.missing",
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         if (selected.Count == 0 || isDryRun)
@@ -150,7 +152,7 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
-            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
@@ -162,16 +164,16 @@ public class SearchService
 
         foreach (var ep in selected)
         {
-            var title = ep.Title ?? $"Episode {ep.Id}";
-            if (ep.Series is not null)
-                title = $"{ep.Series.Title} ({ep.Series.Year}) - S{ep.SeasonNumber:D2}E{ep.EpisodeNumber:D2} - {title}";
+            var title = ep.Series is not null
+                ? $"{ep.Series.Title} ({ep.Series.Year}) - S{ep.SeasonNumber:D2}E{ep.EpisodeNumber:D2} - {ep.Title ?? $"Episode {ep.Id}"}"
+                : ep.Title ?? $"Episode {ep.Id}";
 
             progress.WriteItem(title);
 
             try { await triggerSearch(new[] { ep.Id }); }
             catch (Exception ex)
             {
-                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                _output.WriteWarning($"{inst}.missing",
                     $"Search trigger failed for {title}", ex.Message);
             }
         }
@@ -182,8 +184,9 @@ public class SearchService
 
     private async Task RunSeasonSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedEpisodeResource>>> getWanted,
-        List<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
+        var inst = client.Instance.ToLowerInvariant();
         var seasonCategory = $"{category}_Season";
 
         progress.SetPhase("Cleaning cooldown entries");
@@ -209,7 +212,7 @@ public class SearchService
             ))
             .ToList();
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Grouped {wanted.Count} episodes into {seasons.Count} seasons");
+        _output.WriteDebug($"{inst}.missing", $"Grouped {wanted.Count} episodes into {seasons.Count} seasons");
 
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, seasonCategory, ct);
@@ -223,7 +226,7 @@ public class SearchService
             .ToList();
         var onCooldown = seasons.Count - eligible.Count;
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+        _output.WriteDebug($"{inst}.missing",
             $"Season cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         if (selected.Count == 0 || isDryRun)
@@ -236,7 +239,7 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
-            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(seasons.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
@@ -248,17 +251,17 @@ public class SearchService
 
         foreach (var s in selected)
         {
-            var title = s.Series?.Title ?? $"Series {s.SeriesId}";
-            if (s.Series is not null && s.Series.Year > 0)
-                title = $"{title} ({s.Series.Year})";
-            title = $"{title} - Season {s.SeasonNumber}";
+            var seriesName = s.Series?.Title ?? $"Series {s.SeriesId}";
+            var title = s.Series is not null && s.Series.Year > 0
+                ? $"{seriesName} ({s.Series.Year}) - Season {s.SeasonNumber}"
+                : $"{seriesName} - Season {s.SeasonNumber}";
 
             progress.WriteItem(title);
 
             try { await client.TriggerSeasonSearchAsync(s.SeriesId, s.SeasonNumber, ct); }
             catch (Exception ex)
             {
-                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                _output.WriteWarning($"{inst}.missing",
                     $"Search trigger failed for {title}", ex.Message);
             }
         }
@@ -272,15 +275,17 @@ public class SearchService
 
     private async Task RunAlbumSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedAlbumResource>>> getWanted, Func<int[], Task> triggerSearch,
-        List<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
+        var inst = client.Instance.ToLowerInvariant();
+
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
 
         progress.SetPhase("Fetching wanted albums");
         var wanted = await getWanted();
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Fetched {wanted.Count} wanted albums");
+        _output.WriteDebug($"{inst}.missing", $"Fetched {wanted.Count} wanted albums");
 
         if (wanted.Count == 0)
         {
@@ -300,7 +305,7 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+        _output.WriteDebug($"{inst}.missing",
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         if (selected.Count == 0 || isDryRun)
@@ -313,7 +318,7 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
-            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
@@ -325,16 +330,14 @@ public class SearchService
 
         foreach (var a in selected)
         {
-            var artistName = a.Artist?.ArtistName ?? $"Artist Unknown";
-            var albumTitle = a.Album?.Title ?? $"Album {a.Id}";
-            var title = $"{artistName} - {albumTitle}";
+            var title = $"{a.Artist?.ArtistName ?? "Artist Unknown"} - {a.Album?.Title ?? $"Album {a.Id}"}";
 
             progress.WriteItem(title);
 
             try { await triggerSearch(new[] { a.Id }); }
             catch (Exception ex)
             {
-                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                _output.WriteWarning($"{inst}.missing",
                     $"Search trigger failed for {title}", ex.Message);
             }
         }
@@ -345,8 +348,9 @@ public class SearchService
 
     private async Task RunArtistSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedAlbumResource>>> getWanted,
-        List<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
+        var inst = client.Instance.ToLowerInvariant();
         var artistCategory = $"{category}_Artist";
 
         progress.SetPhase("Cleaning cooldown entries");
@@ -371,7 +375,7 @@ public class SearchService
             ))
             .ToList();
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Grouped {wanted.Count} albums into {artists.Count} artists");
+        _output.WriteDebug($"{inst}.missing", $"Grouped {wanted.Count} albums into {artists.Count} artists");
 
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, artistCategory, ct);
@@ -384,7 +388,7 @@ public class SearchService
             .ToList();
         var onCooldown = artists.Count - eligible.Count;
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+        _output.WriteDebug($"{inst}.missing",
             $"Artist cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         if (selected.Count == 0 || isDryRun)
@@ -397,7 +401,7 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
-            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(artists.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
@@ -416,7 +420,7 @@ public class SearchService
             try { await client.TriggerArtistSearchAsync(a.ArtistId, ct); }
             catch (Exception ex)
             {
-                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                _output.WriteWarning($"{inst}.missing",
                     $"Search trigger failed for {title}", ex.Message);
             }
         }
@@ -430,15 +434,17 @@ public class SearchService
 
     private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedMovieResource>>> getWanted, Func<int[], Task> triggerSearch,
-        List<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
+        var inst = client.Instance.ToLowerInvariant();
+
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
 
         progress.SetPhase("Fetching wanted movies");
         var wanted = await getWanted();
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing", $"Fetched {wanted.Count} wanted movies");
+        _output.WriteDebug($"{inst}.missing", $"Fetched {wanted.Count} wanted movies");
 
         if (wanted.Count == 0)
         {
@@ -457,7 +463,7 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
-        _output.WriteDebug($"{client.Instance.ToLowerInvariant()}.missing",
+        _output.WriteDebug($"{inst}.missing",
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         if (selected.Count == 0 || isDryRun)
@@ -470,7 +476,7 @@ public class SearchService
         progress.SetPhase("Checking indexer availability");
         if (!await HasMatchingIndexersAsync(client, indexerNames, ct))
         {
-            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing", "No enabled indexers — search skipped",
+            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped",
                 indexerNames is { Count: > 0 } ? $"Configured indexers: {string.Join(", ", indexerNames)}" : "No automatic-search indexers found");
             progress.WriteStats(wanted.Count, onCooldown, eligible.Count, 0, true, "No enabled indexers available");
             return;
@@ -482,16 +488,16 @@ public class SearchService
 
         foreach (var m in selected)
         {
-            var title = m.Title ?? $"Movie {m.Id}";
-            if (m.Year > 0)
-                title = $"{title} ({m.Year})";
+            var title = m.Year > 0
+                ? $"{m.Title ?? $"Movie {m.Id}"} ({m.Year})"
+                : m.Title ?? $"Movie {m.Id}";
 
             progress.WriteItem(title);
 
             try { await triggerSearch(new[] { m.Id }); }
             catch (Exception ex)
             {
-                _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.missing",
+                _output.WriteWarning($"{inst}.missing",
                     $"Search trigger failed for {title}", ex.Message);
             }
         }
@@ -500,16 +506,17 @@ public class SearchService
         progress.WriteTrailer();
     }
 
-    private static async Task<bool> HasMatchingIndexersAsync(IArrClient client, List<string>? indexerNames, CancellationToken ct)
+    private static async Task<bool> HasMatchingIndexersAsync(IArrClient client, IReadOnlyList<string>? indexerNames, CancellationToken ct)
     {
         if (indexerNames is null || indexerNames.Count == 0)
             return await client.HasAnyEnabledIndexerAsync(ct);
 
+        var configuredNames = new HashSet<string>(indexerNames, StringComparer.OrdinalIgnoreCase);
         var indexers = await client.GetIndexersAsync(ct);
         return indexers.Any(i =>
             i.EnableAutomaticSearch &&
             i.Name is not null &&
-            indexerNames.Contains(i.Name, StringComparer.OrdinalIgnoreCase));
+            configuredNames.Contains(i.Name));
     }
 
     private static void Shuffle<T>(List<T> list)

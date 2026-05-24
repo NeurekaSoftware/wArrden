@@ -6,65 +6,6 @@ namespace wArrden.Tests;
 public class QueueCleanupHelpersTests
 {
     [Fact]
-    public void CollectMessages_ErrorMessageOnly_ReturnsRawMessage()
-    {
-        var item = new QueueResource
-        {
-            ErrorMessage = "Download failed",
-            StatusMessages = null
-        };
-
-        var result = QueueCleanupService.CollectMessages(item);
-        Assert.Equal("Download failed", result);
-    }
-
-    [Fact]
-    public void CollectMessages_StatusMessages_ConcatenatesAll()
-    {
-        var item = new QueueResource
-        {
-            ErrorMessage = "Error",
-            StatusMessages = new List<QueueStatusMessage>
-            {
-                new() { Title = "msg1", Messages = new List<string> { "Message A", "Message B" } },
-                new() { Title = "msg2", Messages = new List<string> { "Message C" } }
-            }
-        };
-
-        var result = QueueCleanupService.CollectMessages(item);
-        Assert.Equal("Error Message A Message B Message C", result);
-    }
-
-    [Fact]
-    public void CollectMessages_NullMessages_ReturnsEmptyString()
-    {
-        var item = new QueueResource
-        {
-            ErrorMessage = null,
-            StatusMessages = null
-        };
-
-        var result = QueueCleanupService.CollectMessages(item);
-        Assert.Equal("", result);
-    }
-
-    [Fact]
-    public void CollectMessages_NullMessagesList_ReturnsOnlyError()
-    {
-        var item = new QueueResource
-        {
-            ErrorMessage = "Err",
-            StatusMessages = new List<QueueStatusMessage>
-            {
-                new() { Title = "msg", Messages = null }
-            }
-        };
-
-        var result = QueueCleanupService.CollectMessages(item);
-        Assert.Equal("Err", result);
-    }
-
-    [Fact]
     public void MatchRule_CaseInsensitive_FindsMatch()
     {
         var rules = new List<QueueCleanupRule>
@@ -72,7 +13,9 @@ public class QueueCleanupHelpersTests
             new("NOT_QUALITY_UPGRADE", false)
         };
 
-        var result = QueueCleanupService.MatchRule("This is Not an upgrade for existing episode file(s). Existing quality: HDTV-720p. New Quality HDTV-1080p.", rules, "sonarr");
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "This is Not an upgrade for existing episode file(s). Existing quality: HDTV-720p. New Quality HDTV-1080p." },
+            rules, "sonarr");
         Assert.NotNull(result);
         Assert.Equal("NOT_QUALITY_UPGRADE", result.Value.Label);
         Assert.False(result.Value.Blocklist);
@@ -86,7 +29,8 @@ public class QueueCleanupHelpersTests
             new("SAMPLE", true)
         };
 
-        var result = QueueCleanupService.MatchRule("This is a Sample file", rules, "sonarr");
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "This is a Sample file" }, rules, "sonarr");
         Assert.NotNull(result);
         Assert.Equal("SAMPLE", result.Value.Label);
         Assert.True(result.Value.Blocklist);
@@ -100,7 +44,8 @@ public class QueueCleanupHelpersTests
             new("NOT_QUALITY_UPGRADE", false)
         };
 
-        var result = QueueCleanupService.MatchRule("Download completed successfully", rules, "sonarr");
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "Download completed successfully" }, rules, "sonarr");
         Assert.Null(result);
     }
 
@@ -113,7 +58,8 @@ public class QueueCleanupHelpersTests
             new("NO_FILES_ELIGIBLE", true)
         };
 
-        var result = QueueCleanupService.MatchRule("Not an upgrade for existing episode file(s)", rules, "sonarr");
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "Not an upgrade for existing episode file(s)" }, rules, "sonarr");
         Assert.NotNull(result);
         Assert.Equal("NOT_QUALITY_UPGRADE", result.Value.Label);
     }
@@ -126,14 +72,16 @@ public class QueueCleanupHelpersTests
             new("SAMPLE", true)
         };
 
-        var result = QueueCleanupService.MatchRule("", rules, "sonarr");
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "" }, rules, "sonarr");
         Assert.Null(result);
     }
 
     [Fact]
     public void MatchRule_EmptyRules_ReturnsNull()
     {
-        var result = QueueCleanupService.MatchRule("Some message", new List<QueueCleanupRule>(), "sonarr");
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "Some message" }, new List<QueueCleanupRule>(), "sonarr");
         Assert.Null(result);
     }
 
@@ -145,7 +93,8 @@ public class QueueCleanupHelpersTests
             new("some raw text", false)
         };
 
-        var result = QueueCleanupService.MatchRule("this contains some raw text", rules, "sonarr");
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "this contains some raw text" }, rules, "sonarr");
         Assert.Null(result);
     }
 
@@ -157,7 +106,8 @@ public class QueueCleanupHelpersTests
             new("ALBUM_ALREADY_IMPORTED", true)
         };
 
-        var result = QueueCleanupService.MatchRule("Album already imported", rules, "sonarr");
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "Album already imported" }, rules, "sonarr");
         Assert.Null(result);
     }
 
@@ -170,7 +120,7 @@ public class QueueCleanupHelpersTests
         };
 
         var result = QueueCleanupService.MatchRule(
-            "Not a quality revision upgrade for existing movie file(s)", rules, "radarr");
+            new QueueResource { ErrorMessage = "Not a quality revision upgrade for existing movie file(s)" }, rules, "radarr");
         Assert.NotNull(result);
         Assert.Equal("NOT_REVISION_UPGRADE", result.Value.Label);
     }
@@ -184,16 +134,72 @@ public class QueueCleanupHelpersTests
         };
 
         var radarrMatch = QueueCleanupService.MatchRule(
-            "Not an upgrade for existing movie file(s)", rules, "radarr");
+            new QueueResource { ErrorMessage = "Not an upgrade for existing movie file(s)" }, rules, "radarr");
         Assert.NotNull(radarrMatch);
 
         var sonarrMatch = QueueCleanupService.MatchRule(
-            "Not an upgrade for existing episode file(s)", rules, "sonarr");
+            new QueueResource { ErrorMessage = "Not an upgrade for existing episode file(s)" }, rules, "sonarr");
         Assert.NotNull(sonarrMatch);
 
         var lidarrMatch = QueueCleanupService.MatchRule(
-            "Not an upgrade for existing album file(s)", rules, "lidarr");
+            new QueueResource { ErrorMessage = "Not an upgrade for existing album file(s)" }, rules, "lidarr");
         Assert.NotNull(lidarrMatch);
+    }
+
+    [Fact]
+    public void MatchRule_StatusMessages_MatchesPattern()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("SAMPLE", true)
+        };
+
+        var item = new QueueResource
+        {
+            ErrorMessage = null,
+            StatusMessages = new List<QueueStatusMessage>
+            {
+                new() { Title = "msg", Messages = new List<string> { "Unable to determine if file is a sample" } }
+            }
+        };
+
+        var result = QueueCleanupService.MatchRule(item, rules, "sonarr");
+        Assert.NotNull(result);
+        Assert.Equal("SAMPLE", result.Value.Label);
+    }
+
+    [Fact]
+    public void MatchRule_StatusMessages_NoMatchWhenErrorAndStatusAreSeparate()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("DANGEROUS_FILE", false)
+        };
+
+        var item = new QueueResource
+        {
+            ErrorMessage = "Download failed",
+            StatusMessages = new List<QueueStatusMessage>
+            {
+                new() { Title = "msg", Messages = new List<string> { "Found executable file" } }
+            }
+        };
+
+        var result = QueueCleanupService.MatchRule(item, rules, "radarr");
+        Assert.NotNull(result);
+        Assert.Equal("DANGEROUS_FILE", result.Value.Label);
+    }
+
+    [Fact]
+    public void MatchRule_NoMessages_ReturnsNull()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("SAMPLE", true)
+        };
+
+        var result = QueueCleanupService.MatchRule(new QueueResource(), rules, "sonarr");
+        Assert.Null(result);
     }
 
     [Fact]

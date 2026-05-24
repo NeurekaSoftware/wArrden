@@ -6,7 +6,7 @@ namespace wArrden.Services;
 public class QueueCleanupService
 {
     private readonly IArrClient _client;
-    private readonly string _instanceType;
+    private readonly string _arrType;
     private readonly bool _isDryRun;
     private readonly OutputService _output;
     private readonly List<QueueCleanupRule>? _rules;
@@ -15,7 +15,7 @@ public class QueueCleanupService
         List<QueueCleanupRule>? rules = null)
     {
         _client = client;
-        _instanceType = instanceType;
+        _arrType = instanceType.ToLowerInvariant();
         _isDryRun = isDryRun;
         _output = output;
         _rules = rules;
@@ -51,8 +51,7 @@ public class QueueCleanupService
         var matched = new List<(int Id, string Title, string Rule, bool Blocklist)>();
         foreach (var item in blocked)
         {
-            var messages = CollectMessages(item);
-            var match = MatchRule(messages, rules, _instanceType);
+            var match = MatchRule(item, rules, _arrType);
             if (match is null)
                 continue;
 
@@ -85,38 +84,38 @@ public class QueueCleanupService
         return matched.Count;
     }
 
-    internal static string CollectMessages(QueueResource item)
-    {
-        var parts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
-            parts.Add(item.ErrorMessage);
-
-        if (item.StatusMessages is not null)
-        {
-            foreach (var sm in item.StatusMessages)
-            {
-                if (sm.Messages is not null)
-                    parts.AddRange(sm.Messages);
-            }
-        }
-
-        return string.Join(" ", parts);
-    }
-
-    internal static (string Label, bool Blocklist)? MatchRule(string messages, List<QueueCleanupRule> rules, string arrType)
+    internal static (string Label, bool Blocklist)? MatchRule(QueueResource item, List<QueueCleanupRule> rules, string arrType)
     {
         foreach (var rule in rules)
         {
             var patterns = QueueCleanupRuleMatchers.GetPatterns(rule.Match, arrType);
             if (patterns is { Length: > 0 })
             {
-                foreach (var pattern in patterns)
+                if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
                 {
-                    if (messages.Contains(pattern, StringComparison.OrdinalIgnoreCase))
-                        return (rule.Match, rule.Blocklist);
+                    foreach (var pattern in patterns)
+                        if (item.ErrorMessage.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                            return (rule.Match, rule.Blocklist);
+                }
+
+                if (item.StatusMessages is not null)
+                {
+                    foreach (var sm in item.StatusMessages)
+                    {
+                        if (sm.Messages is not null)
+                        {
+                            foreach (var msg in sm.Messages)
+                            {
+                                foreach (var pattern in patterns)
+                                    if (msg.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                                        return (rule.Match, rule.Blocklist);
+                            }
+                        }
+                    }
                 }
             }
         }
+
         return null;
     }
 
