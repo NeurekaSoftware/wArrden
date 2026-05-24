@@ -11,7 +11,7 @@ public class LidarrV1Client : IArrClient
     public string Instance { get; }
 
     public LidarrV1Client(string url, string apiKey, string instanceName)
-        : this(url, apiKey, instanceName, new HttpClientHandler())
+        : this(url, apiKey, instanceName, new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(15) })
     {
     }
 
@@ -19,7 +19,7 @@ public class LidarrV1Client : IArrClient
     {
         Instance = instanceName;
         _baseUrl = url.TrimEnd('/');
-        _http = new HttpClient(handler);
+        _http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
         _http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
     }
 
@@ -34,7 +34,7 @@ public class LidarrV1Client : IArrClient
             $"{_baseUrl}/api/v1/queue?includeUnknownArtistItems=true&includeArtist=true&includeAlbum=true", ct);
         response.EnsureSuccessStatusCode();
         var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<QueueResource>>(cancellationToken: ct);
-        return paging?.Records ?? new();
+        return (IReadOnlyList<QueueResource>?)paging?.Records ?? Array.Empty<QueueResource>();
     }
 
     public async Task DeleteQueueItemAsync(int queueId, CancellationToken ct)
@@ -55,7 +55,7 @@ public class LidarrV1Client : IArrClient
     {
         using var response = await _http.GetAsync($"{_baseUrl}/api/v1/indexer", ct);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct) ?? new();
+        return (IReadOnlyList<IndexerResource>?)await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct) ?? Array.Empty<IndexerResource>();
     }
 
     public async Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct)
@@ -88,7 +88,10 @@ public class LidarrV1Client : IArrClient
 
             var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<WantedAlbumResource>>(cancellationToken: ct);
             if (paging?.Records is { Count: > 0 })
+            {
+                all.Capacity = paging.TotalRecords;
                 all.AddRange(paging.Records);
+            }
 
             if (paging == null || all.Count >= paging.TotalRecords)
                 break;

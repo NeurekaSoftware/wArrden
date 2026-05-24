@@ -77,7 +77,7 @@ builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", Microsoft.Extensions.
 builder.Logging.AddFilter("System", Microsoft.Extensions.Logging.LogLevel.Warning);
 builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
 
-builder.Services.AddDbContext<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
+builder.Services.AddDbContextPool<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
 builder.Services.AddSingleton(opts);
 builder.Services.AddScheduler();
 builder.Services.AddSingleton<ICooldownService, CooldownService>();
@@ -120,7 +120,7 @@ host.Services.UseScheduler(scheduler =>
             scheduler
                 .ScheduleWithParams<SearchJob>(client, "missing", instanceType,
                     inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
-                    inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames ?? new List<string>())
+                    inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames)
                 .Cron(inst.MissingSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_missing");
         }
@@ -130,7 +130,7 @@ host.Services.UseScheduler(scheduler =>
             scheduler
                 .ScheduleWithParams<SearchJob>(client, "upgrade", instanceType,
                     inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
-                    inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames ?? new List<string>())
+                    inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames)
                 .Cron(inst.UpgradeSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_upgrade");
         }
@@ -226,7 +226,7 @@ static List<InstanceConfig>? ResolveTargets(AppConfig config, string? instanceAr
 static async Task RunClearCooldownsCommand(string dbPath, string category, List<InstanceConfig> targets, WardenOptions opts, OutputService output)
 {
     var services = new ServiceCollection();
-    services.AddDbContext<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
+    services.AddDbContextPool<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
     services.AddSingleton(output);
     services.AddSingleton<ICooldownService, CooldownService>();
 
