@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Text.Json;
 using wArrden.Clients.Models;
 
 namespace wArrden.Clients;
@@ -24,25 +23,28 @@ public class RadarrV3Client : IArrClient
         _http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
     }
 
+    public void Dispose()
+    {
+        _http.Dispose();
+    }
+
     public async Task<IReadOnlyList<QueueResource>> GetQueueAsync(CancellationToken ct)
     {
-        var response = await _http.GetAsync($"{_baseUrl}/api/v3/queue?includeUnknownMovieItems=true", ct);
+        using var response = await _http.GetAsync($"{_baseUrl}/api/v3/queue?includeUnknownMovieItems=true", ct);
         response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadAsStringAsync(ct);
-        using var doc = JsonDocument.Parse(json);
-        var records = doc.RootElement.GetProperty("records");
-        return JsonSerializer.Deserialize<List<QueueResource>>(records.GetRawText()) ?? new();
+        var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<QueueResource>>(cancellationToken: ct);
+        return paging?.Records ?? new();
     }
 
     public async Task DeleteQueueItemAsync(int queueId, CancellationToken ct)
     {
-        var response = await _http.DeleteAsync($"{_baseUrl}/api/v3/queue/{queueId}?blocklist=true&skipRedownload=false", ct);
+        using var response = await _http.DeleteAsync($"{_baseUrl}/api/v3/queue/{queueId}?blocklist=true&skipRedownload=false", ct);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task DeleteQueueItemWithoutBlocklistAsync(int queueId, CancellationToken ct)
     {
-        var response = await _http.DeleteAsync($"{_baseUrl}/api/v3/queue/{queueId}?blocklist=false&skipRedownload=false", ct);
+        using var response = await _http.DeleteAsync($"{_baseUrl}/api/v3/queue/{queueId}?blocklist=false&skipRedownload=false", ct);
         response.EnsureSuccessStatusCode();
     }
 
@@ -71,7 +73,7 @@ public class RadarrV3Client : IArrClient
         while (true)
         {
             var url = $"{_baseUrl}/api/v3/wanted/{type}?monitored=true&page={page}&pageSize={pageSize}&sortKey=lastSearchTime&sortDirection=ascending";
-            var response = await _http.GetAsync(url, ct);
+            using var response = await _http.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
             var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<WantedMovieResource>>(cancellationToken: ct);
@@ -84,7 +86,8 @@ public class RadarrV3Client : IArrClient
             page++;
         }
 
-        return all.Where(m => m.Monitored).ToList();
+        all.RemoveAll(m => !m.Monitored);
+        return all;
     }
 
     public Task TriggerEpisodeSearchAsync(int[] episodeIds, CancellationToken ct)
@@ -96,13 +99,13 @@ public class RadarrV3Client : IArrClient
     public async Task TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct)
     {
         var body = new { name = "MoviesSearch", movieIds };
-        var response = await _http.PostAsJsonAsync($"{_baseUrl}/api/v3/command", body, cancellationToken: ct);
+        using var response = await _http.PostAsJsonAsync($"{_baseUrl}/api/v3/command", body, cancellationToken: ct);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task<IReadOnlyList<IndexerResource>> GetIndexersAsync(CancellationToken ct)
     {
-        var response = await _http.GetAsync($"{_baseUrl}/api/v3/indexer", ct);
+        using var response = await _http.GetAsync($"{_baseUrl}/api/v3/indexer", ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct) ?? new();
     }

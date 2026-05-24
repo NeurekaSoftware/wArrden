@@ -2,7 +2,7 @@ using wArrden.Clients.Models;
 
 namespace wArrden.Clients;
 
-public interface IArrClient
+public interface IArrClient : IDisposable
 {
     string Instance { get; }
 

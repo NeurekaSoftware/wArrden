@@ -2,6 +2,7 @@ using wArrden.Data;
 using wArrden.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace wArrden.Tests;
 
@@ -33,6 +34,17 @@ public class CooldownServiceTests : IDisposable
 
     private WardenDbContext CreateContext() => new(_options);
 
+    private CooldownService CreateCooldownService(WardenDbContext db)
+    {
+        var scopeFactory = new Mock<IServiceScopeFactory>();
+        var scope = new Mock<IServiceScope>();
+        var sp = new Mock<IServiceProvider>();
+        sp.Setup(x => x.GetService(typeof(WardenDbContext))).Returns(db);
+        scope.Setup(x => x.ServiceProvider).Returns(sp.Object);
+        scopeFactory.Setup(x => x.CreateScope()).Returns(scope.Object);
+        return new CooldownService(scopeFactory.Object, _output);
+    }
+
     [Fact]
     public async Task CleanExpiredAsync_RemovesEntriesOlderThanCooldown()
     {
@@ -49,7 +61,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         await service.CleanExpiredAsync("Sonarr", "Missing", TimeSpan.FromDays(30), CancellationToken.None);
 
         var remaining = await db.CooldownEntries.ToListAsync();
@@ -73,7 +85,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         await service.CleanExpiredAsync("Sonarr", "Missing", TimeSpan.FromDays(30), CancellationToken.None);
 
         var remaining = await db.CooldownEntries.ToListAsync();
@@ -102,7 +114,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var ids = await service.GetCooldownIdsAsync("Sonarr", "Missing", CancellationToken.None);
 
         Assert.Equal(2, ids.Count);
@@ -115,7 +127,7 @@ public class CooldownServiceTests : IDisposable
     public async Task MarkSearchedAsync_AddsEntries()
     {
         using var db = CreateContext();
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         await service.MarkSearchedAsync("Radarr", "Upgrade", new[] { 1, 2, 3 }, CancellationToken.None);
 
         var entries = await db.CooldownEntries.ToListAsync();
@@ -140,7 +152,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         await service.CleanExpiredAsync("Series", "Missing", TimeSpan.FromDays(30), CancellationToken.None);
 
         var remaining = await db.CooldownEntries.ToListAsync();
@@ -165,7 +177,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var ids = await service.GetCooldownIdsAsync("Series", "Missing", CancellationToken.None);
 
         Assert.Single(ids);
@@ -177,7 +189,7 @@ public class CooldownServiceTests : IDisposable
     public async Task GetCooldownIdsAsync_NoEntries_ReturnsEmpty()
     {
         using var db = CreateContext();
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var ids = await service.GetCooldownIdsAsync("Nonexistent", "Missing", CancellationToken.None);
 
         Assert.Empty(ids);
@@ -187,7 +199,7 @@ public class CooldownServiceTests : IDisposable
     public async Task MarkSearchedAsync_EmptyArray_NoOp()
     {
         using var db = CreateContext();
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         await service.MarkSearchedAsync("Sonarr", "Missing", Array.Empty<int>(), CancellationToken.None);
 
         var entries = await db.CooldownEntries.ToListAsync();
@@ -205,7 +217,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         await Assert.ThrowsAsync<DbUpdateException>(() =>
             service.MarkSearchedAsync("Sonarr", "Missing", new[] { 1 }, CancellationToken.None));
     }
@@ -226,7 +238,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         await service.CleanExpiredAsync("Sonarr", "Missing", TimeSpan.FromDays(30), CancellationToken.None);
 
         var remaining = await db.CooldownEntries.ToListAsync();
@@ -244,7 +256,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         await service.CleanExpiredAsync("Sonarr", "Missing", TimeSpan.FromDays(30), CancellationToken.None);
 
         var remaining = await db.CooldownEntries.ToListAsync();
@@ -267,7 +279,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
 
         Assert.Equal(2, count);
@@ -291,7 +303,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
 
         Assert.Equal(2, count);
@@ -315,7 +327,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var count = await service.ClearAllAsync("Upgrade", "Series", CancellationToken.None);
 
         Assert.Equal(2, count);
@@ -339,7 +351,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
 
         Assert.Equal(1, count);
@@ -369,7 +381,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var count = await service.ClearAllAsync("Missing", null, CancellationToken.None);
 
         Assert.Equal(3, count);
@@ -381,7 +393,7 @@ public class CooldownServiceTests : IDisposable
     public async Task ClearAllAsync_NoEntries_ReturnsZero()
     {
         using var db = CreateContext();
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
 
         Assert.Equal(0, count);
@@ -403,7 +415,7 @@ public class CooldownServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var service = new CooldownService(db, _output);
+        var service = CreateCooldownService(db);
         var count = await service.ClearAllAsync("Missing", "Series", CancellationToken.None);
 
         Assert.Equal(1, count);

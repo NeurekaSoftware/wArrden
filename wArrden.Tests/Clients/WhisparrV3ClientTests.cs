@@ -71,14 +71,14 @@ public class WhisparrV3ClientTests
     [Fact]
     public async Task GetWantedMissingMovies_ThrowsNotSupportedException()
     {
-        IArrClient client = new WhisparrV3Client("http://localhost", "key", "Whisparr", new HttpClientHandler());
+        using IArrClient client = new WhisparrV3Client("http://localhost", "key", "Whisparr", new HttpClientHandler());
         await Assert.ThrowsAsync<NotSupportedException>(() => client.GetWantedMissingMoviesAsync(CancellationToken.None));
     }
 
     [Fact]
     public async Task TriggerMoviesSearch_ThrowsNotSupportedException()
     {
-        IArrClient client = new WhisparrV3Client("http://localhost", "key", "Whisparr", new HttpClientHandler());
+        using IArrClient client = new WhisparrV3Client("http://localhost", "key", "Whisparr", new HttpClientHandler());
         await Assert.ThrowsAsync<NotSupportedException>(() => client.TriggerMoviesSearchAsync(new[] { 1 }, CancellationToken.None));
     }
 

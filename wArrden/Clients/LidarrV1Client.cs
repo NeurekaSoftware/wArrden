@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Text.Json;
 using wArrden.Clients.Models;
 
 namespace wArrden.Clients;
@@ -24,34 +23,37 @@ public class LidarrV1Client : IArrClient
         _http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
     }
 
+    public void Dispose()
+    {
+        _http.Dispose();
+    }
+
     public async Task<IReadOnlyList<QueueResource>> GetQueueAsync(CancellationToken ct)
     {
-        var response = await _http.GetAsync(
+        using var response = await _http.GetAsync(
             $"{_baseUrl}/api/v1/queue?includeUnknownArtistItems=true&includeArtist=true&includeAlbum=true", ct);
         response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadAsStringAsync(ct);
-        using var doc = JsonDocument.Parse(json);
-        var records = doc.RootElement.GetProperty("records");
-        return JsonSerializer.Deserialize<List<QueueResource>>(records.GetRawText()) ?? new();
+        var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<QueueResource>>(cancellationToken: ct);
+        return paging?.Records ?? new();
     }
 
     public async Task DeleteQueueItemAsync(int queueId, CancellationToken ct)
     {
-        var response = await _http.DeleteAsync(
+        using var response = await _http.DeleteAsync(
             $"{_baseUrl}/api/v1/queue/{queueId}?blocklist=true&removeFromClient=true", ct);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task DeleteQueueItemWithoutBlocklistAsync(int queueId, CancellationToken ct)
     {
-        var response = await _http.DeleteAsync(
+        using var response = await _http.DeleteAsync(
             $"{_baseUrl}/api/v1/queue/{queueId}?blocklist=false&removeFromClient=true", ct);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task<IReadOnlyList<IndexerResource>> GetIndexersAsync(CancellationToken ct)
     {
-        var response = await _http.GetAsync($"{_baseUrl}/api/v1/indexer", ct);
+        using var response = await _http.GetAsync($"{_baseUrl}/api/v1/indexer", ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<List<IndexerResource>>(cancellationToken: ct) ?? new();
     }
@@ -81,7 +83,7 @@ public class LidarrV1Client : IArrClient
         while (true)
         {
             var url = $"{_baseUrl}/api/v1/wanted/{type}?includeArtist=true&monitored=true&page={page}&pageSize={pageSize}&sortKey=albums.lastSearchTime&sortDirection=ascending";
-            var response = await _http.GetAsync(url, ct);
+            using var response = await _http.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
             var paging = await response.Content.ReadFromJsonAsync<WantedPagingResource<WantedAlbumResource>>(cancellationToken: ct);
@@ -94,7 +96,8 @@ public class LidarrV1Client : IArrClient
             page++;
         }
 
-        return all.Where(a => a.Monitored).ToList();
+        all.RemoveAll(a => !a.Monitored);
+        return all;
     }
 
     public async Task TriggerAlbumSearchAsync(int[] albumIds, CancellationToken ct)
@@ -111,7 +114,7 @@ public class LidarrV1Client : IArrClient
 
     private async Task PostCommandAsync(object command, CancellationToken ct)
     {
-        var response = await _http.PostAsJsonAsync($"{_baseUrl}/api/v1/command", command, cancellationToken: ct);
+        using var response = await _http.PostAsJsonAsync($"{_baseUrl}/api/v1/command", command, cancellationToken: ct);
         response.EnsureSuccessStatusCode();
     }
 

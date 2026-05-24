@@ -71,14 +71,14 @@ public class LidarrV1ClientTests
     [Fact]
     public async Task GetWantedMissingEpisodes_ThrowsNotSupportedException()
     {
-        IArrClient client = new LidarrV1Client("http://localhost", "key", "Lidarr", new HttpClientHandler());
+        using IArrClient client = new LidarrV1Client("http://localhost", "key", "Lidarr", new HttpClientHandler());
         await Assert.ThrowsAsync<NotSupportedException>(() => client.GetWantedMissingEpisodesAsync(CancellationToken.None));
     }
 
     [Fact]
     public async Task TriggerEpisodeSearch_ThrowsNotSupportedException()
     {
-        IArrClient client = new LidarrV1Client("http://localhost", "key", "Lidarr", new HttpClientHandler());
+        using IArrClient client = new LidarrV1Client("http://localhost", "key", "Lidarr", new HttpClientHandler());
         await Assert.ThrowsAsync<NotSupportedException>(() => client.TriggerEpisodeSearchAsync(new[] { 1 }, CancellationToken.None));
     }
 

@@ -94,6 +94,7 @@ using (var scope = host.Services.CreateScope())
 }
 
 var schedulerOutput = host.Services.GetRequiredService<OutputService>();
+var clients = new List<IArrClient>();
 
 host.Services.UseScheduler(scheduler =>
 {
@@ -107,6 +108,7 @@ host.Services.UseScheduler(scheduler =>
             { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
             _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
         };
+        clients.Add(client);
 
         var instanceKey = inst.InstanceKey;
         var instanceType = InstanceType(inst);
@@ -152,6 +154,13 @@ host.Services.UseScheduler(scheduler =>
 .OnError(ex =>
 {
     schedulerOutput.WriteError("warden.scheduler", "Scheduled task error", ex);
+});
+
+var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+lifetime.ApplicationStopping.Register(() =>
+{
+    foreach (var client in clients)
+        client.Dispose();
 });
 
 OutputService.WriteBanner(config, opts);
@@ -218,6 +227,7 @@ static async Task RunClearCooldownsCommand(string dbPath, string category, List<
 {
     var services = new ServiceCollection();
     services.AddDbContext<WardenDbContext>(o => o.UseSqlite($"Data Source={dbPath}"));
+    services.AddSingleton(output);
     services.AddSingleton<ICooldownService, CooldownService>();
 
     var sp = services.BuildServiceProvider();
