@@ -33,6 +33,13 @@ wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding mi
    docker compose up -d
    ```
 
+## CLI Usage
+
+| Command | Description |
+|---|---|
+| `docker exec warrden clear-missing [instance]` | Clears all missing search cooldowns. If `instance` is omitted, clears across all instances. |
+| `docker exec warrden clear-upgrades [instance]` | Clears all upgrade search cooldowns. If `instance` is omitted, clears across all instances. |
+
 ## Features
 
 wArrden supports multiple instances of each arr type, so you can manage separate libraries (movies, series, anime, music) independently with their own schedules and cooldowns.
@@ -69,10 +76,3 @@ This creates a few common gaps in automation:
 Over time, this can leave libraries with permanently missing content or media that no longer matches your preferred quality and scoring standards.
 
 wArrden fills those gaps by periodically rechecking your library and automating the cleanup work that would otherwise require manual intervention.
-
-## CLI Usage
-
-| Command | Description |
-|---|---|
-| `docker exec warrden clear-missing [instance]` | Clears all missing search cooldowns. If `instance` is omitted, clears across all instances. |
-| `docker exec warrden clear-upgrades [instance]` | Clears all upgrade search cooldowns. If `instance` is omitted, clears across all instances. |
