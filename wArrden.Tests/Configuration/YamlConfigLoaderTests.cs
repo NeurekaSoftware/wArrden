@@ -26,6 +26,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -142,6 +143,51 @@ public class YamlConfigLoaderTests
     }
 
     [Fact]
+    public void Validate_MissingApiVersion_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("apiVersion") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_LegacyNumericApiVersion_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr",
+                    Name = "Series",
+                    Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    ApiVersion = "3",
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("apiVersion") && e.Contains("v3"));
+    }
+
+    [Fact]
     public void Validate_JobEnabledMissingCron_ReturnsError()
     {
         var config = new AppConfig
@@ -154,6 +200,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, MaxResults = 10, Cooldown = "30d" }
                 }
             }
@@ -176,6 +223,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "bad cron" }
                 }
             }
@@ -198,6 +246,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "xyz" }
                 }
             }
@@ -220,6 +269,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 },
                 new()
@@ -228,6 +278,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -250,6 +301,7 @@ public class YamlConfigLoaderTests
                     Name = "Movies",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 },
                 new()
@@ -258,6 +310,7 @@ public class YamlConfigLoaderTests
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
                 }
             }
@@ -280,6 +333,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = -1, Cooldown = "30d" }
                 }
             }
@@ -302,6 +356,7 @@ public class YamlConfigLoaderTests
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
                 }
             }
@@ -324,6 +379,7 @@ public class YamlConfigLoaderTests
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = false, Cron = "0 0 * * *", MaxResults = 0, Cooldown = "30d", SearchType = "episode" },
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
@@ -389,6 +445,7 @@ instances:
   - type: sonarr
     name: Series
     url: http://localhost:8989
+    apiVersion: v3
     apiKey: abc123
     missingSearch:
       enabled: true
@@ -434,6 +491,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "season" }
                 }
             }
@@ -456,6 +514,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" }
                 }
             }
@@ -478,6 +537,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "series" }
                 }
             }
@@ -500,6 +560,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "SEASON" },
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "Episode" }
                 }
@@ -523,6 +584,7 @@ instances:
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "season" }
                 }
             }
@@ -545,6 +607,7 @@ instances:
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" }
                 }
             }
@@ -633,6 +696,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" }
                 }
             }
@@ -655,6 +719,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, MaxResults = 10, Cooldown = "30d" }
                 }
             }
@@ -677,6 +742,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", Cooldown = "30d" }
                 }
             }
@@ -699,6 +765,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10 }
                 }
             }
@@ -721,6 +788,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" },
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
                 }
@@ -807,6 +875,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -835,7 +904,7 @@ instances:
         Assert.Equal(27, config.QueueCleanupRules.Sonarr!.Count);
         Assert.Equal(18, config.QueueCleanupRules.Radarr!.Count);
         Assert.Equal(24, config.QueueCleanupRules.Lidarr!.Count);
-        Assert.Equal(27, config.QueueCleanupRules.Whisparr!.Count);
+        Assert.Equal(28, config.QueueCleanupRules.Whisparr!.Count);
     }
 
     [Fact]
@@ -851,6 +920,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -885,6 +955,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -915,6 +986,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -944,6 +1016,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -973,6 +1046,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1002,6 +1076,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1031,6 +1106,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -1053,6 +1129,7 @@ instances:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1079,7 +1156,7 @@ instances:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -1102,6 +1179,7 @@ instances:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -1124,6 +1202,7 @@ instances:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" }
                 }
             }
@@ -1131,6 +1210,52 @@ instances:
         var errors = YamlConfigLoader.Validate(config);
 
         Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_WhisparrErosSearch_NoSearchTypeSet_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    ApiVersion = "v3-eros",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_WhisparrErosSearch_SearchTypeSet_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "whisparr",
+                    Name = "Adult",
+                    Url = "http://localhost:6969",
+                    ApiKey = "abc123",
+                    ApiVersion = "v3-eros",
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("searchType") && e.Contains("whisparr"));
     }
 
     [Fact]
@@ -1146,6 +1271,7 @@ instances:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" },
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
                 }
@@ -1169,7 +1295,7 @@ instances:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" }
                 }
             }
@@ -1192,7 +1318,7 @@ instances:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "album" },
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 },
@@ -1202,6 +1328,7 @@ instances:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "episode" },
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
@@ -1224,13 +1351,14 @@ instances:
     name: Music
     url: http://localhost:8686
     apiKey: abc123
-    apiVersion: '1'
+    apiVersion: 'v1'
     queueCleanup:
       enabled: true
       cron: '* * * * *'
   - type: whisparr
     name: Adult
     url: http://localhost:6969
+    apiVersion: v3
     apiKey: abc123
     queueCleanup:
       enabled: true
@@ -1277,7 +1405,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1304,7 +1432,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d" },
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "* * * * *" }
                 }
@@ -1328,7 +1456,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "album" }
                 }
             }
@@ -1351,7 +1479,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "artist" }
                 }
             }
@@ -1374,7 +1502,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "ALBUM" },
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "Artist" }
                 }
@@ -1398,6 +1526,7 @@ queueCleanupRules:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "series" }
                 }
             }
@@ -1420,7 +1549,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1450,7 +1579,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1480,7 +1609,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1510,7 +1639,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1542,6 +1671,7 @@ queueCleanupRules:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1571,6 +1701,7 @@ queueCleanupRules:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1600,6 +1731,7 @@ queueCleanupRules:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1629,6 +1761,7 @@ queueCleanupRules:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1660,6 +1793,7 @@ queueCleanupRules:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1686,6 +1820,7 @@ queueCleanupRules:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1710,6 +1845,7 @@ queueCleanupRules:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1734,6 +1870,7 @@ queueCleanupRules:
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1763,7 +1900,7 @@ queueCleanupRules:
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
-                    ApiVersion = "1",
+                    ApiVersion = "v1",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1793,6 +1930,7 @@ queueCleanupRules:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             },
@@ -1822,6 +1960,7 @@ queueCleanupRules:
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "SEASON" },
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", MaxResults = 10, Cooldown = "30d", SearchType = "Episode" }
                 }
@@ -1850,6 +1989,7 @@ queueCleanupRules:
                 {
                     Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -1871,6 +2011,7 @@ queueCleanupRules:
                 {
                     Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
@@ -1892,6 +2033,7 @@ queueCleanupRules:
                 {
                     Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
                     ApiKey = "abc123",
+                    ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }

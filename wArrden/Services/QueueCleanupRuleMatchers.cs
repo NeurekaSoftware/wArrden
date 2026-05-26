@@ -23,7 +23,7 @@ public static class QueueCleanupRuleMatchers
             ["radarr"]   = new[] { "Not an upgrade for existing movie" },
             ["sonarr"]   = new[] { "Not an upgrade for existing episode" },
             ["lidarr"]   = new[] { "Not an upgrade for existing track file", "Not an upgrade for existing album file" },
-            ["whisparr"] = new[] { "Not an upgrade for existing episode" },
+            ["whisparr"] = new[] { "Not an upgrade for existing episode", "Not an upgrade for existing movie" },
         },
 
         ["NOT_REVISION_UPGRADE"] = new()
@@ -38,7 +38,7 @@ public static class QueueCleanupRuleMatchers
             ["radarr"]   = new[] { "potentially dangerous file", "Found executable file" },
             ["sonarr"]   = new[] { "potentially dangerous file", "Found executable file" },
             ["lidarr"]   = new[] { "Found executable file" },
-            ["whisparr"] = new[] { "Found executable file" },
+            ["whisparr"] = new[] { "potentially dangerous file", "Found executable file" },
         },
 
         ["IMPORT_PATH_INACCESSIBLE"] = Shared("Import failed, path does not exist or is not accessible by"),
@@ -47,7 +47,7 @@ public static class QueueCleanupRuleMatchers
         {
             ["radarr"]   = new[] { "Found matching movie via grab history" },
             ["sonarr"]   = new[] { "Found matching series via grab history" },
-            ["whisparr"] = new[] { "Found matching series via grab history" },
+            ["whisparr"] = new[] { "Found matching series via grab history", "Found matching movie via grab history" },
         },
 
         ["NOT_IN_GRABBED_RELEASE"] = new()
@@ -57,9 +57,9 @@ public static class QueueCleanupRuleMatchers
             ["whisparr"] = new[] { "not found in the grabbed release" },
         },
 
-        // ── Radarr Only ──
+        // ── Radarr / Whisparr Eros ──
 
-        ["MOVIE_ALREADY_IMPORTED"] = RadarrOnly("Movie file already imported"),
+        ["MOVIE_ALREADY_IMPORTED"] = RadarrWhisparr("Movie file already imported"),
 
         // ── Sonarr / Whisparr ──
 
@@ -105,6 +105,12 @@ public static class QueueCleanupRuleMatchers
     private static Dictionary<string, string[]> RadarrOnly(params string[] patterns) => new()
     {
         ["radarr"] = patterns,
+    };
+
+    private static Dictionary<string, string[]> RadarrWhisparr(params string[] patterns) => new()
+    {
+        ["radarr"] = patterns,
+        ["whisparr"] = patterns,
     };
 
     private static Dictionary<string, string[]> SonarrWhisparr(params string[] patterns) => new()

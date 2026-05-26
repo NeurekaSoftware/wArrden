@@ -50,10 +50,12 @@ internal static class YamlConfigLoader
     {
         foreach (var inst in config.Instances)
         {
-            if (inst.MissingSearch is not null && (inst.IsSonarr || inst.IsWhisparr || inst.IsLidarr))
+            inst.ApiVersion = NormalizeApiVersion(inst.ApiVersion);
+
+            if (inst.MissingSearch is not null && (inst.IsSonarr || (inst.IsWhisparr && !inst.IsWhisparrV3Eros) || inst.IsLidarr))
                 inst.MissingSearch.SearchType = inst.MissingSearch.SearchType!.ToLowerInvariant();
 
-            if (inst.UpgradeSearch is not null && (inst.IsSonarr || inst.IsWhisparr || inst.IsLidarr))
+            if (inst.UpgradeSearch is not null && (inst.IsSonarr || (inst.IsWhisparr && !inst.IsWhisparrV3Eros) || inst.IsLidarr))
                 inst.UpgradeSearch.SearchType = inst.UpgradeSearch.SearchType!.ToLowerInvariant();
         }
     }
@@ -97,8 +99,7 @@ internal static class YamlConfigLoader
             if (string.IsNullOrWhiteSpace(inst.ApiKey))
                 errors.Add($"{prefix} '{inst.Name}': 'apiKey' is required.");
 
-            if ((inst.IsLidarr && inst.ApiVersion != "1") || (!inst.IsLidarr && inst.ApiVersion != "3"))
-                errors.Add($"{prefix} '{inst.Name}': 'apiVersion' must be '{(inst.IsLidarr ? "1" : "3")}'.");
+            ValidateApiVersion(errors, inst, prefix);
 
             ValidateJob(errors, inst, "missingSearch", i);
             ValidateJob(errors, inst, "upgradeSearch", i);
@@ -160,7 +161,9 @@ internal static class YamlConfigLoader
             }
         }
 
-        if ((inst.IsSonarr || inst.IsWhisparr) && jobKey != "queueCleanup")
+        var isWhisparrEros = inst.IsWhisparr && IsApiVersion(inst, "v3-eros");
+
+        if ((inst.IsSonarr || (inst.IsWhisparr && !isWhisparrEros)) && jobKey != "queueCleanup")
         {
             if (string.IsNullOrWhiteSpace(job.SearchType))
             {
@@ -194,7 +197,7 @@ internal static class YamlConfigLoader
             }
         }
 
-        if (inst.IsRadarr && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))
+        if ((inst.IsRadarr || isWhisparrEros) && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))
         {
             errors.Add($"{prefix}: 'searchType' is not valid for {inst.Type} instances.");
         }
@@ -262,6 +265,31 @@ internal static class YamlConfigLoader
         !string.IsNullOrWhiteSpace(url) &&
         Uri.TryCreate(url, UriKind.Absolute, out var u) &&
         (u.Scheme == "http" || u.Scheme == "https");
+
+    private static void ValidateApiVersion(List<string> errors, InstanceConfig inst, string prefix)
+    {
+        var version = NormalizeApiVersion(inst.ApiVersion);
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            errors.Add($"{prefix} '{inst.Name}': 'apiVersion' is required.");
+            return;
+        }
+
+        if (inst.IsSonarr && version != "v3")
+            errors.Add($"{prefix} '{inst.Name}': 'apiVersion' must be 'v3'.");
+        else if (inst.IsRadarr && version != "v3")
+            errors.Add($"{prefix} '{inst.Name}': 'apiVersion' must be 'v3'.");
+        else if (inst.IsLidarr && version != "v1")
+            errors.Add($"{prefix} '{inst.Name}': 'apiVersion' must be 'v1'.");
+        else if (inst.IsWhisparr && version != "v3" && version != "v3-eros")
+            errors.Add($"{prefix} '{inst.Name}': 'apiVersion' must be 'v3' or 'v3-eros'.");
+    }
+
+    private static bool IsApiVersion(InstanceConfig inst, string version) =>
+        string.Equals(NormalizeApiVersion(inst.ApiVersion), version, StringComparison.Ordinal);
+
+    private static string NormalizeApiVersion(string? version) =>
+        version?.Trim().ToLowerInvariant() ?? string.Empty;
 
     private static bool IsValidLogLevel(string? level)
     {

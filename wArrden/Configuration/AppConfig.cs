@@ -27,8 +27,8 @@ public class InstanceConfig
     public string Type { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
+    public string? ApiVersion { get; set; }
     public string ApiKey { get; set; } = string.Empty;
-    public string ApiVersion { get; set; } = "3";
     public List<string>? IndexerNames { get; set; }
     public JobConfig? MissingSearch { get; set; }
     public JobConfig? UpgradeSearch { get; set; }
@@ -40,6 +40,7 @@ public class InstanceConfig
     public bool IsRadarr => string.Equals(Type, "radarr", StringComparison.OrdinalIgnoreCase);
     public bool IsLidarr => string.Equals(Type, "lidarr", StringComparison.OrdinalIgnoreCase);
     public bool IsWhisparr => string.Equals(Type, "whisparr", StringComparison.OrdinalIgnoreCase);
+    public bool IsWhisparrV3Eros => IsWhisparr && string.Equals(ApiVersion, "v3-eros", StringComparison.OrdinalIgnoreCase);
 }
 
 public class JobConfig

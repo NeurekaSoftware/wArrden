@@ -59,6 +59,8 @@ public class SearchJob : IInvocable
                 ("upgrade", "radarr") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
                 ("missing", "whisparr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
                 ("upgrade", "whisparr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+                ("missing", "whisparr-eros") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
+                ("upgrade", "whisparr-eros") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
                 ("missing", "lidarr") => _search.SearchMissingAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
                 ("upgrade", "lidarr") => _search.SearchUpgradeAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
                 _ => throw new InvalidOperationException(

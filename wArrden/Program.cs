@@ -108,10 +108,10 @@ foreach (var inst in config.Instances)
     {
         validationClient = inst switch
         {
-            { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
-            { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
-            { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
-            { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+            { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+            { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+            { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
             _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
         };
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -145,16 +145,17 @@ host.Services.UseScheduler(scheduler =>
 
         var client = inst switch
         {
-            { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
-            { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
-            { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
-            { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion, inst.Name),
+            { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+            { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+            { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+            { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
             _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
         };
         clients.Add(client);
 
         var instanceKey = inst.InstanceKey;
         var instanceType = InstanceType(inst);
+        var searchInstanceType = SearchInstanceType(inst);
 
         schedulerOutput.WriteDebug("warden.scheduler", $"Scheduling jobs for {inst.Name} ({instanceType})");
 
@@ -162,7 +163,7 @@ host.Services.UseScheduler(scheduler =>
         {
             scheduler
                 .ScheduleWithParams<SearchJob>(new SearchJobParams(
-                    client, "missing", instanceType,
+                    client, "missing", searchInstanceType,
                     inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
                     inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames
                 ))
@@ -174,7 +175,7 @@ host.Services.UseScheduler(scheduler =>
         {
             scheduler
                 .ScheduleWithParams<SearchJob>(new SearchJobParams(
-                    client, "upgrade", instanceType,
+                    client, "upgrade", searchInstanceType,
                     inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
                     inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames
                 ))
@@ -232,6 +233,12 @@ static string InstanceType(InstanceConfig inst)
     if (inst.IsLidarr) return "lidarr";
     if (inst.IsWhisparr) return "whisparr";
     throw new InvalidOperationException($"Unknown instance type: {inst.Type}");
+}
+
+static string SearchInstanceType(InstanceConfig inst)
+{
+    if (inst.IsWhisparrV3Eros) return "whisparr-eros";
+    return InstanceType(inst);
 }
 
 static List<QueueCleanupRule>? GetRulesForType(QueueCleanupRulesConfig? config, string type)

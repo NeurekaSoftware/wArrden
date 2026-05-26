@@ -6,6 +6,8 @@ namespace wArrden.Tests;
 internal class FakeHttpMessageHandler : HttpMessageHandler
 {
     public string? LastRequestUri { get; private set; }
+    public HttpMethod? LastRequestMethod { get; private set; }
+    public string? LastRequestBody { get; private set; }
 
     private readonly string _responseJson;
     private readonly HttpStatusCode _statusCode;
@@ -27,15 +29,21 @@ internal class FakeHttpMessageHandler : HttpMessageHandler
         _exception = exception;
     }
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         LastRequestUri = request.RequestUri?.ToString();
+        LastRequestMethod = request.Method;
+        LastRequestBody = request.Content is null
+            ? null
+            : await request.Content.ReadAsStringAsync(cancellationToken);
+
         if (_exception is not null)
-            return Task.FromException<HttpResponseMessage>(_exception);
+            throw _exception;
+
         var response = new HttpResponseMessage(_statusCode)
         {
             Content = new StringContent(_responseJson, Encoding.UTF8, "application/json")
         };
-        return Task.FromResult(response);
+        return response;
     }
 }

@@ -147,6 +147,27 @@ public class QueueCleanupHelpersTests
     }
 
     [Fact]
+    public void MatchRule_WhisparrErosMoviePatterns_FindsMatch()
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("MOVIE_ALREADY_IMPORTED", false),
+            new("DANGEROUS_FILE", true)
+        };
+
+        var importedMatch = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "Movie file already imported at /data/movie.mkv" }, rules, "whisparr");
+        Assert.NotNull(importedMatch);
+        Assert.Equal("MOVIE_ALREADY_IMPORTED", importedMatch.Value.Label);
+
+        var dangerousMatch = QueueCleanupService.MatchRule(
+            new QueueResource { ErrorMessage = "Caution: Found potentially dangerous file with extension: exe" }, rules, "whisparr");
+        Assert.NotNull(dangerousMatch);
+        Assert.Equal("DANGEROUS_FILE", dangerousMatch.Value.Label);
+        Assert.True(dangerousMatch.Value.Blocklist);
+    }
+
+    [Fact]
     public void MatchRule_StatusMessages_MatchesPattern()
     {
         var rules = new List<QueueCleanupRule>

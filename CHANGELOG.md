@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add Whisparr Eros support for missing and upgrade searches.
+
+### Changed
+- Require each configured instance to declare its version using values such as v3, v1, or v3-eros.
+
 ## [3.1.0] - 2026-05-24
 
 ### Added

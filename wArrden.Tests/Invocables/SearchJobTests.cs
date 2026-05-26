@@ -156,6 +156,30 @@ public class SearchJobTests
     }
 
     [Fact]
+    public void Invoke_MissingWhisparrEros_CallsSearchMissingMovies()
+    {
+        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+            "missing", "whisparr-eros", 10, "30d", "", false, null));
+
+        job.Invoke();
+
+        _searchMock.Verify(s => s.SearchMissingMoviesAsync(
+            _clientMock.Object, 10, TimeSpan.FromDays(30), false, null, CancellationToken.None), Times.Once);
+    }
+
+    [Fact]
+    public void Invoke_UpgradeWhisparrEros_CallsSearchUpgradeMovies()
+    {
+        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+            "upgrade", "whisparr-eros", 5, "7d", "", true, null));
+
+        job.Invoke();
+
+        _searchMock.Verify(s => s.SearchUpgradeMoviesAsync(
+            _clientMock.Object, 5, TimeSpan.FromDays(7), true, null, CancellationToken.None), Times.Once);
+    }
+
+    [Fact]
     public void Invoke_MissingLidarr_Album_CallsSearchMissingAlbums()
     {
         var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,

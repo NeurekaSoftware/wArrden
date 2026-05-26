@@ -8,6 +8,7 @@ instances:
   - type: radarr
     name: Movies
     url: http://radarr:7878
+    apiVersion: v3
     apiKey: YOUR_RADARR_API_KEY
     # Limit searches/upgrades to specific indexers by name.
     # Type: optional
@@ -32,6 +33,7 @@ instances:
   - type: sonarr
     name: Series
     url: http://sonarr:8989
+    apiVersion: v3
     apiKey: YOUR_SONARR_API_KEY
     # Limit searches/upgrades to specific indexers by name.
     # Type: optional
@@ -58,8 +60,8 @@ instances:
   - type: lidarr
     name: Music
     url: http://lidarr:8686
+    apiVersion: v1
     apiKey: YOUR_LIDARR_API_KEY
-    apiVersion: "1"
     # Limit searches/upgrades to specific indexers by name.
     # Type: optional
     # Default: all enabled indexers
@@ -85,6 +87,7 @@ instances:
   - type: whisparr
     name: Adult
     url: http://whisparr:6969
+    apiVersion: v3
     apiKey: YOUR_WHISPARR_API_KEY
     # Limit searches/upgrades to specific indexers by name.
     # Type: optional
@@ -102,6 +105,30 @@ instances:
       searchType: season
       cron: "*/15 * * * *"
       maxResults: 1
+      cooldown: 30d
+    queueCleanup:
+      enabled: true
+      cron: "* * * * *"
+
+  - type: whisparr
+    name: Adult (Eros)
+    url: http://whisparr:6969
+    apiVersion: v3-eros
+    apiKey: YOUR_WHISPARR_API_KEY
+    # Limit searches/upgrades to specific indexers by name.
+    # Type: optional
+    # Default: all enabled indexers
+    # indexerNames:
+    #   - NZBGeek
+    missingSearch:
+      enabled: true
+      cron: "*/15 * * * *"
+      maxResults: 15
+      cooldown: 30d
+    upgradeSearch:
+      enabled: true
+      cron: "*/15 * * * *"
+      maxResults: 15
       cooldown: 30d
     queueCleanup:
       enabled: true
@@ -471,7 +498,7 @@ queueCleanupRules:
       action: none
 
   whisparr:
-    # The file is a short sample/clip, not the full episode.
+    # The file is a short sample/clip, not the full item.
     # Whisparr: "Sample"
     # Whisparr: "Unable to determine if file is a sample"
     - match: SAMPLE
@@ -484,12 +511,14 @@ queueCleanupRules:
 
     # Download was matched by ID from grab history — manual import needed.
     # Whisparr: "Found matching series via grab history, but release was matched to series by ID."
+    # Whisparr Eros: "Found matching movie via grab history, but release was matched to movie by ID."
     - match: MATCHED_VIA_GRAB_HISTORY
       action: removeAndBlocklist
 
-    # The episode was not in the release that was actually grabbed.
+    # The episode/movie was not in the release that was actually grabbed.
     # Whisparr: "Episode {0} was not found in the grabbed release: {1}"
     # Whisparr: "Episodes {0} were not found in the grabbed release: {1}"
+    # Whisparr Eros: "Movie {0} was not found in the grabbed release: {1}"
     - match: NOT_IN_GRABBED_RELEASE
       action: removeAndBlocklist
 
@@ -506,16 +535,19 @@ queueCleanupRules:
 
     # Release quality is equal to or lower than what you already have.
     # Whisparr: "Not an upgrade for existing episode file(s). Existing quality: {0}. New Quality {1}."
+    # Whisparr Eros: "Not an upgrade for existing movie file. Existing quality: {0}. New Quality {1}."
     - match: NOT_QUALITY_UPGRADE
       action: remove
 
     # Release revision number is not higher than existing (propers/repacks).
     # Whisparr: "Not a quality revision upgrade for existing episode file(s)"
+    # Whisparr Eros: "Not a quality revision upgrade for existing movie file(s)"
     - match: NOT_REVISION_UPGRADE
       action: remove
 
     # Custom format scores are not better than existing.
     # Whisparr: "Not a Custom Format upgrade for existing episode file(s). New: [{0}] ({1}) do not improve on Existing: [{2}] ({3})"
+    # Whisparr Eros: "Not a Custom Format upgrade for existing movie file(s). New: [{0}] ({1}) do not improve on Existing: [{2}] ({3})"
     - match: NOT_CUSTOM_FORMAT_UPGRADE
       action: remove
 
@@ -527,6 +559,11 @@ queueCleanupRules:
     # This exact episode file was already imported before.
     # Whisparr: "Episode file already imported at {0}"
     - match: EPISODE_ALREADY_IMPORTED
+      action: remove
+
+    # This exact movie file was already imported before.
+    # Whisparr Eros: "Movie file already imported at {0}"
+    - match: MOVIE_ALREADY_IMPORTED
       action: remove
 
     # The video file has no audio streams.
@@ -571,6 +608,8 @@ queueCleanupRules:
 
     # Potentially harmful executable file found in download.
     # Whisparr: "Caution: Found executable file"
+    # Whisparr Eros: "Caution: Found executable file with extension: '{extension}'"
+    # Whisparr Eros: "Caution: Found potentially dangerous file with extension: {extension}"
     - match: DANGEROUS_FILE
       action: none
 
