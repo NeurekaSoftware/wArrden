@@ -44,12 +44,12 @@ wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding mi
 
 wArrden supports multiple instances of each arr type, so you can manage separate libraries (movies, series, anime, music) independently with their own schedules and cooldowns.
 
-| Supported | Queue Cleanup | Missing Search | Upgrade Search |
-|-----------|:---:|:---:|:---:|
-| Radarr    | ✔️ | ✔️ | ✔️ |
-| Sonarr    | ✔️ | ✔️ | ✔️ |
-| Lidarr    | ✔️ | ✔️ | ✔️ |
-| Whisparr  | ✔️ | ✔️ | ✔️ |
+| Supported | API | Queue Cleanup | Missing Search | Upgrade Search |
+|-----------| :-: |:---:|:---:|:---:|
+| Radarr    | `v3` | ✔️ | ✔️ | ✔️ |
+| Sonarr    | `v3` | ✔️ | ✔️ | ✔️ |
+| Lidarr    | `v1` | ✔️ | ✔️ | ✔️ |
+| Whisparr  | `v3`, `v3-eros` | ✔️ | ✔️ | ✔️ |
 
 ## Missing Search
 
