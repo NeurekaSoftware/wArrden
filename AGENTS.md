@@ -228,10 +228,10 @@ When writing, modifying, or debugging API calls to any arr instance, verify the 
 | Application | Version | OpenAPI Spec URL |
 |---|---|---|
 | Radarr | v3 | `https://raw.githubusercontent.com/Radarr/Radarr/refs/heads/develop/src/Radarr.Api.V3/openapi.json` |
-| Sonarr | v3 (also covers v4) | `https://raw.githubusercontent.com/Sonarr/Sonarr/refs/heads/develop/src/Sonarr.Api.V3/openapi.json` |
+| Sonarr | v3 | `https://raw.githubusercontent.com/Sonarr/Sonarr/refs/heads/develop/src/Sonarr.Api.V3/openapi.json` |
 | Lidarr | v1 | `https://raw.githubusercontent.com/Lidarr/Lidarr/refs/heads/develop/src/Lidarr.Api.V1/openapi.json` |
-| Whisparr | v2 | `https://raw.githubusercontent.com/Whisparr/Whisparr/refs/heads/v2-develop/src/Whisparr.Api.V3/openapi.json` |
-| Whisparr | eros | `https://raw.githubusercontent.com/Whisparr/Whisparr/refs/heads/eros/src/Whisparr.Api.V3/openapi.json` |
+| Whisparr | v3 | `https://raw.githubusercontent.com/Whisparr/Whisparr/refs/heads/v2-develop/src/Whisparr.Api.V3/openapi.json` |
+| Whisparr | v3-eros | `https://raw.githubusercontent.com/Whisparr/Whisparr/refs/heads/eros/src/Whisparr.Api.V3/openapi.json` |
 
 ### Workflow
 
