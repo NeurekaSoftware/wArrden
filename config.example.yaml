@@ -50,7 +50,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-missing"
@@ -78,7 +77,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-upgrade"
@@ -95,7 +93,6 @@ instances:
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
-    # Default: disabled
     indexerFilter:
       enabled: false
       # Indexer names to whitelist. When set, only these indexers are used.
@@ -160,7 +157,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-missing"
@@ -192,7 +188,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-upgrade"
@@ -209,7 +204,6 @@ instances:
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
-    # Default: disabled
     indexerFilter:
       enabled: false
       # Indexer names to whitelist. When set, only these indexers are used.
@@ -274,7 +268,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-missing"
@@ -306,7 +299,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-upgrade"
@@ -323,7 +315,6 @@ instances:
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
-    # Default: disabled
     indexerFilter:
       enabled: false
       # Indexer names to whitelist. When set, only these indexers are used.
@@ -388,7 +379,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-missing"
@@ -420,7 +410,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-upgrade"
@@ -437,7 +426,6 @@ instances:
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
-    # Default: disabled
     indexerFilter:
       enabled: false
       # Indexer names to whitelist. When set, only these indexers are used.
@@ -498,7 +486,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-missing"
@@ -526,7 +513,6 @@ instances:
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
-      # Default: disabled
       tagging:
         enabled: false
         name: "warrden-upgrade"
@@ -543,7 +529,6 @@ instances:
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
-    # Default: disabled
     indexerFilter:
       enabled: false
       # Indexer names to whitelist. When set, only these indexers are used.
