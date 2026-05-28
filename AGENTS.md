@@ -225,7 +225,7 @@ When writing, modifying, or debugging API calls to any arr instance, verify the 
 
 ### Source URLs
 
-| Application | Version | OpenAPI Spec URL |
+| Application | API Version | OpenAPI Spec URL |
 |---|---|---|
 | Radarr | v3 | `https://raw.githubusercontent.com/Radarr/Radarr/refs/heads/develop/src/Radarr.Api.V3/openapi.json` |
 | Sonarr | v3 | `https://raw.githubusercontent.com/Sonarr/Sonarr/refs/heads/develop/src/Sonarr.Api.V3/openapi.json` |
