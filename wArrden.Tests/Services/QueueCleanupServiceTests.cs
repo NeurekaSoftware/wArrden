@@ -518,6 +518,109 @@ public class QueueCleanupServiceTests
     }
 
     [Fact]
+    public async Task CleanAsync_ItemWithStatusMessagesButNoWarningStatus_IsDetected()
+    {
+        var item = new QueueResource
+        {
+            Id = 1,
+            TrackedDownloadStatus = "ok",
+            StatusMessages = new List<QueueStatusMessage>
+            {
+                new() { Messages = new List<string> { "No files found are eligible" } }
+            },
+            Title = "Test Show"
+        };
+        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QueueResource> { item });
+        _clientMock.Setup(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
+        var result = await service.CleanAsync(CancellationToken.None);
+
+        Assert.Equal(1, result);
+        _clientMock.Verify(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanAsync_ItemWithErrorMessageButNoWarningStatus_IsDetected()
+    {
+        var item = new QueueResource
+        {
+            Id = 1,
+            ErrorMessage = "No files found are eligible",
+            Title = "Test Show"
+        };
+        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QueueResource> { item });
+        _clientMock.Setup(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
+        var result = await service.CleanAsync(CancellationToken.None);
+
+        Assert.Equal(1, result);
+        _clientMock.Verify(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanAsync_MatchesPatternInStatusMessageTitle()
+    {
+        var item = new QueueResource
+        {
+            Id = 1,
+            TrackedDownloadStatus = "warning",
+            StatusMessages = new List<QueueStatusMessage>
+            {
+                new() { Title = "No files found are eligible" }
+            },
+            Title = "Test Show"
+        };
+        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QueueResource> { item });
+        _clientMock.Setup(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var rules = SonarrRules();
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
+        var result = await service.CleanAsync(CancellationToken.None);
+
+        Assert.Equal(1, result);
+        _clientMock.Verify(c => c.DeleteQueueItemAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanAsync_DownloadClientError_MatchesViaStatusMessageTitle()
+    {
+        var item = new QueueResource
+        {
+            Id = 1,
+            StatusMessages = new List<QueueStatusMessage>
+            {
+                new() { Title = "Download warning: qBittorrent is reporting an error" }
+            },
+            Title = "Test Show"
+        };
+        _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QueueResource> { item });
+        _clientMock.Setup(c => c.DeleteQueueItemWithoutBlocklistAsync(1, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var rules = new List<QueueCleanupRule>
+        {
+            new("DOWNLOAD_CLIENT_ERROR", false),
+            new("NO_FILES_ELIGIBLE", true),
+        };
+        var service = new QueueCleanupService(_clientMock.Object, "sonarr", false, _output, rules);
+        var result = await service.CleanAsync(CancellationToken.None);
+
+        Assert.Equal(1, result);
+        _clientMock.Verify(c => c.DeleteQueueItemWithoutBlocklistAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task CleanAsync_WhisparrMixedMatches_OnlyActsOnMatches()
     {
         var matched = new QueueResource

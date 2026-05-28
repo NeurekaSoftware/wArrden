@@ -37,10 +37,12 @@ public class QueueCleanupService
         }
 
         var blocked = queue.Where(q =>
-            string.Equals(q.TrackedDownloadStatus, "warning", StringComparison.OrdinalIgnoreCase))
+            string.Equals(q.TrackedDownloadStatus, "warning", StringComparison.OrdinalIgnoreCase)
+            || (q.StatusMessages is { Count: > 0 })
+            || !string.IsNullOrWhiteSpace(q.ErrorMessage))
             .ToList();
 
-        _output.WriteDebug($"{instanceKey}.queue", $"{blocked.Count} warning-status items out of {queue.Count} total");
+        _output.WriteDebug($"{instanceKey}.queue", $"{blocked.Count} items with warnings/errors out of {queue.Count} total");
 
         if (blocked.Count == 0)
         {
@@ -103,6 +105,13 @@ public class QueueCleanupService
                 {
                     foreach (var sm in item.StatusMessages)
                     {
+                        if (sm.Title is not null)
+                        {
+                            foreach (var pattern in patterns)
+                                if (sm.Title.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                                    return (rule.Match, rule.Blocklist);
+                        }
+
                         if (sm.Messages is not null)
                         {
                             foreach (var msg in sm.Messages)
