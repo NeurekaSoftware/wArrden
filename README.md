@@ -16,10 +16,10 @@ wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding mi
 > [!IMPORTANT]  
 > This repository's GitHub mirror is for reference only. Please submit bug reports and feature requests to our [official Forgejo repository](https://code.neureka.dev/warrden/warrden).
 
+## Quickstart
+
 > [!TIP]
 > The `config.example.yaml` file can look overwhelming, but you don't need to understand every option to get started. Just add your arr URL and API key, then enable the instance — the defaults handle the rest.
-
-## Quickstart
 
 1. Download `compose.yaml`:
    ```
