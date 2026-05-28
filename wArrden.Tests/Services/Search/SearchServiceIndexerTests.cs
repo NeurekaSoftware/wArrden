@@ -23,7 +23,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupEpisodeTrigger();
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -49,7 +49,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupEpisodeTrigger();
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false, new List<string>(), CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false, new List<string>(), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -80,7 +80,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupEpisodeTrigger();
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
-            new List<string> { "NZBGeek" }, CancellationToken.None);
+            new List<string> { "NZBGeek" }, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -111,7 +111,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupCooldownIds(ids: []);
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
-            new List<string> { "NZBGeek" }, CancellationToken.None);
+            new List<string> { "NZBGeek" }, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -144,7 +144,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupEpisodeTrigger();
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
-            new List<string> { "nzbgeek" }, CancellationToken.None);
+            new List<string> { "nzbgeek" }, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -173,7 +173,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupCooldownIds(ids: []);
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
-            new List<string> { "NZBGeek" }, CancellationToken.None);
+            new List<string> { "NZBGeek" }, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -202,7 +202,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupMovieTrigger();
 
         await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false,
-            new List<string> { "NZBGeek" }, CancellationToken.None);
+            new List<string> { "NZBGeek" }, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -231,7 +231,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupCooldownIds(ids: []);
 
         await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false,
-            new List<string> { "NZBGeek" }, CancellationToken.None);
+            new List<string> { "NZBGeek" }, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -263,7 +263,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupMovieTrigger();
 
         await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false,
-            new List<string> { "NZBGeek" }, CancellationToken.None);
+            new List<string> { "NZBGeek" }, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -294,7 +294,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupSeasonTrigger();
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false,
-            new List<string> { "NZBGeek" }, CancellationToken.None);
+            new List<string> { "NZBGeek" }, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(100, 1, It.IsAny<CancellationToken>()), Times.Once);
@@ -315,7 +315,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupCleanExpired();
         SetupCooldownIds(ids: []);
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 2, DefaultCooldown, "episode", true, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 2, DefaultCooldown, "episode", true, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>()), Times.Never);
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Never);

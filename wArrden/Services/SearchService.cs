@@ -1,5 +1,6 @@
 using wArrden.Clients;
 using wArrden.Clients.Models;
+using wArrden.Configuration;
 
 namespace wArrden.Services;
 
@@ -7,96 +8,98 @@ public class SearchService
 {
     private readonly ICooldownService _cooldown;
     private readonly OutputService _output;
+    private readonly TaggingService _tagging;
 
-    public SearchService(ICooldownService cooldown, OutputService output)
+    public SearchService(ICooldownService cooldown, OutputService output, TaggingService tagging)
     {
         _cooldown = cooldown;
         _output = output;
+        _tagging = tagging;
     }
 
-    public virtual async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchMissingEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, CancellationToken ct)
     {
         var progress = _output.CreateSearchWriter(client.Instance, "Missing Search", maxResults);
         progress.WriteHeader();
         if (string.Equals(searchType, "season", StringComparison.OrdinalIgnoreCase))
         {
             await RunSeasonSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                () => client.GetWantedMissingEpisodesAsync(ct), indexerNames, progress, ct);
+                () => client.GetWantedMissingEpisodesAsync(ct), indexerNames, tagging, progress, ct);
         }
         else
         {
             await RunEpisodeSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                () => client.GetWantedMissingEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), indexerNames, progress, ct);
+                () => client.GetWantedMissingEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), indexerNames, tagging, progress, ct);
         }
     }
 
-    public virtual async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchUpgradeEpisodesAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, CancellationToken ct)
     {
         var progress = _output.CreateSearchWriter(client.Instance, "Upgrade Search", maxResults);
         progress.WriteHeader();
         if (string.Equals(searchType, "season", StringComparison.OrdinalIgnoreCase))
         {
             await RunSeasonSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                () => client.GetWantedCutoffEpisodesAsync(ct), indexerNames, progress, ct);
+                () => client.GetWantedCutoffEpisodesAsync(ct), indexerNames, tagging, progress, ct);
         }
         else
         {
             await RunEpisodeSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                () => client.GetWantedCutoffEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), indexerNames, progress, ct);
+                () => client.GetWantedCutoffEpisodesAsync(ct), async ids => await client.TriggerEpisodeSearchAsync(ids, ct), indexerNames, tagging, progress, ct);
         }
     }
 
-    public virtual async Task SearchMissingMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchMissingMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, CancellationToken ct)
     {
         var progress = _output.CreateSearchWriter(client.Instance, "Missing Search", maxResults);
         progress.WriteHeader();
         await RunMovieSearch(client, "Missing", cooldown, maxResults, isDryRun,
-            () => client.GetWantedMissingMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), indexerNames, progress, ct);
+            () => client.GetWantedMissingMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), indexerNames, tagging, progress, ct);
     }
 
-    public virtual async Task SearchUpgradeMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchUpgradeMoviesAsync(IArrClient client, int maxResults, TimeSpan cooldown, bool isDryRun, IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, CancellationToken ct)
     {
         var progress = _output.CreateSearchWriter(client.Instance, "Upgrade Search", maxResults);
         progress.WriteHeader();
         await RunMovieSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-            () => client.GetWantedCutoffMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), indexerNames, progress, ct);
+            () => client.GetWantedCutoffMoviesAsync(ct), async ids => await client.TriggerMoviesSearchAsync(ids, ct), indexerNames, tagging, progress, ct);
     }
 
-    public virtual async Task SearchMissingAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchMissingAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, CancellationToken ct)
     {
         var progress = _output.CreateSearchWriter(client.Instance, "Missing Search", maxResults);
         progress.WriteHeader();
         if (string.Equals(searchType, "artist", StringComparison.OrdinalIgnoreCase))
         {
             await RunArtistSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                () => client.GetWantedMissingAlbumsAsync(ct), indexerNames, progress, ct);
+                () => client.GetWantedMissingAlbumsAsync(ct), indexerNames, tagging, progress, ct);
         }
         else
         {
             await RunAlbumSearch(client, "Missing", cooldown, maxResults, isDryRun,
-                () => client.GetWantedMissingAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, progress, ct);
+                () => client.GetWantedMissingAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, tagging, progress, ct);
         }
     }
 
-    public virtual async Task SearchUpgradeAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, CancellationToken ct)
+    public virtual async Task SearchUpgradeAlbumsAsync(IArrClient client, int maxResults, TimeSpan cooldown, string searchType, bool isDryRun, IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, CancellationToken ct)
     {
         var progress = _output.CreateSearchWriter(client.Instance, "Upgrade Search", maxResults);
         progress.WriteHeader();
         if (string.Equals(searchType, "artist", StringComparison.OrdinalIgnoreCase))
         {
             await RunArtistSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                () => client.GetWantedCutoffAlbumsAsync(ct), indexerNames, progress, ct);
+                () => client.GetWantedCutoffAlbumsAsync(ct), indexerNames, tagging, progress, ct);
         }
         else
         {
             await RunAlbumSearch(client, "Upgrade", cooldown, maxResults, isDryRun,
-                () => client.GetWantedCutoffAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, progress, ct);
+                () => client.GetWantedCutoffAlbumsAsync(ct), async ids => await client.TriggerAlbumSearchAsync(ids, ct), indexerNames, tagging, progress, ct);
         }
     }
 
     private async Task RunEpisodeSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedEpisodeResource>>> getWanted, Func<int[], Task> triggerSearch,
-        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
 
@@ -177,12 +180,15 @@ public class SearchService
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
+
+        await TagSearchedItems(tagging, client, tid => _tagging.TagEpisodeSeriesAsync(client, selected, tid, ct));
+
         progress.WriteTrailer();
     }
 
     private async Task RunSeasonSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedEpisodeResource>>> getWanted,
-        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
         var seasonCategory = $"{category}_Season";
@@ -271,6 +277,10 @@ public class SearchService
 
         var seasonKeys = selected.Select(s => s.SeasonKey).ToArray();
         await _cooldown.MarkSearchedAsync(client.Instance, seasonCategory, seasonKeys, ct);
+
+        await TagSearchedItems(tagging, client, tid =>
+            _tagging.TagSeasonSeriesAsync(client, selected.Select(s => s.SeriesId).ToList(), tid, ct));
+
         progress.WriteTrailer();
     }
 
@@ -278,7 +288,7 @@ public class SearchService
 
     private async Task RunAlbumSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedAlbumResource>>> getWanted, Func<int[], Task> triggerSearch,
-        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
 
@@ -354,12 +364,15 @@ public class SearchService
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
+
+        await TagSearchedItems(tagging, client, tid => _tagging.TagAlbumArtistsAsync(client, selected, tid, ct));
+
         progress.WriteTrailer();
     }
 
     private async Task RunArtistSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedAlbumResource>>> getWanted,
-        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
         var artistCategory = $"{category}_Artist";
@@ -443,6 +456,10 @@ public class SearchService
 
         var artistIds = selected.Select(s => s.ArtistId).ToArray();
         await _cooldown.MarkSearchedAsync(client.Instance, artistCategory, artistIds, ct);
+
+        await TagSearchedItems(tagging, client, tid =>
+            _tagging.TagArtistsAsync(client, selected.Select(a => a.ArtistId).ToList(), tid, ct));
+
         progress.WriteTrailer();
     }
 
@@ -450,7 +467,7 @@ public class SearchService
 
     private async Task RunMovieSearch(IArrClient client, string category, TimeSpan cooldown, int maxResults, bool isDryRun,
         Func<Task<IReadOnlyList<WantedMovieResource>>> getWanted, Func<int[], Task> triggerSearch,
-        IReadOnlyList<string>? indexerNames, OutputService.SearchOutputWriter progress, CancellationToken ct)
+        IReadOnlyList<string>? indexerNames, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
 
@@ -529,7 +546,31 @@ public class SearchService
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
+
+        await TagSearchedItems(tagging, client, tid =>
+            _tagging.TagMoviesAsync(client, selected.Select(m => m.Id).ToList(), tid, ct));
+
         progress.WriteTrailer();
+    }
+
+    private async Task TagSearchedItems(TaggingConfig? tagging, IArrClient client, Func<int, Task> tagAction)
+    {
+        if (tagging?.Enabled != true || string.IsNullOrWhiteSpace(tagging.Name))
+            return;
+
+        try
+        {
+            var tagId = await _tagging.FindOrCreateTagAsync(client, tagging.Name, CancellationToken.None);
+            if (tagId is null) return;
+
+            await tagAction(tagId.Value);
+        }
+        catch (Exception ex)
+        {
+            _output.WriteWarning($"{client.Instance.ToLowerInvariant()}.tagging",
+                $"Tagging failed for '{tagging.Name}'",
+                $"{ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     private static async Task<bool> HasMatchingIndexersAsync(IArrClient client, IReadOnlyList<string>? indexerNames, CancellationToken ct)

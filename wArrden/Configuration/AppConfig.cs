@@ -50,4 +50,12 @@ public class JobConfig
     public int? MaxResults { get; set; }
     public string? Cooldown { get; set; }
     public string? SearchType { get; set; }
+    public TaggingConfig? Tagging { get; set; }
+}
+
+public class TaggingConfig
+{
+    public bool? Enabled { get; set; }
+    public string? Name { get; set; }
+    public bool? Retroactive { get; set; }
 }

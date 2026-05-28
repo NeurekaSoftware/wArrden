@@ -21,11 +21,25 @@ instances:
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-missing"
+        retroactive: false
     upgradeSearch:
       enabled: true
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-upgrade"
+        retroactive: false
     queueCleanup:
       enabled: true
       cron: "* * * * *"
@@ -47,12 +61,26 @@ instances:
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-missing"
+        retroactive: false
     upgradeSearch:
       enabled: true
       searchType: season
       cron: "*/15 * * * *"
       maxResults: 1
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-upgrade"
+        retroactive: false
     queueCleanup:
       enabled: true
       cron: "* * * * *"
@@ -74,12 +102,26 @@ instances:
       cron: "*/15 * * * *"
       maxResults: 1
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-missing"
+        retroactive: false
     upgradeSearch:
       enabled: false
       searchType: album
       cron: "*/15 * * * *"
       maxResults: 1
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-upgrade"
+        retroactive: false
     queueCleanup:
       enabled: true
       cron: "* * * * *"
@@ -100,12 +142,26 @@ instances:
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-missing"
+        retroactive: false
     upgradeSearch:
       enabled: true
       searchType: season
       cron: "*/15 * * * *"
       maxResults: 1
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-upgrade"
+        retroactive: false
     queueCleanup:
       enabled: true
       cron: "* * * * *"
@@ -125,11 +181,25 @@ instances:
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-missing"
+        retroactive: false
     upgradeSearch:
       enabled: true
       cron: "*/15 * * * *"
       maxResults: 15
       cooldown: 30d
+      # Automatically tag searched items with a label on the arr instance.
+      # Type: optional
+      # Default: disabled
+      tagging:
+        enabled: false
+        name: "warrden-upgrade"
+        retroactive: false
     queueCleanup:
       enabled: true
       cron: "* * * * *"

@@ -23,4 +23,12 @@ public interface IArrClient : IDisposable
     Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct);
     Task<IReadOnlyList<IndexerResource>> GetIndexersAsync(CancellationToken ct);
     Task<bool> ValidateApiKeyAsync(CancellationToken ct);
+
+    Task<IReadOnlyList<TagResource>> GetTagsAsync(CancellationToken ct);
+    Task<TagResource> CreateTagAsync(string label, CancellationToken ct);
+    Task<bool> EnsureTagOnSeriesAsync(int seriesId, int tagId, CancellationToken ct);
+    Task<bool> EnsureTagOnMovieAsync(int movieId, int tagId, CancellationToken ct);
+    Task<bool> EnsureTagOnArtistAsync(int artistId, int tagId, CancellationToken ct);
+    Task<HashSet<int>> ResolveSeriesIdsAsync(int[] episodeIds, CancellationToken ct);
+    Task<HashSet<int>> ResolveArtistIdsAsync(int[] albumIds, CancellationToken ct);
 }

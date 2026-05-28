@@ -20,7 +20,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupCleanExpired();
         SetupCooldownIds(ids: []);
 
-        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, true, null, CancellationToken.None);
+        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, true, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -43,7 +43,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupCleanExpired(category: "Upgrade");
         SetupCooldownIds(category: "Upgrade", ids: []);
 
-        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, true, null, CancellationToken.None);
+        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, true, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -69,7 +69,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupMovieTrigger();
 
-        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -94,7 +94,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupMovieTrigger();
 
-        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 3, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 3, DefaultCooldown, false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -118,7 +118,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupCleanExpired();
         SetupCooldownIds(ids: [1, 2]);
 
-        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -141,7 +141,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupCleanExpired(category: "Upgrade");
         SetupCooldownIds(category: "Upgrade", ids: [1]);
 
-        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -168,7 +168,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupMovieTrigger();
 
-        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -195,7 +195,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupMovieTrigger();
 
-        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -225,7 +225,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupCooldownIds(ids: []);
         SetupHasIndexers();
 
-        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, null, CancellationToken.None);
 
         Assert.Contains(2, searchedIds);
     }
@@ -251,7 +251,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupCooldownIds(category: "Upgrade", ids: []);
         SetupHasIndexers();
 
-        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, null, CancellationToken.None);
 
         Assert.Contains(2, searchedIds);
     }
@@ -272,7 +272,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         SetupCooldownIds(ids: []);
         SetupHasIndexers(false);
 
-        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
+        await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);

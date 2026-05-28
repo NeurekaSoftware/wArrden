@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using wArrden.Clients.Models;
 
 namespace wArrden.Clients;
@@ -134,6 +135,87 @@ public class SonarrV3Client : IArrClient
 
     Task IArrClient.TriggerArtistSearchAsync(int artistId, CancellationToken ct)
         => throw new NotSupportedException("Sonarr does not support artist search.");
+
+    public async Task<IReadOnlyList<TagResource>> GetTagsAsync(CancellationToken ct)
+    {
+        using var response = await _http.GetAsync($"{_baseUrl}/api/v3/tag", ct);
+        response.EnsureSuccessStatusCode();
+        return (IReadOnlyList<TagResource>?)await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.ListTagResource, ct) ?? Array.Empty<TagResource>();
+    }
+
+    public async Task<TagResource> CreateTagAsync(string label, CancellationToken ct)
+    {
+        var body = JsonContent.Create(new { label });
+        using var response = await _http.PostAsync($"{_baseUrl}/api/v3/tag", body, ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.TagResource, ct))!;
+    }
+
+    public async Task<bool> EnsureTagOnSeriesAsync(int seriesId, int tagId, CancellationToken ct)
+    {
+        return await EnsureTagOnResourceAsync("series", seriesId, tagId, ct);
+    }
+
+    public Task<bool> EnsureTagOnMovieAsync(int movieId, int tagId, CancellationToken ct)
+        => throw new NotSupportedException("Sonarr does not support movie tags.");
+
+    public Task<bool> EnsureTagOnArtistAsync(int artistId, int tagId, CancellationToken ct)
+        => throw new NotSupportedException("Sonarr does not support artist tags.");
+
+    public async Task<HashSet<int>> ResolveSeriesIdsAsync(int[] episodeIds, CancellationToken ct)
+    {
+        var seriesIds = new HashSet<int>();
+        const int batchSize = 50;
+        for (var i = 0; i < episodeIds.Length; i += batchSize)
+        {
+            var batch = episodeIds.Skip(i).Take(batchSize);
+            var idsParam = string.Join("&episodeIds=", batch);
+            using var response = await _http.GetAsync(
+                $"{_baseUrl}/api/v3/episode?episodeIds={idsParam}&includeSeries=true", ct);
+            response.EnsureSuccessStatusCode();
+
+            var root = await response.Content.ReadFromJsonAsync<JsonNode>(cancellationToken: ct);
+            if (root is null) continue;
+
+            foreach (var ep in root.AsArray())
+            {
+                var sid = ep?["seriesId"]?.GetValue<int>();
+                if (sid.HasValue && sid.Value != 0)
+                    seriesIds.Add(sid.Value);
+            }
+        }
+        return seriesIds;
+    }
+
+    public Task<HashSet<int>> ResolveArtistIdsAsync(int[] albumIds, CancellationToken ct)
+        => throw new NotSupportedException("Sonarr does not support artist resolution.");
+
+    private async Task<bool> EnsureTagOnResourceAsync(string resourceType, int resourceId, int tagId, CancellationToken ct)
+    {
+        var url = $"{_baseUrl}/api/v3/{resourceType}/{resourceId}";
+
+        using var getResponse = await _http.GetAsync(url, ct);
+        getResponse.EnsureSuccessStatusCode();
+
+        var root = await getResponse.Content.ReadFromJsonAsync<JsonNode>(cancellationToken: ct);
+        if (root is null) return false;
+
+        var tags = root["tags"]?.AsArray();
+        if (tags is null)
+        {
+            root["tags"] = new JsonArray(tagId);
+        }
+        else
+        {
+            if (tags.Any(n => n is not null && n.GetValue<int>() == tagId))
+                return false;
+            tags.Add(tagId);
+        }
+
+        using var putResponse = await _http.PutAsJsonAsync(url, root, cancellationToken: ct);
+        putResponse.EnsureSuccessStatusCode();
+        return true;
+    }
 
     public async Task<bool> ValidateApiKeyAsync(CancellationToken ct)
     {

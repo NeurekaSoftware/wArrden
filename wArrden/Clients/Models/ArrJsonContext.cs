@@ -8,4 +8,6 @@ namespace wArrden.Clients.Models;
 [JsonSerializable(typeof(WantedPagingResource<WantedAlbumResource>))]
 [JsonSerializable(typeof(WantedPagingResource<QueueResource>))]
 [JsonSerializable(typeof(IndexerResource[]))]
+[JsonSerializable(typeof(TagResource[]))]
+[JsonSerializable(typeof(List<TagResource>))]
 public partial class ArrJsonContext : JsonSerializerContext;

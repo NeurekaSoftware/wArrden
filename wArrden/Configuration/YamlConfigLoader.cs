@@ -101,9 +101,9 @@ internal static class YamlConfigLoader
 
             ValidateApiVersion(errors, inst, prefix);
 
-            ValidateJob(errors, inst, "missingSearch", i);
-            ValidateJob(errors, inst, "upgradeSearch", i);
-            ValidateJob(errors, inst, "queueCleanup", i);
+            ValidateJob(errors, inst, "missingSearch", i, config);
+            ValidateJob(errors, inst, "upgradeSearch", i, config);
+            ValidateJob(errors, inst, "queueCleanup", i, config);
         }
 
         ValidateQueueCleanupRules(errors, config.QueueCleanupRules, config);
@@ -123,7 +123,7 @@ internal static class YamlConfigLoader
         return errors;
     }
 
-    private static void ValidateJob(List<string> errors, InstanceConfig inst, string jobKey, int idx)
+    private static void ValidateJob(List<string> errors, InstanceConfig inst, string jobKey, int idx, AppConfig config)
     {
         var job = jobKey switch
         {
@@ -200,6 +200,24 @@ internal static class YamlConfigLoader
         if ((inst.IsRadarr || isWhisparrEros) && jobKey != "queueCleanup" && !string.IsNullOrWhiteSpace(job.SearchType))
         {
             errors.Add($"{prefix}: 'searchType' is not valid for {inst.Type} instances.");
+        }
+
+        if (job.Tagging is not null)
+        {
+            var tp = $"{prefix}.tagging";
+
+            if (job.Tagging.Enabled is null)
+                errors.Add($"{tp}: 'enabled' is required.");
+            if (job.Tagging.Name is null)
+                errors.Add($"{tp}: 'name' is required.");
+            if (job.Tagging.Retroactive is null)
+                errors.Add($"{tp}: 'retroactive' is required.");
+
+            if (job.Tagging.Enabled == true && string.IsNullOrWhiteSpace(job.Tagging.Name))
+                errors.Add($"{tp}: 'name' must not be empty when tagging is enabled.");
+
+            if (job.Tagging.Retroactive == true)
+                config.Warnings.Add($"{tp}: 'retroactive' is true — set to false after first run to skip unnecessary API calls on each startup.");
         }
     }
 

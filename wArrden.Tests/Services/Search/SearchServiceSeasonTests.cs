@@ -27,7 +27,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupSeasonTrigger();
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(100, 1, It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(200, 2, It.IsAny<CancellationToken>()), Times.Once);
@@ -55,7 +55,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupSeasonTrigger();
 
-        await Service.SearchUpgradeEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, CancellationToken.None);
+        await Service.SearchUpgradeEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(100, 1, It.IsAny<CancellationToken>()), Times.Once);
         CooldownMock.Verify(c => c.MarkSearchedAsync("Sonarr", "Upgrade_Season", It.IsAny<int[]>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -77,7 +77,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupCleanExpired(category: "Missing_Season");
         SetupCooldownIds(category: "Missing_Season", ids: []);
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", true, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", true, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         CooldownMock.Verify(c => c.MarkSearchedAsync(It.IsAny<string>(), It.IsAny<string>(),
@@ -93,7 +93,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupOutputCallback();
         SetupCleanExpired(category: "Missing_Season");
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 2, DefaultCooldown, "season", false, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 2, DefaultCooldown, "season", false, null, null, CancellationToken.None);
 
         CooldownMock.Verify(
             c => c.CleanExpiredAsync("Sonarr", "Missing_Season", It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
@@ -122,7 +122,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupCleanExpired(category: "Missing_Season");
         SetupCooldownIds(category: "Missing_Season", ids: [seasonKey1, seasonKey2]);
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -149,7 +149,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupSeasonTrigger();
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(200, 1, It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(100, 1, It.IsAny<CancellationToken>()), Times.Never);
@@ -173,7 +173,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupSeasonTrigger();
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, null, CancellationToken.None);
 
         CooldownMock.Verify(c => c.CleanExpiredAsync("Sonarr", "Missing_Season", It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Once);
         CooldownMock.Verify(c => c.GetCooldownIdsAsync("Sonarr", "Missing_Season", It.IsAny<CancellationToken>()), Times.Once);
@@ -202,7 +202,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupSeasonTrigger();
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 2, DefaultCooldown, "season", false, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 2, DefaultCooldown, "season", false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
@@ -224,7 +224,7 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
         SetupCooldownIds(category: "Missing_Season", ids: []);
         SetupHasIndexers(false);
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Never);

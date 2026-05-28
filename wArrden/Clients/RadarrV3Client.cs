@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using wArrden.Clients.Models;
 
 namespace wArrden.Clients;
@@ -126,6 +127,65 @@ public class RadarrV3Client : IArrClient
 
     Task IArrClient.TriggerArtistSearchAsync(int artistId, CancellationToken ct)
         => throw new NotSupportedException("Radarr does not support artist search.");
+
+    public async Task<IReadOnlyList<TagResource>> GetTagsAsync(CancellationToken ct)
+    {
+        using var response = await _http.GetAsync($"{_baseUrl}/api/v3/tag", ct);
+        response.EnsureSuccessStatusCode();
+        return (IReadOnlyList<TagResource>?)await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.ListTagResource, ct) ?? Array.Empty<TagResource>();
+    }
+
+    public async Task<TagResource> CreateTagAsync(string label, CancellationToken ct)
+    {
+        var body = JsonContent.Create(new { label });
+        using var response = await _http.PostAsync($"{_baseUrl}/api/v3/tag", body, ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.TagResource, ct))!;
+    }
+
+    public Task<bool> EnsureTagOnSeriesAsync(int seriesId, int tagId, CancellationToken ct)
+        => throw new NotSupportedException("Radarr does not support series tags.");
+
+    public async Task<bool> EnsureTagOnMovieAsync(int movieId, int tagId, CancellationToken ct)
+    {
+        return await EnsureTagOnResourceAsync("movie", movieId, tagId, ct);
+    }
+
+    public Task<bool> EnsureTagOnArtistAsync(int artistId, int tagId, CancellationToken ct)
+        => throw new NotSupportedException("Radarr does not support artist tags.");
+
+    public Task<HashSet<int>> ResolveSeriesIdsAsync(int[] episodeIds, CancellationToken ct)
+        => throw new NotSupportedException("Radarr does not support series resolution.");
+
+    public Task<HashSet<int>> ResolveArtistIdsAsync(int[] albumIds, CancellationToken ct)
+        => throw new NotSupportedException("Radarr does not support artist resolution.");
+
+    private async Task<bool> EnsureTagOnResourceAsync(string resourceType, int resourceId, int tagId, CancellationToken ct)
+    {
+        var url = $"{_baseUrl}/api/v3/{resourceType}/{resourceId}";
+
+        using var getResponse = await _http.GetAsync(url, ct);
+        getResponse.EnsureSuccessStatusCode();
+
+        var root = await getResponse.Content.ReadFromJsonAsync<JsonNode>(cancellationToken: ct);
+        if (root is null) return false;
+
+        var tags = root["tags"]?.AsArray();
+        if (tags is null)
+        {
+            root["tags"] = new JsonArray(tagId);
+        }
+        else
+        {
+            if (tags.Any(n => n is not null && n.GetValue<int>() == tagId))
+                return false;
+            tags.Add(tagId);
+        }
+
+        using var putResponse = await _http.PutAsJsonAsync(url, root, cancellationToken: ct);
+        putResponse.EnsureSuccessStatusCode();
+        return true;
+    }
 
     public async Task<bool> ValidateApiKeyAsync(CancellationToken ct)
     {

@@ -7,6 +7,7 @@ public abstract class SearchServiceTestBase
 {
     protected readonly Mock<ICooldownService> CooldownMock;
     protected readonly Mock<OutputService> OutputMock;
+    protected readonly Mock<TaggingService> TaggingMock;
     protected readonly Mock<IArrClient> ClientMock;
     protected readonly SearchService Service;
     protected static readonly TimeSpan DefaultCooldown = TimeSpan.FromDays(30);
@@ -19,8 +20,9 @@ public abstract class SearchServiceTestBase
         OutputMock.Object.Error = TextWriter.Null;
         ClientMock = new Mock<IArrClient>();
         ClientMock.Setup(c => c.Instance).Returns("Sonarr");
+        TaggingMock = new Mock<TaggingService>(OutputMock.Object, null!);
 
-        Service = new SearchService(CooldownMock.Object, OutputMock.Object);
+        Service = new SearchService(CooldownMock.Object, OutputMock.Object, TaggingMock.Object);
     }
 
     protected void SetupOutputCallback()

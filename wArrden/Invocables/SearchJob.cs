@@ -13,7 +13,8 @@ public sealed record SearchJobParams(
     string Cooldown,
     string SearchType,
     bool IsDryRun,
-    List<string>? IndexerNames
+    List<string>? IndexerNames,
+    TaggingConfig? Tagging
 );
 
 public class SearchJob : IInvocable
@@ -28,6 +29,7 @@ public class SearchJob : IInvocable
     private readonly string _searchType;
     private readonly bool _isDryRun;
     private readonly List<string>? _indexerNames;
+    private readonly TaggingConfig? _tagging;
 
     public SearchJob(SearchService search, OutputService output, SearchJobParams p)
     {
@@ -41,6 +43,7 @@ public class SearchJob : IInvocable
         _searchType = p.SearchType;
         _isDryRun = p.IsDryRun;
         _indexerNames = p.IndexerNames;
+        _tagging = p.Tagging;
     }
 
     public async Task Invoke()
@@ -53,16 +56,16 @@ public class SearchJob : IInvocable
         {
             var task = (_searchKind, _instanceType) switch
             {
-                ("missing", "sonarr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-                ("upgrade", "sonarr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-                ("missing", "radarr") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
-                ("upgrade", "radarr") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
-                ("missing", "whisparr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-                ("upgrade", "whisparr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-                ("missing", "whisparr-eros") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
-                ("upgrade", "whisparr-eros") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, ct),
-                ("missing", "lidarr") => _search.SearchMissingAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
-                ("upgrade", "lidarr") => _search.SearchUpgradeAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, ct),
+                ("missing", "sonarr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, _tagging, ct),
+                ("upgrade", "sonarr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, _tagging, ct),
+                ("missing", "radarr") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, _tagging, ct),
+                ("upgrade", "radarr") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, _tagging, ct),
+                ("missing", "whisparr") => _search.SearchMissingEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, _tagging, ct),
+                ("upgrade", "whisparr") => _search.SearchUpgradeEpisodesAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, _tagging, ct),
+                ("missing", "whisparr-eros") => _search.SearchMissingMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, _tagging, ct),
+                ("upgrade", "whisparr-eros") => _search.SearchUpgradeMoviesAsync(_client, _maxResults, _cooldown, _isDryRun, _indexerNames, _tagging, ct),
+                ("missing", "lidarr") => _search.SearchMissingAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, _tagging, ct),
+                ("upgrade", "lidarr") => _search.SearchUpgradeAlbumsAsync(_client, _maxResults, _cooldown, _searchType, _isDryRun, _indexerNames, _tagging, ct),
                 _ => throw new InvalidOperationException(
                     $"No search handler for kind='{_searchKind}' type='{_instanceType}'")
             };

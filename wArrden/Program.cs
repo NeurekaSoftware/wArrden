@@ -89,6 +89,7 @@ builder.Services.AddScheduler();
 builder.Services.AddSingleton<ICooldownService, CooldownService>();
 builder.Services.AddSingleton(new OutputService { MinimumLevel = ParseLogLevel(config.LogLevel), TimeZone = startupTimeZone });
 builder.Services.AddSingleton<SearchService>();
+builder.Services.AddSingleton<TaggingService>();
 
 var host = builder.Build();
 
@@ -165,7 +166,8 @@ host.Services.UseScheduler(scheduler =>
                 .ScheduleWithParams<SearchJob>(new SearchJobParams(
                     client, "missing", searchInstanceType,
                     inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
-                    inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames
+                    inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames,
+                    inst.MissingSearch.Tagging
                 ))
                 .Cron(inst.MissingSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_missing");
@@ -177,7 +179,8 @@ host.Services.UseScheduler(scheduler =>
                 .ScheduleWithParams<SearchJob>(new SearchJobParams(
                     client, "upgrade", searchInstanceType,
                     inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
-                    inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames
+                    inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames,
+                    inst.UpgradeSearch.Tagging
                 ))
                 .Cron(inst.UpgradeSearch.Cron!)
                 .PreventOverlapping($"{instanceKey}_upgrade");
@@ -212,6 +215,8 @@ lifetime.ApplicationStopping.Register(() =>
 });
 
 OutputService.WriteBanner(config, opts, startupTimeZone);
+
+await RunRetroactiveTagging(config, clients, disabledInstances, host);
 
 await host.RunAsync();
 
@@ -359,3 +364,61 @@ static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
 }
 
 static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
+
+static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clients, HashSet<string> disabledInstances, IHost host)
+{
+    var tagging = host.Services.GetRequiredService<TaggingService>();
+    var output = host.Services.GetRequiredService<OutputService>();
+    var ts = FormatTimestamp(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, output.TimeZone));
+
+    for (var i = 0; i < config.Instances.Count; i++)
+    {
+        var inst = config.Instances[i];
+        if (disabledInstances.Contains(inst.InstanceKey))
+            continue;
+
+        var client = clients[i];
+
+        var jobs = new (JobConfig? Job, string JobKey, string TagName)[]
+        {
+            (inst.MissingSearch, "missing", inst.MissingSearch?.Tagging?.Name ?? ""),
+            (inst.UpgradeSearch, "upgrade", inst.UpgradeSearch?.Tagging?.Name ?? ""),
+        };
+
+        foreach (var (job, jobKey, tagName) in jobs)
+        {
+            if (job?.Tagging?.Enabled != true || job.Tagging?.Retroactive != true || string.IsNullOrWhiteSpace(tagName))
+                continue;
+
+            var context = $"{inst.InstanceKey}.retrotag_{jobKey}";
+            output.WriteDebug(context, $"Retroactive tagging started for '{tagName}'");
+
+            try
+            {
+                if (inst.IsSonarr || (inst.IsWhisparr && !inst.IsWhisparrV3Eros))
+                {
+                    var prefix = jobKey == "missing" ? "Missing" : "Upgrade";
+                    await tagging.RunRetroactiveEpisodeAsync(client, inst.Name, prefix, tagName, CancellationToken.None);
+                    await tagging.RunRetroactiveSeasonAsync(client, inst.Name, $"{prefix}_Season", tagName, CancellationToken.None);
+                }
+                else if (inst.IsRadarr || inst.IsWhisparrV3Eros)
+                {
+                    var prefix = jobKey == "missing" ? "Missing" : "Upgrade";
+                    await tagging.RunRetroactiveMovieAsync(client, inst.Name, prefix, tagName, CancellationToken.None);
+                }
+                else if (inst.IsLidarr)
+                {
+                    var prefix = jobKey == "missing" ? "Missing" : "Upgrade";
+                    await tagging.RunRetroactiveAlbumAsync(client, inst.Name, prefix, tagName, CancellationToken.None);
+                    await tagging.RunRetroactiveArtistAsync(client, inst.Name, $"{prefix}_Artist", tagName, CancellationToken.None);
+                }
+            }
+            catch (Exception ex)
+            {
+                output.WriteWarning(context,
+                    $"Retroactive tagging failed for '{tagName}'",
+                    $"{ex.GetType().Name}: {ex.Message}");
+            }
+        }
+    }
+}
