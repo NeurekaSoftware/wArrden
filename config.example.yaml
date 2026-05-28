@@ -9,6 +9,10 @@ instances:
   # Type: required
   # Values: radarr | sonarr | lidarr | whisparr
   - type: radarr
+    # Enable or disable this entire instance. When disabled, no API calls are made.
+    # Type: required
+    # Values: true | false
+    enabled: false
     # A friendly label for log output. Must be unique across instances.
     # Type: required
     name: Movies
@@ -111,6 +115,10 @@ instances:
   # Type: required
   # Values: radarr | sonarr | lidarr | whisparr
   - type: sonarr
+    # Enable or disable this entire instance. When disabled, no API calls are made.
+    # Type: required
+    # Values: true | false
+    enabled: false
     # A friendly label for log output. Must be unique across instances.
     # Type: required
     name: Series
@@ -221,6 +229,10 @@ instances:
   # Type: required
   # Values: radarr | sonarr | lidarr | whisparr
   - type: lidarr
+    # Enable or disable this entire instance. When disabled, no API calls are made.
+    # Type: required
+    # Values: true | false
+    enabled: false
     # A friendly label for log output. Must be unique across instances.
     # Type: required
     name: Music
@@ -331,6 +343,10 @@ instances:
   # Type: required
   # Values: radarr | sonarr | lidarr | whisparr
   - type: whisparr
+    # Enable or disable this entire instance. When disabled, no API calls are made.
+    # Type: required
+    # Values: true | false
+    enabled: false
     # A friendly label for log output. Must be unique across instances.
     # Type: required
     name: Adult
@@ -441,6 +457,10 @@ instances:
   # Type: required
   # Values: radarr | sonarr | lidarr | whisparr
   - type: whisparr
+    # Enable or disable this entire instance. When disabled, no API calls are made.
+    # Type: required
+    # Values: true | false
+    enabled: false
     # A friendly label for log output. Must be unique across instances.
     # Type: required
     name: Adult (Eros)

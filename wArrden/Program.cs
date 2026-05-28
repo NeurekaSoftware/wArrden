@@ -104,6 +104,8 @@ var disabledInstances = new HashSet<string>();
 
 foreach (var inst in config.Instances)
 {
+    if (inst.Enabled != true) continue;
+
     IArrClient? validationClient = null;
     try
     {
@@ -141,6 +143,7 @@ host.Services.UseScheduler(scheduler =>
 {
     foreach (var inst in config.Instances)
     {
+        if (inst.Enabled != true) continue;
         if (disabledInstances.Contains(inst.InstanceKey))
             continue;
 
@@ -374,6 +377,7 @@ static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clien
     for (var i = 0; i < config.Instances.Count; i++)
     {
         var inst = config.Instances[i];
+        if (inst.Enabled != true) continue;
         if (disabledInstances.Contains(inst.InstanceKey))
             continue;
 

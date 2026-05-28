@@ -23,6 +23,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -46,6 +47,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "unknown",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123"
@@ -67,6 +69,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123"
@@ -88,6 +91,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "not-a-url",
                     ApiKey = "abc123"
@@ -109,6 +113,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = ""
@@ -130,6 +135,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -152,6 +158,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -174,6 +181,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -197,6 +205,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -220,6 +229,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -243,6 +253,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -266,6 +277,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -275,6 +287,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -298,6 +311,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Movies",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -307,6 +321,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "radarr",
+                    Enabled = true,
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
@@ -330,6 +345,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -353,6 +369,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "RADARR",
+                    Enabled = true,
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
@@ -376,6 +393,7 @@ public class YamlConfigLoaderTests
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -420,7 +438,7 @@ public class YamlConfigLoaderTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            File.WriteAllText(tempFile, "instances:\n  - type: sonarr\n    name: ''\n    url: http://localhost:8989\n    apiKey: abc123");
+            File.WriteAllText(tempFile, "instances:\n  - type: sonarr\n    enabled: true\n    name: ''\n    url: http://localhost:8989\n    apiKey: abc123");
 
             var ex = Assert.Throws<ConfigurationException>(() =>
                 YamlConfigLoader.Load(tempFile));
@@ -443,6 +461,7 @@ public class YamlConfigLoaderTests
             File.WriteAllText(tempFile, @"
 instances:
   - type: sonarr
+    enabled: true
     name: Series
     url: http://localhost:8989
     apiVersion: v3
@@ -488,6 +507,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -511,6 +531,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -534,6 +555,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -557,6 +579,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -581,6 +604,7 @@ instances:
                 new()
                 {
                     Type = "radarr",
+                    Enabled = true,
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
@@ -604,6 +628,7 @@ instances:
                 new()
                 {
                     Type = "radarr",
+                    Enabled = true,
                     Name = "Movies",
                     Url = "http://localhost:7878",
                     ApiKey = "abc123",
@@ -626,6 +651,7 @@ instances:
             File.WriteAllText(tempFile, @"
 instances:
   - type: sonarr
+    enabled: true
     name: Series
     url: http://localhost:8989
     apiKey: abc123
@@ -659,6 +685,7 @@ instances:
             File.WriteAllText(tempFile, @"
 instances:
   - type: sonarr
+    enabled: true
     name: Series
     url: http://localhost:8989
     apiKey: abc123
@@ -693,6 +720,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -716,6 +744,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -739,6 +768,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -762,6 +792,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -785,6 +816,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -808,6 +840,7 @@ instances:
             File.WriteAllText(tempFile, @"
 instances:
   - type: sonarr
+    enabled: true
     name: Series
     url: http://localhost:8989
     apiKey: abc123
@@ -842,6 +875,7 @@ instances:
             File.WriteAllText(tempFile, @"
 instances:
   - type: sonarr
+    enabled: true
     name: Series
     url: http://localhost:8989
     apiKey: abc123
@@ -872,6 +906,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -917,6 +952,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -952,6 +988,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -983,6 +1020,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1013,6 +1051,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1043,6 +1082,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1073,6 +1113,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1103,6 +1144,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1126,6 +1168,7 @@ instances:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1153,6 +1196,7 @@ instances:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1176,6 +1220,7 @@ instances:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1199,6 +1244,7 @@ instances:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1222,6 +1268,7 @@ instances:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1245,6 +1292,7 @@ instances:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1268,6 +1316,7 @@ instances:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1292,6 +1341,7 @@ instances:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1315,6 +1365,7 @@ instances:
                 new()
                 {
                     Type = "LIDARR",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1325,6 +1376,7 @@ instances:
                 new()
                 {
                     Type = "Whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1348,6 +1400,7 @@ instances:
             File.WriteAllText(tempFile, @"
 instances:
   - type: lidarr
+    enabled: true
     name: Music
     url: http://localhost:8686
     apiKey: abc123
@@ -1356,6 +1409,7 @@ instances:
       enabled: true
       cron: '* * * * *'
   - type: whisparr
+    enabled: true
     name: Adult
     url: http://localhost:6969
     apiVersion: v3
@@ -1402,6 +1456,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1429,6 +1484,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1453,6 +1509,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1476,6 +1533,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1499,6 +1557,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1523,6 +1582,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1546,6 +1606,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1576,6 +1637,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1606,6 +1668,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1636,6 +1699,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1668,6 +1732,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1698,6 +1763,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1728,6 +1794,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1758,6 +1825,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1790,6 +1858,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1817,6 +1886,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1842,6 +1912,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1867,6 +1938,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "sonarr",
+                    Enabled = true,
                     Name = "Series",
                     Url = "http://localhost:8989",
                     ApiKey = "abc123",
@@ -1897,6 +1969,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "lidarr",
+                    Enabled = true,
                     Name = "Music",
                     Url = "http://localhost:8686",
                     ApiKey = "abc123",
@@ -1927,6 +2000,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1957,6 +2031,7 @@ queueCleanupRules:
                 new()
                 {
                     Type = "whisparr",
+                    Enabled = true,
                     Name = "Adult",
                     Url = "http://localhost:6969",
                     ApiKey = "abc123",
@@ -1987,7 +2062,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
@@ -2009,7 +2087,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
@@ -2030,7 +2111,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
@@ -2051,7 +2135,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     IndexerFilter = new IndexerFilterConfig { Enabled = false },
@@ -2073,7 +2160,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     IndexerFilter = new IndexerFilterConfig { Enabled = true, Include = new List<string> { "NZBGeek" } },
@@ -2095,7 +2185,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     IndexerFilter = new IndexerFilterConfig { Enabled = true, Exclude = new List<string> { "NZBGeek" } },
@@ -2117,7 +2210,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     IndexerFilter = new IndexerFilterConfig
@@ -2144,7 +2240,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     IndexerFilter = new IndexerFilterConfig { Include = new List<string> { "NZBGeek" } },
@@ -2166,7 +2265,10 @@ queueCleanupRules:
             {
                 new()
                 {
-                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    Type = "sonarr",
+                    Enabled = true,
+                    Name = "Series",
+                    Url = "http://localhost:8989",
                     ApiKey = "abc123",
                     ApiVersion = "v3",
                     IndexerFilter = new IndexerFilterConfig { Enabled = true },

@@ -93,6 +93,9 @@ internal static class YamlConfigLoader
             else if (!inst.IsSonarr && !inst.IsRadarr && !inst.IsLidarr && !inst.IsWhisparr)
                 errors.Add($"{prefix} '{inst.Name}': 'type' must be 'sonarr', 'radarr', 'lidarr' or 'whisparr'.");
 
+            if (inst.Enabled is null)
+                errors.Add($"{prefix} '{inst.Name}': 'enabled' is required.");
+
             if (!IsValidUrl(inst.Url))
                 errors.Add($"{prefix} '{inst.Name}': 'url' must be a valid http(s) URL.");
 
