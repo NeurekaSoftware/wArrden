@@ -7,11 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-05-28
+
 ### Added
-- Add Whisparr Eros support for missing and upgrade searches.
+- Add Whisparr Eros (v3-eros) support for missing and upgrade searches.
+- Add optional tagging to search jobs, with a retroactive option to tag already-cooldowned items.
+- Add DOWNLOAD_CLIENT_ERROR queue cleanup matcher for download client error states.
 
 ### Changed
-- Require each configured instance to declare its version using values such as v3, v1, or v3-eros.
+- Require an API version declaration on each instance, such as v3, v1, or v3-eros.
+- Require an `enabled` field on each instance to allow disabling an instance without removing it from config.
+- Replace `indexerNames` with a flexible `indexerFilter` supporting include and exclude rules, where exclude takes priority over include.
+- Batch search triggers into a single API command per job to reduce request load on arr instances.
+- Report a hard error at startup when the config file contains unsupported keys.
+
+### Fixed
+- Fix queue cleanup sometimes missing warning items by broadening detection criteria and matching against status message titles.
 
 ## [3.1.0] - 2026-05-24
 
@@ -116,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/3.1.0...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/4.0.0...HEAD
+[4.0.0]: https://code.neureka.dev/warrden/warrden/compare/3.1.0...4.0.0
 [3.1.0]: https://code.neureka.dev/warrden/warrden/compare/3.0.0...3.1.0
 [3.0.0]: https://code.neureka.dev/warrden/warrden/releases/tag/3.0.0
 [2.1.3]: https://code.neureka.dev/warrden/warrden/compare/2.1.3...3.0.0
