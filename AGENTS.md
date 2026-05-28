@@ -219,6 +219,29 @@ Year is only appended when greater than zero.
 - Queue cleanup rules: `wArrden/Services/QueueCleanupRules.cs`
 - API models: `wArrden/Clients/Models/`
 
+## API Call Verification via OpenAPI Specs
+
+When writing, modifying, or debugging API calls to any arr instance, verify the endpoint, parameters, request body, and response schema against the official OpenAPI spec for that arr.
+
+### Source URLs
+
+| Application | Version | OpenAPI Spec URL |
+|---|---|---|
+| Radarr | v3 | `https://raw.githubusercontent.com/Radarr/Radarr/refs/heads/develop/src/Radarr.Api.V3/openapi.json` |
+| Sonarr | v3 (also covers v4) | `https://raw.githubusercontent.com/Sonarr/Sonarr/refs/heads/develop/src/Sonarr.Api.V3/openapi.json` |
+| Lidarr | v1 | `https://raw.githubusercontent.com/Lidarr/Lidarr/refs/heads/develop/src/Lidarr.Api.V1/openapi.json` |
+| Whisparr | v2 | `https://raw.githubusercontent.com/Whisparr/Whisparr/refs/heads/v2-develop/src/Whisparr.Api.V3/openapi.json` |
+| Whisparr | eros | `https://raw.githubusercontent.com/Whisparr/Whisparr/refs/heads/eros/src/Whisparr.Api.V3/openapi.json` |
+
+### Workflow
+
+1. Identify which arr and API version the API call targets.
+2. If the OpenAPI spec content for that arr/version is not already in the current session context, fetch it from the URL above.
+3. Verify the endpoint path, HTTP method, query parameters, request body schema, and response schema match the spec.
+4. If the spec is unavailable or the API version differs from what the project expects, ask the user to provide the correct spec before proceeding.
+
+Do not store the fetched OpenAPI specs in the repository; fetch them on demand per session as needed.
+
 ## Config Example
 
 `config.example.yaml` is the authoritative reference for all configuration options. It must stay in sync with every code change that adds, removes, or renames a config field, matcher key, or action value.
