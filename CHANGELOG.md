@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.1] - 2026-05-28
+
+### Fixed
+- Fix queue cleanup only fetching the first 10 download queue items instead of all items.
+
 ## [4.0.0] - 2026-05-28
 
 ### Added
@@ -127,7 +132,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/4.0.0...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/4.0.1...HEAD
+[4.0.1]: https://code.neureka.dev/warrden/warrden/compare/4.0.0...4.0.1
 [4.0.0]: https://code.neureka.dev/warrden/warrden/compare/3.1.0...4.0.0
 [3.1.0]: https://code.neureka.dev/warrden/warrden/compare/3.0.0...3.1.0
 [3.0.0]: https://code.neureka.dev/warrden/warrden/releases/tag/3.0.0
