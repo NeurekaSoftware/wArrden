@@ -1,12 +1,25 @@
 using wArrden.Clients;
 using wArrden.Clients.Models;
+using wArrden.Configuration;
 
 namespace wArrden.Tests;
 
 public class SearchServiceIndexerTests : SearchServiceTestBase
 {
+    private static IndexerFilterConfig FilterWith(params string[] include) =>
+        new() { Enabled = true, Include = include.ToList() };
+
+    private static IndexerFilterConfig ExcludeFilterWith(params string[] exclude) =>
+        new() { Enabled = true, Exclude = exclude.ToList() };
+
+    private static IndexerFilterConfig FilterWithIncludeAndExclude(string[] include, string[] exclude) =>
+        new() { Enabled = true, Include = include.ToList(), Exclude = exclude.ToList() };
+
+    private static IndexerFilterConfig DisabledFilter() =>
+        new() { Enabled = false };
+
     [Fact]
-    public async Task SearchMissingEpisodes_IndexerNamesNull_UsesHasAnyEnabledIndexer()
+    public async Task SearchMissingEpisodes_IndexerFilterNull_UsesHasAnyEnabledIndexer()
     {
         var episodes = new List<WantedEpisodeResource>
         {
@@ -32,7 +45,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
     }
 
     [Fact]
-    public async Task SearchMissingEpisodes_IndexerNamesEmpty_UsesHasAnyEnabledIndexer()
+    public async Task SearchMissingEpisodes_IndexerFilterEnabledFalse_UsesHasAnyEnabledIndexer()
     {
         var episodes = new List<WantedEpisodeResource>
         {
@@ -49,14 +62,16 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupHasIndexers();
         SetupEpisodeTrigger();
 
-        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false, new List<string>(), null, CancellationToken.None);
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false, DisabledFilter(), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Never);
+        ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public async Task SearchMissingEpisodes_IndexerNamesMatch_ProceedsWithSearch()
+    public async Task SearchMissingEpisodes_IndexerFilterIncludeMatch_ProceedsWithSearch()
     {
         var episodes = new List<WantedEpisodeResource>
         {
@@ -80,7 +95,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupEpisodeTrigger();
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
-            new List<string> { "NZBGeek" }, null, CancellationToken.None);
+            FilterWith("NZBGeek"), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -89,7 +104,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
     }
 
     [Fact]
-    public async Task SearchMissingEpisodes_IndexerNamesNoMatch_SkipsSearch()
+    public async Task SearchMissingEpisodes_IndexerFilterIncludeNoMatch_SkipsSearch()
     {
         var episodes = new List<WantedEpisodeResource>
         {
@@ -111,7 +126,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupCooldownIds(ids: []);
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
-            new List<string> { "NZBGeek" }, null, CancellationToken.None);
+            FilterWith("NZBGeek"), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -121,7 +136,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
     }
 
     [Fact]
-    public async Task SearchMissingEpisodes_IndexerNamesCaseInsensitive_Proceeds()
+    public async Task SearchMissingEpisodes_IndexerFilterCaseInsensitive_Proceeds()
     {
         var episodes = new List<WantedEpisodeResource>
         {
@@ -144,7 +159,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupEpisodeTrigger();
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
-            new List<string> { "nzbgeek" }, null, CancellationToken.None);
+            FilterWith("nzbgeek"), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -173,14 +188,106 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupCooldownIds(ids: []);
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
-            new List<string> { "NZBGeek" }, null, CancellationToken.None);
+            FilterWith("NZBGeek"), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task SearchMissingMovies_IndexerNamesMatch_ProceedsWithSearch()
+    public async Task SearchMissingEpisodes_ExcludeOnly_ProceedsWhenOthersExist()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        var indexers = new List<IndexerResource>
+        {
+            new() { Id = 1, Name = "NZBGeek", EnableAutomaticSearch = true },
+            new() { Id = 2, Name = "DrunkenSlug", EnableAutomaticSearch = true }
+        };
+
+        ClientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+        ClientMock.Setup(c => c.GetIndexersAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indexers);
+
+        SetupOutputCallback();
+        SetupCleanExpired();
+        SetupCooldownIds(ids: []);
+        SetupEpisodeTrigger();
+
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
+            ExcludeFilterWith("NZBGeek"), null, CancellationToken.None);
+
+        ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task SearchMissingEpisodes_ExcludeOnly_SkipsWhenAllExcluded()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        var indexers = new List<IndexerResource>
+        {
+            new() { Id = 1, Name = "NZBGeek", EnableAutomaticSearch = true }
+        };
+
+        ClientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+        ClientMock.Setup(c => c.GetIndexersAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indexers);
+
+        SetupOutputCallback();
+        SetupCleanExpired();
+        SetupCooldownIds(ids: []);
+
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
+            ExcludeFilterWith("NZBGeek"), null, CancellationToken.None);
+
+        ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task SearchMissingEpisodes_IncludeAndExclude_ExcludeTakesPriority()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        var indexers = new List<IndexerResource>
+        {
+            new() { Id = 1, Name = "NZBGeek", EnableAutomaticSearch = true },
+            new() { Id = 2, Name = "DrunkenSlug", EnableAutomaticSearch = true },
+            new() { Id = 3, Name = "NinjaCentral", EnableAutomaticSearch = true }
+        };
+
+        ClientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+        ClientMock.Setup(c => c.GetIndexersAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indexers);
+
+        SetupOutputCallback();
+        SetupCleanExpired();
+        SetupCooldownIds(ids: []);
+        SetupEpisodeTrigger();
+
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
+            FilterWithIncludeAndExclude(["NZBGeek", "DrunkenSlug", "NinjaCentral"], ["NZBGeek"]), null, CancellationToken.None);
+
+        ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task SearchMissingMovies_IndexerFilterIncludeMatch_ProceedsWithSearch()
     {
         var movies = new List<WantedMovieResource>
         {
@@ -202,7 +309,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupMovieTrigger();
 
         await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false,
-            new List<string> { "NZBGeek" }, null, CancellationToken.None);
+            FilterWith("NZBGeek"), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -210,7 +317,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
     }
 
     [Fact]
-    public async Task SearchMissingMovies_IndexerNamesNoMatch_SkipsSearch()
+    public async Task SearchMissingMovies_IndexerFilterIncludeNoMatch_SkipsSearch()
     {
         var movies = new List<WantedMovieResource>
         {
@@ -231,7 +338,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupCooldownIds(ids: []);
 
         await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false,
-            new List<string> { "NZBGeek" }, null, CancellationToken.None);
+            FilterWith("NZBGeek"), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -241,7 +348,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
     }
 
     [Fact]
-    public async Task SearchUpgradeMovies_IndexerNamesMatch_ProceedsWithSearch()
+    public async Task SearchUpgradeMovies_IndexerFilterIncludeMatch_ProceedsWithSearch()
     {
         var movies = new List<WantedMovieResource>
         {
@@ -263,7 +370,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupMovieTrigger();
 
         await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false,
-            new List<string> { "NZBGeek" }, null, CancellationToken.None);
+            FilterWith("NZBGeek"), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
@@ -271,7 +378,7 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
     }
 
     [Fact]
-    public async Task SearchMissingEpisodes_Season_IndexerNamesMatch_Proceeds()
+    public async Task SearchMissingEpisodes_Season_IndexerFilterIncludeMatch_Proceeds()
     {
         var episodes = new List<WantedEpisodeResource>
         {
@@ -294,14 +401,14 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         SetupSeasonTrigger();
 
         await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false,
-            new List<string> { "NZBGeek" }, null, CancellationToken.None);
+            FilterWith("NZBGeek"), null, CancellationToken.None);
 
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Once);
         ClientMock.Verify(c => c.TriggerSeasonSearchAsync(100, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task SearchMissingEpisodes_IndexerNamesNull_DryRun_NoIndexerCheck()
+    public async Task SearchMissingEpisodes_IndexerFilterNull_DryRun_NoIndexerCheck()
     {
         var episodes = new List<WantedEpisodeResource>
         {
@@ -319,5 +426,40 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
 
         ClientMock.Verify(c => c.HasAnyEnabledIndexerAsync(It.IsAny<CancellationToken>()), Times.Never);
         ClientMock.Verify(c => c.GetIndexersAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SearchMissingEpisodes_IndexerFilterIncludeNoMatch_EffectiveDetailInWarning()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        var indexers = new List<IndexerResource>
+        {
+            new() { Id = 1, Name = "NZBGeek", EnableAutomaticSearch = true }
+        };
+
+        ClientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+        ClientMock.Setup(c => c.GetIndexersAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indexers);
+
+        SetupOutputCallback();
+        SetupCleanExpired();
+        SetupCooldownIds(ids: []);
+
+        string? warningDetail = null;
+        OutputMock
+            .Setup(o => o.WriteWarning(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string, string>((_, _, detail) => warningDetail = detail);
+
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
+            FilterWith("DrunkenSlug"), null, CancellationToken.None);
+
+        Assert.NotNull(warningDetail);
+        Assert.Contains("NZBGeek", warningDetail);
+        Assert.Contains("DrunkenSlug", warningDetail);
     }
 }

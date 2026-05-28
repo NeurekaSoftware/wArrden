@@ -10,12 +10,6 @@ instances:
     url: http://radarr:7878
     apiVersion: v3
     apiKey: YOUR_RADARR_API_KEY
-    # Limit searches/upgrades to specific indexers by name.
-    # Type: optional
-    # Default: all enabled indexers
-    # indexerNames:
-    #   - NZBGeek
-    #   - publicHD
     missingSearch:
       enabled: true
       cron: "*/15 * * * *"
@@ -43,18 +37,22 @@ instances:
     queueCleanup:
       enabled: true
       cron: "* * * * *"
+    # Control which indexers are used for searches.
+    # Type: optional
+    # Default: disabled
+    indexerFilter:
+      enabled: false
+      include:
+        - NZBGeek
+        - DrunkenSlug
+      exclude:
+        - NZBGeek
 
   - type: sonarr
     name: Series
     url: http://sonarr:8989
     apiVersion: v3
     apiKey: YOUR_SONARR_API_KEY
-    # Limit searches/upgrades to specific indexers by name.
-    # Type: optional
-    # Default: all enabled indexers
-    # indexerNames:
-    #   - NZBGeek
-    #   - Rarbg
     missingSearch:
       enabled: true
       searchType: episode
@@ -84,18 +82,22 @@ instances:
     queueCleanup:
       enabled: true
       cron: "* * * * *"
+    # Control which indexers are used for searches.
+    # Type: optional
+    # Default: disabled
+    indexerFilter:
+      enabled: false
+      include:
+        - NZBGeek
+        - DrunkenSlug
+      exclude:
+        - NZBGeek
 
   - type: lidarr
     name: Music
     url: http://lidarr:8686
     apiVersion: v1
     apiKey: YOUR_LIDARR_API_KEY
-    # Limit searches/upgrades to specific indexers by name.
-    # Type: optional
-    # Default: all enabled indexers
-    # indexerNames:
-    #   - NZBGeek
-    #   - publicHD
     missingSearch:
       enabled: false
       searchType: album
@@ -125,17 +127,22 @@ instances:
     queueCleanup:
       enabled: true
       cron: "* * * * *"
+    # Control which indexers are used for searches.
+    # Type: optional
+    # Default: disabled
+    indexerFilter:
+      enabled: false
+      include:
+        - NZBGeek
+        - DrunkenSlug
+      exclude:
+        - NZBGeek
 
   - type: whisparr
     name: Adult
     url: http://whisparr:6969
     apiVersion: v3
     apiKey: YOUR_WHISPARR_API_KEY
-    # Limit searches/upgrades to specific indexers by name.
-    # Type: optional
-    # Default: all enabled indexers
-    # indexerNames:
-    #   - NZBGeek
     missingSearch:
       enabled: true
       searchType: episode
@@ -165,17 +172,22 @@ instances:
     queueCleanup:
       enabled: true
       cron: "* * * * *"
+    # Control which indexers are used for searches.
+    # Type: optional
+    # Default: disabled
+    indexerFilter:
+      enabled: false
+      include:
+        - NZBGeek
+        - DrunkenSlug
+      exclude:
+        - NZBGeek
 
   - type: whisparr
     name: Adult (Eros)
     url: http://whisparr:6969
     apiVersion: v3-eros
     apiKey: YOUR_WHISPARR_API_KEY
-    # Limit searches/upgrades to specific indexers by name.
-    # Type: optional
-    # Default: all enabled indexers
-    # indexerNames:
-    #   - NZBGeek
     missingSearch:
       enabled: true
       cron: "*/15 * * * *"
@@ -203,9 +215,19 @@ instances:
     queueCleanup:
       enabled: true
       cron: "* * * * *"
+    # Control which indexers are used for searches.
+    # Type: optional
+    # Default: disabled
+    indexerFilter:
+      enabled: false
+      include:
+        - NZBGeek
+        - DrunkenSlug
+      exclude:
+        - NZBGeek
 
 
-# The defaults below work for most setups — you don't need to change
+ # The defaults below work for most setups — you don't need to change
 # anything unless the default actions don't match your preferences.
 #
 # Actions: remove | removeAndBlocklist | none

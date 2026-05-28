@@ -101,6 +101,8 @@ internal static class YamlConfigLoader
 
             ValidateApiVersion(errors, inst, prefix);
 
+            ValidateIndexerFilter(errors, config, inst, prefix);
+
             ValidateJob(errors, inst, "missingSearch", i, config);
             ValidateJob(errors, inst, "upgradeSearch", i, config);
             ValidateJob(errors, inst, "queueCleanup", i, config);
@@ -121,6 +123,26 @@ internal static class YamlConfigLoader
             config.Warnings.Add("No jobs are enabled across any instance.");
 
         return errors;
+    }
+
+    private static void ValidateIndexerFilter(List<string> errors, AppConfig config, InstanceConfig inst, string prefix)
+    {
+        var filter = inst.IndexerFilter;
+        if (filter is null)
+            return;
+
+        if (filter.Enabled is null)
+        {
+            errors.Add($"{prefix} '{inst.Name}'.indexerFilter: 'enabled' is required.");
+            return;
+        }
+
+        if (filter.Enabled == true &&
+            (filter.Include is null || filter.Include.Count == 0) &&
+            (filter.Exclude is null || filter.Exclude.Count == 0))
+        {
+            config.Warnings.Add($"{prefix} '{inst.Name}'.indexerFilter: enabled but no include/exclude rules configured — this is equivalent to not having the filter.");
+        }
     }
 
     private static void ValidateJob(List<string> errors, InstanceConfig inst, string jobKey, int idx, AppConfig config)

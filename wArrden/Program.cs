@@ -166,7 +166,7 @@ host.Services.UseScheduler(scheduler =>
                 .ScheduleWithParams<SearchJob>(new SearchJobParams(
                     client, "missing", searchInstanceType,
                     inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
-                    inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames,
+                    inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerFilter,
                     inst.MissingSearch.Tagging
                 ))
                 .Cron(inst.MissingSearch.Cron!)
@@ -179,7 +179,7 @@ host.Services.UseScheduler(scheduler =>
                 .ScheduleWithParams<SearchJob>(new SearchJobParams(
                     client, "upgrade", searchInstanceType,
                     inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
-                    inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerNames,
+                    inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerFilter,
                     inst.UpgradeSearch.Tagging
                 ))
                 .Cron(inst.UpgradeSearch.Cron!)

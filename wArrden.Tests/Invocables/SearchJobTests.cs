@@ -1,4 +1,5 @@
 using wArrden.Clients;
+using wArrden.Configuration;
 using wArrden.Invocables;
 using wArrden.Services;
 
@@ -120,16 +121,16 @@ public class SearchJobTests
     }
 
     [Fact]
-    public void Invoke_IndexerNames_PassedToService()
+    public void Invoke_IndexerFilter_PassedToService()
     {
-        var indexerNames = new List<string> { "NZBGeek", "Rarbg" };
+        var indexerFilter = new IndexerFilterConfig { Enabled = true, Include = new List<string> { "NZBGeek", "Rarbg" } };
         var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
-            "missing", "sonarr", 10, "30d", "episode", false, indexerNames, null));
+            "missing", "sonarr", 10, "30d", "episode", false, indexerFilter, null));
 
         job.Invoke();
 
         _searchMock.Verify(s => s.SearchMissingEpisodesAsync(
-            _clientMock.Object, 10, TimeSpan.FromDays(30), "episode", false, indexerNames, null, CancellationToken.None), Times.Once);
+            _clientMock.Object, 10, TimeSpan.FromDays(30), "episode", false, indexerFilter, null, CancellationToken.None), Times.Once);
     }
 
     [Fact]

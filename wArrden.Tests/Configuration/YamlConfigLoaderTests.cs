@@ -2022,11 +2022,10 @@ queueCleanupRules:
     }
 
     [Fact]
-    public void Validate_NullLogLevel_Passes()
+    public void Validate_IndexerFilterNull_Passes()
     {
         var config = new AppConfig
         {
-            LogLevel = null,
             Instances = new List<InstanceConfig>
             {
                 new()
@@ -2041,5 +2040,143 @@ queueCleanupRules:
         var errors = YamlConfigLoader.Validate(config);
 
         Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_IndexerFilterEnabledFalse_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    ApiVersion = "v3",
+                    IndexerFilter = new IndexerFilterConfig { Enabled = false },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_IndexerFilterEnabledTrueWithInclude_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    ApiVersion = "v3",
+                    IndexerFilter = new IndexerFilterConfig { Enabled = true, Include = new List<string> { "NZBGeek" } },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_IndexerFilterEnabledTrueWithExclude_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    ApiVersion = "v3",
+                    IndexerFilter = new IndexerFilterConfig { Enabled = true, Exclude = new List<string> { "NZBGeek" } },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_IndexerFilterEnabledTrueWithBoth_Passes()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    ApiVersion = "v3",
+                    IndexerFilter = new IndexerFilterConfig
+                    {
+                        Enabled = true,
+                        Include = new List<string> { "NZBGeek", "DrunkenSlug" },
+                        Exclude = new List<string> { "NZBGeek" }
+                    },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validate_IndexerFilterMissingEnabledKey_ReturnsError()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    ApiVersion = "v3",
+                    IndexerFilter = new IndexerFilterConfig { Include = new List<string> { "NZBGeek" } },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Contains(errors, e => e.Contains("indexerFilter") && e.Contains("enabled") && e.Contains("required"));
+    }
+
+    [Fact]
+    public void Validate_IndexerFilterEnabledNoRules_Warns()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "abc123",
+                    ApiVersion = "v3",
+                    IndexerFilter = new IndexerFilterConfig { Enabled = true },
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var errors = YamlConfigLoader.Validate(config);
+
+        Assert.Empty(errors);
+        Assert.Contains(config.Warnings, w => w.Contains("indexerFilter") && w.Contains("no include/exclude"));
     }
 }

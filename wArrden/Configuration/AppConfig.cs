@@ -29,7 +29,7 @@ public class InstanceConfig
     public string Url { get; set; } = string.Empty;
     public string? ApiVersion { get; set; }
     public string ApiKey { get; set; } = string.Empty;
-    public List<string>? IndexerNames { get; set; }
+    public IndexerFilterConfig? IndexerFilter { get; set; }
     public JobConfig? MissingSearch { get; set; }
     public JobConfig? UpgradeSearch { get; set; }
     public JobConfig? QueueCleanup { get; set; }
@@ -41,6 +41,13 @@ public class InstanceConfig
     public bool IsLidarr => string.Equals(Type, "lidarr", StringComparison.OrdinalIgnoreCase);
     public bool IsWhisparr => string.Equals(Type, "whisparr", StringComparison.OrdinalIgnoreCase);
     public bool IsWhisparrV3Eros => IsWhisparr && string.Equals(ApiVersion, "v3-eros", StringComparison.OrdinalIgnoreCase);
+}
+
+public class IndexerFilterConfig
+{
+    public bool? Enabled { get; set; }
+    public List<string>? Include { get; set; }
+    public List<string>? Exclude { get; set; }
 }
 
 public class JobConfig
