@@ -228,6 +228,11 @@ queueCleanupRules:
     - match: DANGEROUS_FILE
       action: none
 
+    # Download client is reporting a generic error — investigate the download client.
+    # Radarr: "qBittorrent is reporting an error", "Deluge is reporting an error", "uTorrent is reporting an error"
+    - match: DOWNLOAD_CLIENT_ERROR
+      action: none
+
     # Can't access the download folder — check permissions/mounts.
     # Radarr: "Import failed, path does not exist or is not accessible by Radarr: {0}."
     - match: IMPORT_PATH_INACCESSIBLE
@@ -336,6 +341,11 @@ queueCleanupRules:
     # Sonarr: "Caution: Found executable file with extension: '{0}'"
     # Sonarr: "Caution: Found potentially dangerous file with extension: {0}"
     - match: DANGEROUS_FILE
+      action: none
+
+    # Download client is reporting a generic error — investigate the download client.
+    # Sonarr: "qBittorrent is reporting an error", "Deluge is reporting an error", "uTorrent is reporting an error"
+    - match: DOWNLOAD_CLIENT_ERROR
       action: none
 
     # Can't access the download folder — check permissions/mounts.
@@ -492,6 +502,11 @@ queueCleanupRules:
     - match: DANGEROUS_FILE
       action: none
 
+    # Download client is reporting a generic error — investigate the download client.
+    # Lidarr: "qBittorrent is reporting an error", "Deluge is reporting an error", "uTorrent is reporting an error"
+    - match: DOWNLOAD_CLIENT_ERROR
+      action: none
+
     # Can't access the download folder — check permissions/mounts.
     # Lidarr: "Import failed, path does not exist or is not accessible by Lidarr: {0}."
     - match: IMPORT_PATH_INACCESSIBLE
@@ -611,6 +626,12 @@ queueCleanupRules:
     # Whisparr Eros: "Caution: Found executable file with extension: '{extension}'"
     # Whisparr Eros: "Caution: Found potentially dangerous file with extension: {extension}"
     - match: DANGEROUS_FILE
+      action: none
+
+    # Download client is reporting a generic error — investigate the download client.
+    # Whisparr: "qBittorrent is reporting an error", "Deluge is reporting an error", "uTorrent is reporting an error"
+    # Whisparr Eros: "qBittorrent is reporting an error", "Deluge is reporting an error", "uTorrent is reporting an error"
+    - match: DOWNLOAD_CLIENT_ERROR
       action: none
 
     # Can't access the download folder — check permissions/mounts.

@@ -41,6 +41,8 @@ public static class QueueCleanupRuleMatchers
             ["whisparr"] = new[] { "potentially dangerous file", "Found executable file" },
         },
 
+        ["DOWNLOAD_CLIENT_ERROR"] = Shared("is reporting an error"),
+
         ["IMPORT_PATH_INACCESSIBLE"] = Shared("Import failed, path does not exist or is not accessible by"),
 
         ["MATCHED_VIA_GRAB_HISTORY"] = new()
