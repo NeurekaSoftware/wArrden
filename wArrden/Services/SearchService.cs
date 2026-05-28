@@ -7,7 +7,6 @@ public class SearchService
 {
     private readonly ICooldownService _cooldown;
     private readonly OutputService _output;
-    private readonly int[] _triggerIds = new int[1];
 
     public SearchService(ICooldownService cooldown, OutputService output)
     {
@@ -163,17 +162,20 @@ public class SearchService
                 : ep.Title ?? $"Episode {ep.Id}";
 
             progress.WriteItem(title);
-
-            _triggerIds[0] = ep.Id;
-            try { await triggerSearch(_triggerIds); }
-            catch (Exception ex)
-            {
-                _output.WriteWarning($"{inst}.missing",
-                    $"Search trigger failed for {title}", ex.Message);
-            }
         }
 
         var ids = selected.Select(s => s.Id).ToArray();
+        try { await triggerSearch(ids); }
+        catch (Exception ex)
+        {
+            var titles = selected.Select(ep =>
+                ep.Series is not null
+                    ? $"{ep.Series.Title} ({ep.Series.Year}) - S{ep.SeasonNumber:D2}E{ep.EpisodeNumber:D2} - {ep.Title ?? $"Episode {ep.Id}"}"
+                    : ep.Title ?? $"Episode {ep.Id}");
+            _output.WriteWarning($"{inst}.missing",
+                $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
+        }
+
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }
@@ -339,17 +341,18 @@ public class SearchService
             var title = $"{a.Artist?.ArtistName ?? "Artist Unknown"} - {a.Album?.Title ?? $"Album {a.Id}"}";
 
             progress.WriteItem(title);
-
-            _triggerIds[0] = a.Id;
-            try { await triggerSearch(_triggerIds); }
-            catch (Exception ex)
-            {
-                _output.WriteWarning($"{inst}.missing",
-                    $"Search trigger failed for {title}", ex.Message);
-            }
         }
 
         var ids = selected.Select(s => s.Id).ToArray();
+        try { await triggerSearch(ids); }
+        catch (Exception ex)
+        {
+            var titles = selected.Select(a =>
+                $"{a.Artist?.ArtistName ?? "Artist Unknown"} - {a.Album?.Title ?? $"Album {a.Id}"}");
+            _output.WriteWarning($"{inst}.missing",
+                $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
+        }
+
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }
@@ -511,17 +514,20 @@ public class SearchService
                 : m.Title ?? $"Movie {m.Id}";
 
             progress.WriteItem(title);
-
-            _triggerIds[0] = m.Id;
-            try { await triggerSearch(_triggerIds); }
-            catch (Exception ex)
-            {
-                _output.WriteWarning($"{inst}.missing",
-                    $"Search trigger failed for {title}", ex.Message);
-            }
         }
 
         var ids = selected.Select(s => s.Id).ToArray();
+        try { await triggerSearch(ids); }
+        catch (Exception ex)
+        {
+            var titles = selected.Select(m =>
+                m.Year > 0
+                    ? $"{m.Title ?? $"Movie {m.Id}"} ({m.Year})"
+                    : m.Title ?? $"Movie {m.Id}");
+            _output.WriteWarning($"{inst}.missing",
+                $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
+        }
+
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
         progress.WriteTrailer();
     }

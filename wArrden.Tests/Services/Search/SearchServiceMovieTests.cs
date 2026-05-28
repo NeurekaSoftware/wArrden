@@ -72,7 +72,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
-            Times.Exactly(2));
+            Times.Once);
         CooldownMock.Verify(c => c.MarkSearchedAsync("Sonarr", "Missing",
             It.IsAny<int[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -171,7 +171,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         await Service.SearchMissingMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
-            Times.Exactly(2));
+            Times.Once);
         CooldownMock.Verify(c => c.MarkSearchedAsync("Sonarr", "Missing",
             It.IsAny<int[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -198,7 +198,7 @@ public class SearchServiceMovieTests : SearchServiceTestBase
         await Service.SearchUpgradeMoviesAsync(ClientMock.Object, 5, DefaultCooldown, false, null, CancellationToken.None);
 
         ClientMock.Verify(c => c.TriggerMoviesSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
-            Times.Exactly(2));
+            Times.Once);
         CooldownMock.Verify(c => c.MarkSearchedAsync("Sonarr", "Upgrade",
             It.IsAny<int[]>(), It.IsAny<CancellationToken>()), Times.Once);
     }
