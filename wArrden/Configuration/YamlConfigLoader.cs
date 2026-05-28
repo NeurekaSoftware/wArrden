@@ -1,5 +1,6 @@
 using wArrden.Services;
 using YamlDotNet.Core;
+using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -19,6 +20,7 @@ internal static class YamlConfigLoader
         {
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
                 .Build();
 
             config = deserializer.Deserialize<AppConfig>(yaml) ?? new AppConfig();
@@ -37,7 +39,8 @@ internal static class YamlConfigLoader
             throw new InvalidOperationException($"Failed to parse config file '{path}': {ex.Message}", ex);
         }
 
-        var errors = Validate(config);
+        var errors = CollectUnknownKeys(yaml);
+        errors.AddRange(Validate(config));
         if (errors.Count > 0)
             throw new ConfigurationException(errors);
 
@@ -58,6 +61,121 @@ internal static class YamlConfigLoader
             if (inst.UpgradeSearch is not null && (inst.IsSonarr || (inst.IsWhisparr && !inst.IsWhisparrV3Eros) || inst.IsLidarr))
                 inst.UpgradeSearch.SearchType = inst.UpgradeSearch.SearchType!.ToLowerInvariant();
         }
+    }
+
+    private static List<string> CollectUnknownKeys(string yaml)
+    {
+        var errors = new List<string>();
+        try
+        {
+            var yamlStream = new YamlStream();
+            using var reader = new StringReader(yaml);
+            yamlStream.Load(reader);
+
+            if (yamlStream.Documents.Count == 0)
+                return errors;
+
+            var root = (YamlMappingNode)yamlStream.Documents[0].RootNode;
+
+            var rootKnown = new HashSet<string>
+                { "logLevel", "instances", "queueCleanupRules" };
+            CheckUnknownKeys(root, rootKnown, "", errors);
+
+            if (TryGetChild(root, "instances") is YamlSequenceNode instancesSeq)
+            {
+                for (int i = 0; i < instancesSeq.Children.Count; i++)
+                {
+                    if (instancesSeq.Children[i] is YamlMappingNode instNode)
+                        CheckInstanceKeys(instNode, i, errors);
+                }
+            }
+
+            if (TryGetChild(root, "queueCleanupRules") is YamlMappingNode rulesNode)
+            {
+                var rulesKnown = new HashSet<string>
+                    { "sonarr", "radarr", "lidarr", "whisparr" };
+                CheckUnknownKeys(rulesNode, rulesKnown, "queueCleanupRules", errors);
+
+                foreach (var arrType in new[] { "sonarr", "radarr", "lidarr", "whisparr" })
+                {
+                    if (TryGetChild(rulesNode, arrType) is YamlSequenceNode ruleSeq)
+                    {
+                        var ruleKnown = new HashSet<string> { "match", "action" };
+                        for (int i = 0; i < ruleSeq.Children.Count; i++)
+                        {
+                            if (ruleSeq.Children[i] is YamlMappingNode ruleNode)
+                                CheckUnknownKeys(ruleNode, ruleKnown,
+                                    $"queueCleanupRules.{arrType}[{i}]", errors);
+                        }
+                    }
+                }
+            }
+        }
+        catch (YamlException)
+        {
+        }
+
+        return errors;
+    }
+
+    private static void CheckInstanceKeys(YamlMappingNode instNode, int idx, List<string> errors)
+    {
+        var known = new HashSet<string>
+        {
+            "type", "enabled", "name", "url", "apiVersion", "apiKey",
+            "indexerFilter", "missingSearch", "upgradeSearch", "queueCleanup"
+        };
+        CheckUnknownKeys(instNode, known, $"instances[{idx}]", errors);
+
+        if (TryGetChild(instNode, "indexerFilter") is YamlMappingNode filterNode)
+        {
+            var filterKnown = new HashSet<string> { "enabled", "include", "exclude" };
+            CheckUnknownKeys(filterNode, filterKnown, $"instances[{idx}].indexerFilter", errors);
+        }
+
+        var jobKnown = new HashSet<string>
+            { "enabled", "cron", "maxResults", "cooldown", "searchType", "tagging" };
+
+        foreach (var jobKey in new[] { "missingSearch", "upgradeSearch", "queueCleanup" })
+        {
+            if (TryGetChild(instNode, jobKey) is YamlMappingNode jobNode)
+            {
+                CheckUnknownKeys(jobNode, jobKnown, $"instances[{idx}].{jobKey}", errors);
+
+                if (TryGetChild(jobNode, "tagging") is YamlMappingNode taggingNode)
+                {
+                    var tagKnown = new HashSet<string> { "enabled", "name", "retroactive" };
+                    CheckUnknownKeys(taggingNode, tagKnown,
+                        $"instances[{idx}].{jobKey}.tagging", errors);
+                }
+            }
+        }
+    }
+
+    private static void CheckUnknownKeys(YamlMappingNode node, HashSet<string> known,
+        string prefix, List<string> errors)
+    {
+        foreach (var kvp in node.Children)
+        {
+            if (kvp.Key is not YamlScalarNode keyNode) continue;
+            var key = keyNode.Value;
+            if (key is null) continue;
+            if (!known.Contains(key))
+                errors.Add(string.IsNullOrEmpty(prefix)
+                    ? $"unknown key '{key}'."
+                    : $"{prefix}: unknown key '{key}'.");
+        }
+    }
+
+    private static YamlNode? TryGetChild(YamlMappingNode parent, string childKey)
+    {
+        foreach (var kvp in parent.Children)
+        {
+            if (kvp.Key is YamlScalarNode keyNode &&
+                string.Equals(keyNode.Value, childKey, StringComparison.Ordinal))
+                return kvp.Value;
+        }
+        return null;
     }
 
     internal static List<string> Validate(AppConfig config)

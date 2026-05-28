@@ -858,7 +858,7 @@ instances:
             var ex = Assert.Throws<ConfigurationException>(() =>
                 YamlConfigLoader.Load(tempFile));
 
-            Assert.Contains(ex.Errors, e => e.Contains("YAML parse error"));
+            Assert.Contains(ex.Errors, e => e.Contains("unknown key 'badKey'"));
         }
         finally
         {
@@ -888,7 +888,7 @@ instances:
             var ex = Assert.Throws<ConfigurationException>(() =>
                 YamlConfigLoader.Load(tempFile));
 
-            Assert.Contains(ex.Errors, e => e.Contains("YAML parse error"));
+            Assert.Contains(ex.Errors, e => e.Contains("unknown key 'badKey'"));
         }
         finally
         {
