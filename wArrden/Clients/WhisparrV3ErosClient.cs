@@ -31,11 +31,27 @@ public class WhisparrV3ErosClient : IArrClient
 
     public async Task<IReadOnlyList<QueueResource>> GetQueueAsync(CancellationToken ct)
     {
-        using var response = await _http.GetAsync(
-            $"{_baseUrl}/api/v3/queue?includeUnknownMovieItems=true&includeMovie=true", ct);
-        response.EnsureSuccessStatusCode();
-        var paging = await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.WantedPagingResourceQueueResource, ct);
-        return (IReadOnlyList<QueueResource>?)paging?.Records ?? Array.Empty<QueueResource>();
+        var all = new List<QueueResource>();
+        var page = 1;
+        const int pageSize = 100;
+
+        while (true)
+        {
+            var url = $"{_baseUrl}/api/v3/queue?includeUnknownMovieItems=true&includeMovie=true&page={page}&pageSize={pageSize}";
+            using var response = await _http.GetAsync(url, ct);
+            response.EnsureSuccessStatusCode();
+
+            var paging = await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.WantedPagingResourceQueueResource, ct);
+            if (paging?.Records is { Count: > 0 })
+                all.AddRange(paging.Records);
+
+            if (paging == null || all.Count >= paging.TotalRecords)
+                break;
+
+            page++;
+        }
+
+        return all;
     }
 
     public async Task DeleteQueueItemAsync(int queueId, CancellationToken ct)
