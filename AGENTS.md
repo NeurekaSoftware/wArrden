@@ -252,6 +252,7 @@ Do not store the fetched OpenAPI specs in the repository; fetch them on demand p
 - Every `queueCleanupRules` matcher entry must include a plain-language description and the full arr warning message(s) it targets.
 - Every available matcher key is listed under each arr type it applies to, with one of three actions: `remove`, `removeAndBlocklist`, or `none`.
 - Matcher keys that are listed but recommended as inactive ship with `action: none`.
+- **Duplicate comments must stay identical.** When the same config key appears in multiple instance blocks (e.g. `type`, `cron`, `cooldown`), its comment text must match exactly across all copies. This ensures every instance block is fully self-documenting for copy-paste and prevents comment drift.
 
 ### Comment Format
 

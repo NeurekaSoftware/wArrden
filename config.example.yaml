@@ -5,15 +5,44 @@
 logLevel: info
 
 instances:
+  # The arr application type. At least one instance is required.
+  # Type: required
+  # Values: radarr | sonarr | lidarr | whisparr
   - type: radarr
+    # A friendly label for log output. Must be unique across instances.
+    # Type: required
     name: Movies
+    # Base URL of the arr instance API.
+    # Type: required
+    # Values: Valid HTTP or HTTPS URL
     url: http://radarr:7878
+    # API version of the arr instance.
+    # Type: required
+    # Values: radarr=v3 | sonarr=v3 | lidarr=v1 | whisparr=v3 or v3-eros
     apiVersion: v3
+    # API key from the arr instance (Settings → General).
+    # Type: required
     apiKey: YOUR_RADARR_API_KEY
+    # Search for monitored items that are not yet downloaded.
     missingSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 15
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -22,10 +51,26 @@ instances:
         enabled: false
         name: "warrden-missing"
         retroactive: false
+    # Search for items that have a better quality cutoff available.
     upgradeSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 15
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -34,30 +79,76 @@ instances:
         enabled: false
         name: "warrden-upgrade"
         retroactive: false
+    # Remove or blocklist stuck/warning items from the download queue.
     queueCleanup:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
     # Default: disabled
     indexerFilter:
       enabled: false
+      # Indexer names to whitelist. When set, only these indexers are used.
+      # Type: optional
+      # Default: none
       include:
         - NZBGeek
         - DrunkenSlug
+      # Indexer names to blacklist. These indexers are excluded from searches.
+      # exclude takes priority over include for the same indexer name.
+      # Type: optional
+      # Default: none
       exclude:
         - NZBGeek
 
+  # The arr application type. At least one instance is required.
+  # Type: required
+  # Values: radarr | sonarr | lidarr | whisparr
   - type: sonarr
+    # A friendly label for log output. Must be unique across instances.
+    # Type: required
     name: Series
+    # Base URL of the arr instance API.
+    # Type: required
+    # Values: Valid HTTP or HTTPS URL
     url: http://sonarr:8989
+    # API version of the arr instance.
+    # Type: required
+    # Values: radarr=v3 | sonarr=v3 | lidarr=v1 | whisparr=v3 or v3-eros
     apiVersion: v3
+    # API key from the arr instance (Settings → General).
+    # Type: required
     apiKey: YOUR_SONARR_API_KEY
+    # Search for monitored items that are not yet downloaded.
     missingSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # What unit to search for.
+      # Type: required
+      # Values: episode | season
       searchType: episode
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 15
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -66,11 +157,30 @@ instances:
         enabled: false
         name: "warrden-missing"
         retroactive: false
+    # Search for items that have a better quality cutoff available.
     upgradeSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # What unit to search for.
+      # Type: required
+      # Values: episode | season
       searchType: season
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 1
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -79,30 +189,76 @@ instances:
         enabled: false
         name: "warrden-upgrade"
         retroactive: false
+    # Remove or blocklist stuck/warning items from the download queue.
     queueCleanup:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
     # Default: disabled
     indexerFilter:
       enabled: false
+      # Indexer names to whitelist. When set, only these indexers are used.
+      # Type: optional
+      # Default: none
       include:
         - NZBGeek
         - DrunkenSlug
+      # Indexer names to blacklist. These indexers are excluded from searches.
+      # exclude takes priority over include for the same indexer name.
+      # Type: optional
+      # Default: none
       exclude:
         - NZBGeek
 
+  # The arr application type. At least one instance is required.
+  # Type: required
+  # Values: radarr | sonarr | lidarr | whisparr
   - type: lidarr
+    # A friendly label for log output. Must be unique across instances.
+    # Type: required
     name: Music
+    # Base URL of the arr instance API.
+    # Type: required
+    # Values: Valid HTTP or HTTPS URL
     url: http://lidarr:8686
+    # API version of the arr instance.
+    # Type: required
+    # Values: radarr=v3 | sonarr=v3 | lidarr=v1 | whisparr=v3 or v3-eros
     apiVersion: v1
+    # API key from the arr instance (Settings → General).
+    # Type: required
     apiKey: YOUR_LIDARR_API_KEY
+    # Search for monitored items that are not yet downloaded.
     missingSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: false
+      # What unit to search for.
+      # Type: required
+      # Values: album | artist
       searchType: album
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 1
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -111,11 +267,30 @@ instances:
         enabled: false
         name: "warrden-missing"
         retroactive: false
+    # Search for items that have a better quality cutoff available.
     upgradeSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: false
+      # What unit to search for.
+      # Type: required
+      # Values: album | artist
       searchType: album
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 1
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -124,30 +299,76 @@ instances:
         enabled: false
         name: "warrden-upgrade"
         retroactive: false
+    # Remove or blocklist stuck/warning items from the download queue.
     queueCleanup:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
     # Default: disabled
     indexerFilter:
       enabled: false
+      # Indexer names to whitelist. When set, only these indexers are used.
+      # Type: optional
+      # Default: none
       include:
         - NZBGeek
         - DrunkenSlug
+      # Indexer names to blacklist. These indexers are excluded from searches.
+      # exclude takes priority over include for the same indexer name.
+      # Type: optional
+      # Default: none
       exclude:
         - NZBGeek
 
+  # The arr application type. At least one instance is required.
+  # Type: required
+  # Values: radarr | sonarr | lidarr | whisparr
   - type: whisparr
+    # A friendly label for log output. Must be unique across instances.
+    # Type: required
     name: Adult
+    # Base URL of the arr instance API.
+    # Type: required
+    # Values: Valid HTTP or HTTPS URL
     url: http://whisparr:6969
+    # API version of the arr instance.
+    # Type: required
+    # Values: radarr=v3 | sonarr=v3 | lidarr=v1 | whisparr=v3 or v3-eros
     apiVersion: v3
+    # API key from the arr instance (Settings → General).
+    # Type: required
     apiKey: YOUR_WHISPARR_API_KEY
+    # Search for monitored items that are not yet downloaded.
     missingSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # What unit to search for.
+      # Type: required
+      # Values: episode | season
       searchType: episode
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 15
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -156,11 +377,30 @@ instances:
         enabled: false
         name: "warrden-missing"
         retroactive: false
+    # Search for items that have a better quality cutoff available.
     upgradeSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # What unit to search for.
+      # Type: required
+      # Values: episode | season
       searchType: season
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 1
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -169,29 +409,72 @@ instances:
         enabled: false
         name: "warrden-upgrade"
         retroactive: false
+    # Remove or blocklist stuck/warning items from the download queue.
     queueCleanup:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
     # Default: disabled
     indexerFilter:
       enabled: false
+      # Indexer names to whitelist. When set, only these indexers are used.
+      # Type: optional
+      # Default: none
       include:
         - NZBGeek
         - DrunkenSlug
+      # Indexer names to blacklist. These indexers are excluded from searches.
+      # exclude takes priority over include for the same indexer name.
+      # Type: optional
+      # Default: none
       exclude:
         - NZBGeek
 
+  # The arr application type. At least one instance is required.
+  # Type: required
+  # Values: radarr | sonarr | lidarr | whisparr
   - type: whisparr
+    # A friendly label for log output. Must be unique across instances.
+    # Type: required
     name: Adult (Eros)
+    # Base URL of the arr instance API.
+    # Type: required
+    # Values: Valid HTTP or HTTPS URL
     url: http://whisparr:6969
+    # API version of the arr instance.
+    # Type: required
+    # Values: radarr=v3 | sonarr=v3 | lidarr=v1 | whisparr=v3 or v3-eros
     apiVersion: v3-eros
+    # API key from the arr instance (Settings → General).
+    # Type: required
     apiKey: YOUR_WHISPARR_API_KEY
+    # Search for monitored items that are not yet downloaded.
     missingSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 15
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -200,10 +483,26 @@ instances:
         enabled: false
         name: "warrden-missing"
         retroactive: false
+    # Search for items that have a better quality cutoff available.
     upgradeSearch:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "*/15 * * * *"
+      # Maximum items to search per run.
+      # Type: required
+      # Values: Integer >= 0
       maxResults: 15
+      # Minimum time before an item can be re-searched.
+      # Type: required
+      # Values: Duration string (e.g. 30d, 12h, 90m, 1h30m)
+      # 30d is a safe conservative default for most users. Very large
+      # libraries may benefit from a longer cooldown. Shorter values
+      # risk indexer rate-limiting or bans.
       cooldown: 30d
       # Automatically tag searched items with a label on the arr instance.
       # Type: optional
@@ -212,22 +511,36 @@ instances:
         enabled: false
         name: "warrden-upgrade"
         retroactive: false
+    # Remove or blocklist stuck/warning items from the download queue.
     queueCleanup:
+      # Enable or disable this job.
+      # Type: required
+      # Values: true | false
       enabled: true
+      # How often the job runs.
+      # Type: required
+      # Values: 5-field expression (minute hour day-of-month month day-of-week)
       cron: "* * * * *"
     # Control which indexers are used for searches.
     # Type: optional
     # Default: disabled
     indexerFilter:
       enabled: false
+      # Indexer names to whitelist. When set, only these indexers are used.
+      # Type: optional
+      # Default: none
       include:
         - NZBGeek
         - DrunkenSlug
+      # Indexer names to blacklist. These indexers are excluded from searches.
+      # exclude takes priority over include for the same indexer name.
+      # Type: optional
+      # Default: none
       exclude:
         - NZBGeek
 
 
- # The defaults below work for most setups — you don't need to change
+# The defaults below work for most setups — you don't need to change
 # anything unless the default actions don't match your preferences.
 #
 # Actions: remove | removeAndBlocklist | none
