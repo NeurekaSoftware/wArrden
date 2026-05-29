@@ -38,7 +38,8 @@ public class OutputServiceTests
                 new()
                 {
                     Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
-                    ApiKey = "key", QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                    ApiKey = "key", Enabled = true,
+                    QueueCleanup = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
                 }
             }
         };
@@ -253,7 +254,7 @@ public class OutputServiceTests
                 new()
                 {
                     Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
-                    ApiKey = "key",
+                    ApiKey = "key", Enabled = true,
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "episode" },
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/10 * * * *", SearchType = "season" }
                 }
@@ -278,7 +279,7 @@ public class OutputServiceTests
                 new()
                 {
                     Type = "radarr", Name = "Movies", Url = "http://localhost:7878",
-                    ApiKey = "key",
+                    ApiKey = "key", Enabled = true,
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "episode" }
                 }
             }
@@ -346,7 +347,7 @@ public class OutputServiceTests
                 new()
                 {
                     Type = "whisparr", Name = "Adult", Url = "http://localhost:6969",
-                    ApiKey = "key",
+                    ApiKey = "key", Enabled = true,
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "episode" },
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/10 * * * *", SearchType = "season" }
                 }
@@ -371,7 +372,7 @@ public class OutputServiceTests
                 new()
                 {
                     Type = "lidarr", Name = "Music", Url = "http://localhost:8686",
-                    ApiKey = "key", ApiVersion = "1",
+                    ApiKey = "key", ApiVersion = "1", Enabled = true,
                     MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *", SearchType = "album" },
                     UpgradeSearch = new JobConfig { Enabled = true, Cron = "*/10 * * * *", SearchType = "artist" }
                 }

@@ -37,15 +37,16 @@ public class OutputService
 
         w.WriteLine($"[{ts} INFO] [system.startup]");
 
-        for (int i = 0; i < config.Instances.Count + 2; i++)
+        var enabledInstances = config.Instances.Where(i => i.Enabled == true).ToList();
+        for (int i = 0; i < enabledInstances.Count + 2; i++)
         {
-            var isLast = i == config.Instances.Count + 1;
+            var isLast = i == enabledInstances.Count + 1;
             var rootPrefix = isLast ? " └─" : " ├─";
             var childPrefix = isLast ? "    " : " │  ";
 
-            if (i < config.Instances.Count)
-                WriteInstanceSection(w, rootPrefix, childPrefix, config.Instances[i]);
-            else if (i == config.Instances.Count)
+            if (i < enabledInstances.Count)
+                WriteInstanceSection(w, rootPrefix, childPrefix, enabledInstances[i]);
+            else if (i == enabledInstances.Count)
                 WriteRuntimeSection(w, rootPrefix, childPrefix, opts, tz, now);
             else
                 WriteQueueCleanupRulesSection(w, rootPrefix, childPrefix, config);
@@ -78,12 +79,27 @@ public class OutputService
         var children = new List<string>();
         children.Add($"URL".PadRight(LabelPad) + inst.Url);
 
-        if (inst.QueueCleanup?.Enabled == true)
-            children.Add($"Queue Cleanup".PadRight(LabelPad) + inst.QueueCleanup.Cron!);
-        if (inst.MissingSearch?.Enabled == true)
-            children.Add($"Missing Search".PadRight(LabelPad) + inst.MissingSearch.Cron! + SearchTypeLabel(inst, inst.MissingSearch));
-        if (inst.UpgradeSearch?.Enabled == true)
-            children.Add($"Upgrade Search".PadRight(LabelPad) + inst.UpgradeSearch.Cron! + SearchTypeLabel(inst, inst.UpgradeSearch));
+        if (inst.QueueCleanup is not null)
+        {
+            if (inst.QueueCleanup.Enabled == true)
+                children.Add($"Queue Cleanup".PadRight(LabelPad) + inst.QueueCleanup.Cron!);
+            else
+                children.Add($"Queue Cleanup".PadRight(LabelPad) + "(disabled)");
+        }
+        if (inst.MissingSearch is not null)
+        {
+            if (inst.MissingSearch.Enabled == true)
+                children.Add($"Missing Search".PadRight(LabelPad) + inst.MissingSearch.Cron! + SearchTypeLabel(inst, inst.MissingSearch));
+            else
+                children.Add($"Missing Search".PadRight(LabelPad) + "(disabled)");
+        }
+        if (inst.UpgradeSearch is not null)
+        {
+            if (inst.UpgradeSearch.Enabled == true)
+                children.Add($"Upgrade Search".PadRight(LabelPad) + inst.UpgradeSearch.Cron! + SearchTypeLabel(inst, inst.UpgradeSearch));
+            else
+                children.Add($"Upgrade Search".PadRight(LabelPad) + "(disabled)");
+        }
 
         for (int i = 0; i < children.Count; i++)
         {
