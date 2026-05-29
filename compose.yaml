@@ -2,7 +2,7 @@ name: warrden
 
 services:
   warrden:
-    image: code.neureka.dev/warrden/warrden:3
+    image: code.neureka.dev/warrden/warrden:4
     container_name: warrden
     environment:
       - TZ=UTC
