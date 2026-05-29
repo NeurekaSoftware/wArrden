@@ -13,6 +13,7 @@ var opts = new WardenOptions
 {
     DryRun = GetEnv("DRY_RUN"),
     Timezone = GetEnv("TZ"),
+    AppVersion = GetEnv("APP_VERSION"),
     DatabasePath = GetEnv("DATABASE_PATH") ?? "data/warden.db"
 };
 

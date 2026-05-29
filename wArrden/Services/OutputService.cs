@@ -126,8 +126,10 @@ public class OutputService
 
         var localTime = now.ToString("yyyy-MM-dd HH:mm:ss");
 
+        var version = opts.AppVersion ?? "dev";
         var dryRun = opts.IsDryRun.ToString().ToLowerInvariant();
 
+        w.WriteLine($"{childPrefix} ├─ {"Version".PadRight(LabelPad)}{version}");
         w.WriteLine($"{childPrefix} ├─ {"Timezone".PadRight(LabelPad)}{displayId} ({abbr})");
         w.WriteLine($"{childPrefix} ├─ {"Local Time".PadRight(LabelPad)}{localTime}");
         w.WriteLine($"{childPrefix} ├─ {"UTC Offset".PadRight(LabelPad)}{offsetStr}");
