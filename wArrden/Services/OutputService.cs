@@ -38,22 +38,13 @@ public class OutputService
         w.WriteLine($"[{ts} INFO] [system.startup]");
 
         var enabledInstances = config.Instances.Where(i => i.Enabled == true).ToList();
-        for (int i = 0; i < enabledInstances.Count + 2; i++)
-        {
-            var isLast = i == enabledInstances.Count + 1;
-            var rootPrefix = isLast ? " └─" : " ├─";
-            var childPrefix = isLast ? "    " : " │  ";
+        var totalSections = enabledInstances.Count + 2;
+        var sectionIndex = 0;
 
-            if (i < enabledInstances.Count)
-                WriteInstanceSection(w, rootPrefix, childPrefix, enabledInstances[i]);
-            else if (i == enabledInstances.Count)
-                WriteRuntimeSection(w, rootPrefix, childPrefix, opts, tz, now);
-            else
-                WriteQueueCleanupRulesSection(w, rootPrefix, childPrefix, config);
-
-            if (!isLast)
-                w.WriteLine(" │");
-        }
+        WriteSection(w, opts, tz, now, config, enabledInstances, totalSections, ref sectionIndex, isRuntime: true);
+        for (int i = 0; i < enabledInstances.Count; i++)
+            WriteSection(w, opts, tz, now, config, enabledInstances, totalSections, ref sectionIndex, isRuntime: false, instanceIndex: i);
+        WriteSection(w, opts, tz, now, config, enabledInstances, totalSections, ref sectionIndex, isRuntime: false, isQueueRules: true);
 
         if (config.Warnings.Count > 0)
         {
@@ -70,6 +61,27 @@ public class OutputService
         w.WriteLine();
         w.WriteLine($"[{ts} INFO] [system.ready] wArrden initialized");
         w.WriteLine();
+    }
+
+    private static void WriteSection(TextWriter w, WardenOptions opts, TimeZoneInfo tz, DateTime now, AppConfig config,
+        List<InstanceConfig> enabledInstances, int totalSections, ref int sectionIndex,
+        bool isRuntime = false, int instanceIndex = -1, bool isQueueRules = false)
+    {
+        var isLast = sectionIndex == totalSections - 1;
+        var rootPrefix = isLast ? " └─" : " ├─";
+        var childPrefix = isLast ? "    " : " │  ";
+
+        if (isRuntime)
+            WriteRuntimeSection(w, rootPrefix, childPrefix, opts, tz, now);
+        else if (isQueueRules)
+            WriteQueueCleanupRulesSection(w, rootPrefix, childPrefix, config);
+        else
+            WriteInstanceSection(w, rootPrefix, childPrefix, enabledInstances[instanceIndex]);
+
+        if (!isLast)
+            w.WriteLine(" │");
+
+        sectionIndex++;
     }
 
     private static void WriteInstanceSection(TextWriter w, string rootPrefix, string childPrefix, InstanceConfig inst)

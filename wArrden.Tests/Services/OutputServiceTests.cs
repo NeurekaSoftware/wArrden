@@ -71,6 +71,33 @@ public class OutputServiceTests
     }
 
     [Fact]
+    public void WriteBanner_RuntimeAppearsBeforeInstances()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "key", Enabled = true
+                }
+            }
+        };
+        var opts = new WardenOptions();
+
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer);
+
+        var output = _writer.ToString();
+        var runtimeIndex = output.IndexOf("─ Runtime", StringComparison.Ordinal);
+        var instanceIndex = output.IndexOf("Series (series)", StringComparison.Ordinal);
+        var rulesIndex = output.IndexOf("Queue Cleanup Rules", StringComparison.Ordinal);
+
+        Assert.True(runtimeIndex < instanceIndex, "Runtime section should appear before instance sections");
+        Assert.True(instanceIndex < rulesIndex, "Instance sections should appear before Queue Cleanup Rules");
+    }
+
+    [Fact]
     public void WriteQueueResult_NoMatches_ShowsNoBlocked()
     {
         _output.WriteQueueResult("TestSonarr", 150, 0, 0,
