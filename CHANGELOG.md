@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.1.2] - 2026-05-30
 
 ### Fixed
-- Prevent instances from being permanently disabled when unreachable at startup. The warden now retries connections with exponential backoff and recovers automatically once the service becomes reachable.
+- Prevent instances from being permanently disabled when unreachable at startup. wArrden now retries connections with exponential backoff and recovers automatically once the service becomes reachable.
 
 ## [4.1.1] - 2026-05-28
 

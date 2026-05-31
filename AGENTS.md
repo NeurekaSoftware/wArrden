@@ -4,6 +4,10 @@
 
 wArrden is a scheduled job runner that searches for missing/upgrade items and cleans stuck queue entries on Sonarr/Radarr instances. This file defines console log output formatting standards.
 
+## Naming
+
+The application is named **wArrden** (camelCase with capital `A`). It must **never** be referred to as "warden", "the warden", or "The warden" in any user-facing text: documentation, changelogs, commit messages, UI output, or log messages. The letter case must always be `wArrden`.
+
 ## Log Level & Output
 
 Set via `logLevel` in `config.yaml`:
