@@ -8,6 +8,12 @@ public class AppConfig
     public List<string> Warnings { get; set; } = new();
     public List<string> Errors { get; set; } = new();
 
+    public void AddWarning(string message)
+    {
+        lock (Warnings)
+            Warnings.Add(message);
+    }
+
     public void AddValidationError(string message, string? detail = null)
     {
         lock (Errors)

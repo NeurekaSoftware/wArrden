@@ -47,7 +47,7 @@ startupOutput.WriteDebug("warden.config", $"Log level set to {logLevelLabel}");
 
 var startupTimeZone = ResolveTimezone(opts.Timezone, out var tzWarning);
 if (tzWarning is not null)
-    config.Warnings.Add(tzWarning);
+    config.AddWarning(tzWarning);
 startupOutput.TimeZone = startupTimeZone;
 
 var dbPath = Path.GetFullPath(opts.DatabasePath);

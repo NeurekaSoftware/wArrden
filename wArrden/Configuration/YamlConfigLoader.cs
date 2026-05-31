@@ -241,7 +241,7 @@ internal static class YamlConfigLoader
             (i.QueueCleanup?.Enabled == true ? 1 : 0));
 
         if (enabledJobs == 0)
-            config.Warnings.Add("No jobs are enabled across any instance.");
+            config.AddWarning("No jobs are enabled across any instance.");
 
         return errors;
     }
@@ -262,7 +262,7 @@ internal static class YamlConfigLoader
             (filter.Include is null || filter.Include.Count == 0) &&
             (filter.Exclude is null || filter.Exclude.Count == 0))
         {
-            config.Warnings.Add($"{prefix} '{inst.Name}'.indexerFilter: enabled but no include/exclude rules configured — this is equivalent to not having the filter.");
+            config.AddWarning($"{prefix} '{inst.Name}'.indexerFilter: enabled but no include/exclude rules configured — this is equivalent to not having the filter.");
         }
     }
 
@@ -360,7 +360,7 @@ internal static class YamlConfigLoader
                 errors.Add($"{tp}: 'name' must not be empty when tagging is enabled.");
 
             if (job.Tagging.Retroactive == true)
-                config.Warnings.Add($"{tp}: 'retroactive' is true — set to false after first run to skip unnecessary API calls on each startup.");
+                config.AddWarning($"{tp}: 'retroactive' is true — set to false after first run to skip unnecessary API calls on each startup.");
         }
     }
 
@@ -388,7 +388,7 @@ internal static class YamlConfigLoader
 
         if (list is null || list.Count == 0)
         {
-            config.Warnings.Add($"queueCleanupRules.{type} is empty; no queue warnings will be matched for {type} instances.");
+            config.AddWarning($"queueCleanupRules.{type} is empty; no queue warnings will be matched for {type} instances.");
             return;
         }
 
@@ -400,7 +400,7 @@ internal static class YamlConfigLoader
             if (string.IsNullOrWhiteSpace(rule.Match))
                 errors.Add($"{prefix}: 'match' must not be empty.");
             else if (!QueueCleanupRuleMatchers.IsValidKey(rule.Match))
-                config.Warnings.Add($"{prefix}: '{rule.Match}' is not a known matcher key and will be skipped. See config.example.yaml for available keys.");
+                config.AddWarning($"{prefix}: '{rule.Match}' is not a known matcher key and will be skipped. See config.example.yaml for available keys.");
 
             var action = rule.Action?.Trim();
             if (string.IsNullOrWhiteSpace(action))
