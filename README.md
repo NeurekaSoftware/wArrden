@@ -6,6 +6,7 @@
 
 [![Release](https://img.shields.io/badge/dynamic/json.svg?style=flat-square&logo=git&logoColor=F43F5E&label=Release&color=F43F5E&url=https://code.neureka.dev/api/v1/repos/warrden/warrden/releases&query=$[0].tag_name)](https://code.neureka.dev/warrden/warrden/releases)
 [![Actions](https://img.shields.io/badge/dynamic/json?style=flat-square&logo=gitlfs&logoColor=8B5CF6&label=Actions&color=8B5CF6&url=https://code.neureka.dev/api/v1/repos/warrden/warrden/actions/runs&query=workflow_runs[0].status)](https://code.neureka.dev/warrden/warrden/actions)
+[![License](https://img.shields.io/github/license/NeurekaSoftware/wArrden?style=flat-square&label=License&color=14B8A6&logo=opensourceinitiative&logoColor=14B8A6)](https://code.neureka.dev/warrden/warrden)
 [![AI](https://img.shields.io/badge/AI-assisted-5786FE?style=flat-square&logo=deepseek&logoColor=5786FE)](https://code.neureka.dev/warrden/warrden)
 [![Stars](https://img.shields.io/github/stars/NeurekaSoftware/wArrden?style=flat-square&label=Stars&color=EAB308&logo=googlegemini&logoColor=EAB308)](https://code.neureka.dev/warrden/warrden)
 
@@ -22,11 +23,13 @@ wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding mi
 > The `config.example.yaml` file can look overwhelming, but you don't need to understand every option to get started. Just add your arr URL and API key, then enable the instance — the defaults handle the rest.
 
 1. Download `compose.yaml`:
+
    ```
    curl -O https://code.neureka.dev/warrden/warrden/raw/branch/main/compose.yaml
    ```
 
 2. Download the example config as `config.yaml`, then edit it with your Sonarr/Radarr URLs and API keys:
+
    ```
    curl -o config.yaml https://code.neureka.dev/warrden/warrden/raw/branch/main/config.example.yaml
    ```
@@ -38,21 +41,21 @@ wArrden makes it easy to maintain your Radarr and Sonarr libraries by finding mi
 
 ## CLI Usage
 
-| Command | Description |
-|---|---|
-| `docker exec warrden clear-missing [instance]` | Clears all missing search cooldowns. If `instance` is omitted, clears across all instances. |
+| Command                                         | Description                                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `docker exec warrden clear-missing [instance]`  | Clears all missing search cooldowns. If `instance` is omitted, clears across all instances. |
 | `docker exec warrden clear-upgrades [instance]` | Clears all upgrade search cooldowns. If `instance` is omitted, clears across all instances. |
 
 ## Features
 
 wArrden supports multiple instances of each arr type, so you can manage separate libraries (movies, series, anime, music) independently with their own schedules and cooldowns.
 
-| Supported | API | Queue Cleanup | Missing Search | Upgrade Search |
-|-----------| :-: |:---:|:---:|:---:|
-| Radarr    | `v3` | ✔️ | ✔️ | ✔️ |
-| Sonarr    | `v3` | ✔️ | ✔️ | ✔️ |
-| Lidarr    | `v1` | ✔️ | ✔️ | ✔️ |
-| Whisparr  | `v3`, `v3-eros` | ✔️ | ✔️ | ✔️ |
+| Supported |       API       | Queue Cleanup | Missing Search | Upgrade Search |
+| --------- | :-------------: | :-----------: | :------------: | :------------: |
+| Radarr    |      `v3`       |      ✔️       |       ✔️       |       ✔️       |
+| Sonarr    |      `v3`       |      ✔️       |       ✔️       |       ✔️       |
+| Lidarr    |      `v1`       |      ✔️       |       ✔️       |       ✔️       |
+| Whisparr  | `v3`, `v3-eros` |      ✔️       |       ✔️       |       ✔️       |
 
 ## Missing Search
 
