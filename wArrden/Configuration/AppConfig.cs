@@ -7,6 +7,16 @@ public class AppConfig
     public QueueCleanupRulesConfig? QueueCleanupRules { get; set; }
     public List<string> Warnings { get; set; } = new();
     public List<string> Errors { get; set; } = new();
+
+    public void AddValidationError(string message, string? detail = null)
+    {
+        lock (Errors)
+        {
+            Errors.Add(message);
+            if (detail is not null)
+                Errors.Add(detail);
+        }
+    }
 }
 
 public class QueueCleanupRulesConfig

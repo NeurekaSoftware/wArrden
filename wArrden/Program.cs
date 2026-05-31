@@ -114,14 +114,7 @@ async Task ValidateInstanceAsync(InstanceConfig inst)
 
     var (msg, detail) = await ValidateOnceAsync(client, inst.Name, inst.Url, CancellationToken.None);
     if (msg is not null)
-    {
-        lock (config.Errors)
-        {
-            config.Errors.Add(msg);
-            if (detail is not null)
-                config.Errors.Add(detail);
-        }
-    }
+        config.AddValidationError(msg, detail);
 }
 
 var validationTasks = new List<Task>();
