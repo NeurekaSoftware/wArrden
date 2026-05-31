@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.2] - 2026-05-30
+
+### Fixed
+- Prevent instances from being permanently disabled when unreachable at startup. The warden now retries connections with exponential backoff and recovers automatically once the service becomes reachable.
+
 ## [4.1.1] - 2026-05-28
 
 ### Changed
@@ -146,8 +151,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cooldown system to avoid re-searching the same items too frequently
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/4.1.2...HEAD
 
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/4.1.1...HEAD
+[4.1.2]: https://code.neureka.dev/warrden/warrden/compare/4.1.1...4.1.2
 [4.1.1]: https://code.neureka.dev/warrden/warrden/compare/4.1.0...4.1.1
 [4.1.0]: https://code.neureka.dev/warrden/warrden/compare/4.0.2...4.1.0
 [4.0.2]: https://code.neureka.dev/warrden/warrden/compare/4.0.1...4.0.2
