@@ -101,41 +101,32 @@ using (var scope = host.Services.CreateScope())
     await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL");
 }
 
-var disabledInstances = new HashSet<string>();
+async Task ValidateInstanceAsync(InstanceConfig inst)
+{
+    using var client = inst switch
+    {
+        { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+        { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+        { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+        { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
+        _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
+    };
 
+    var isValid = await ValidateWithBackoffAsync(client, inst.Name, inst.Url, startupOutput, CancellationToken.None);
+    if (!isValid)
+    {
+        lock (config.Warnings)
+            config.Warnings.Add($"API key validation failed for {inst.Name} ({inst.Url}) — instance may not function correctly");
+    }
+}
+
+var validationTasks = new List<Task>();
 foreach (var inst in config.Instances)
 {
     if (inst.Enabled != true) continue;
-
-    IArrClient? validationClient = null;
-    try
-    {
-        validationClient = inst switch
-        {
-            { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-            { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-            { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-            { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-            _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
-        };
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        var isValid = await validationClient.ValidateApiKeyAsync(cts.Token);
-        if (!isValid)
-        {
-            config.Warnings.Add($"API key validation failed for {inst.Name} ({inst.Url}) — instance disabled.");
-            disabledInstances.Add(inst.InstanceKey);
-        }
-    }
-    catch (Exception ex)
-    {
-        config.Warnings.Add($"Could not connect to {inst.Name} ({inst.Url}): {ex.Message} — instance disabled.");
-        disabledInstances.Add(inst.InstanceKey);
-    }
-    finally
-    {
-        validationClient?.Dispose();
-    }
+    validationTasks.Add(ValidateInstanceAsync(inst));
 }
+await Task.WhenAll(validationTasks);
 
 var schedulerOutput = host.Services.GetRequiredService<OutputService>();
 var clients = new List<IArrClient>(config.Instances.Count);
@@ -145,9 +136,6 @@ host.Services.UseScheduler(scheduler =>
     foreach (var inst in config.Instances)
     {
         if (inst.Enabled != true) continue;
-        if (disabledInstances.Contains(inst.InstanceKey))
-            continue;
-
         var client = inst switch
         {
             { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
@@ -220,7 +208,7 @@ lifetime.ApplicationStopping.Register(() =>
 
 OutputService.WriteBanner(config, opts, startupTimeZone);
 
-await RunRetroactiveTagging(config, clients, disabledInstances, host);
+await RunRetroactiveTagging(config, clients, host);
 
 await host.RunAsync();
 
@@ -369,7 +357,7 @@ static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
 
 static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
 
-static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clients, HashSet<string> disabledInstances, IHost host)
+static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clients, IHost host)
 {
     var tagging = host.Services.GetRequiredService<TaggingService>();
     var output = host.Services.GetRequiredService<OutputService>();
@@ -379,8 +367,6 @@ static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clien
     {
         var inst = config.Instances[i];
         if (inst.Enabled != true) continue;
-        if (disabledInstances.Contains(inst.InstanceKey))
-            continue;
 
         var client = clients[i];
 
@@ -426,4 +412,47 @@ static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clien
             }
         }
     }
+}
+
+static async Task<bool> ValidateWithBackoffAsync(
+    IArrClient client, string instanceName, string instanceUrl,
+    OutputService output, CancellationToken ct)
+{
+    var attempt = 0;
+    var maxDelay = TimeSpan.FromSeconds(60);
+    var initialDelay = TimeSpan.FromSeconds(1);
+    var multiplier = 2.0;
+
+    while (!ct.IsCancellationRequested)
+    {
+        attempt++;
+        try
+        {
+            var isValid = await client.ValidateApiKeyAsync(ct);
+            if (isValid) return true;
+
+            output.WriteWarning("warden.config",
+                $"API key validation failed for {instanceName} ({instanceUrl}) — instance not authenticated");
+            return false;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            var delayMs = Math.Min(
+                initialDelay.TotalMilliseconds * Math.Pow(multiplier, attempt - 1),
+                maxDelay.TotalMilliseconds);
+            var delay = TimeSpan.FromMilliseconds(delayMs);
+
+            output.WriteWarning("warden.config",
+                $"Could not connect to {instanceName} ({instanceUrl}) — retrying in {delay.TotalSeconds:F0}s",
+                $"{ex.GetType().Name}: {ex.Message}");
+
+            await Task.Delay(delay, ct);
+        }
+    }
+
+    return false;
 }

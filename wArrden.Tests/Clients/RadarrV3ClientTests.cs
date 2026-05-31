@@ -104,14 +104,13 @@ public class RadarrV3ClientTests
     }
 
     [Fact]
-    public async Task ValidateApiKeyAsync_ReturnsFalse_WhenConnectionFails()
+    public async Task ValidateApiKeyAsync_Throws_WhenConnectionFails()
     {
         var handler = new FakeHttpMessageHandler(new HttpRequestException("Connection refused"));
         var client = new RadarrV3Client("http://localhost", "key", "Radarr", handler);
 
-        var result = await client.ValidateApiKeyAsync(CancellationToken.None);
-
-        Assert.False(result);
+        await Assert.ThrowsAsync<HttpRequestException>(
+            () => client.ValidateApiKeyAsync(CancellationToken.None));
     }
 
     private static string EmptyMoviePageJson => BuildMoviePage(Array.Empty<(int, string, bool, int)>());

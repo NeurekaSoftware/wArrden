@@ -208,14 +208,7 @@ public class WhisparrV3ErosClient : IArrClient
 
     public async Task<bool> ValidateApiKeyAsync(CancellationToken ct)
     {
-        try
-        {
-            using var response = await _http.GetAsync($"{_baseUrl}/api", ct);
-            return response.IsSuccessStatusCode;
-        }
-        catch
-        {
-            return false;
-        }
+        using var response = await _http.GetAsync($"{_baseUrl}/api", ct);
+        return response.IsSuccessStatusCode;
     }
 }
