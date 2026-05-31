@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Halt startup validation immediately on connection failure or API key rejection instead of retrying, and log both cases as errors instead of warnings.
+
+### Fixed
+- Fix instances being skipped during scheduling when a previous instance has queue cleanup enabled but no matching rules.
+
 ## [4.1.2] - 2026-05-30
 
 ### Fixed

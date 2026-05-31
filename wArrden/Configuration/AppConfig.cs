@@ -6,6 +6,7 @@ public class AppConfig
     public List<InstanceConfig> Instances { get; set; } = new();
     public QueueCleanupRulesConfig? QueueCleanupRules { get; set; }
     public List<string> Warnings { get; set; } = new();
+    public List<string> Errors { get; set; } = new();
 }
 
 public class QueueCleanupRulesConfig

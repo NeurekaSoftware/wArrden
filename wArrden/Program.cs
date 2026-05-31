@@ -112,7 +112,16 @@ async Task ValidateInstanceAsync(InstanceConfig inst)
         _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
     };
 
-    await ValidateOnceAsync(client, inst.Name, inst.Url, startupOutput, CancellationToken.None);
+    var (msg, detail) = await ValidateOnceAsync(client, inst.Name, inst.Url, CancellationToken.None);
+    if (msg is not null)
+    {
+        lock (config.Errors)
+        {
+            config.Errors.Add(msg);
+            if (detail is not null)
+                config.Errors.Add(detail);
+        }
+    }
 }
 
 var validationTasks = new List<Task>();
@@ -409,18 +418,16 @@ static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clien
     }
 }
 
-static async Task<bool> ValidateOnceAsync(
+static async Task<(string? Message, string? Detail)> ValidateOnceAsync(
     IArrClient client, string instanceName, string instanceUrl,
-    OutputService output, CancellationToken ct)
+    CancellationToken ct)
 {
     try
     {
         var isValid = await client.ValidateApiKeyAsync(ct);
-        if (isValid) return true;
+        if (isValid) return (null, null);
 
-        output.WriteError("warden.config",
-            $"API key validation failed for {instanceName} ({instanceUrl}) — instance not authenticated");
-        return false;
+        return ($"API key validation failed for {instanceName} ({instanceUrl}) — instance not authenticated", null);
     }
     catch (OperationCanceledException) when (ct.IsCancellationRequested)
     {
@@ -428,9 +435,7 @@ static async Task<bool> ValidateOnceAsync(
     }
     catch (Exception ex)
     {
-        output.WriteError("warden.config",
-            $"Could not connect to {instanceName} ({instanceUrl})",
-            ex);
-        return false;
+        return ($"Could not connect to {instanceName} ({instanceUrl})",
+            $"{ex.GetType().Name}: {ex.Message}");
     }
 }

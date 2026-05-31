@@ -58,6 +58,18 @@ public class OutputService
             }
         }
 
+        if (config.Errors.Count > 0)
+        {
+            w.WriteLine();
+            w.WriteLine($"\x1b[31m[{ts} ERROR] [warden.config]\x1b[0m");
+            for (int i = 0; i < config.Errors.Count; i++)
+            {
+                var isLastError = i == config.Errors.Count - 1;
+                var prefix = isLastError ? " └─" : " ├─";
+                w.WriteLine($"{prefix} {config.Errors[i]}");
+            }
+        }
+
         w.WriteLine();
         w.WriteLine($"[{ts} INFO] [system.ready] wArrden initialized");
         w.WriteLine();
