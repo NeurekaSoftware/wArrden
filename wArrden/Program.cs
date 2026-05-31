@@ -112,12 +112,7 @@ async Task ValidateInstanceAsync(InstanceConfig inst)
         _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
     };
 
-    var isValid = await ValidateWithBackoffAsync(client, inst.Name, inst.Url, startupOutput, CancellationToken.None);
-    if (!isValid)
-    {
-        lock (config.Warnings)
-            config.Warnings.Add($"API key validation failed for {inst.Name} ({inst.Url}) — instance may not function correctly");
-    }
+    await ValidateOnceAsync(client, inst.Name, inst.Url, startupOutput, CancellationToken.None);
 }
 
 var validationTasks = new List<Task>();
@@ -184,7 +179,7 @@ host.Services.UseScheduler(scheduler =>
             if (rules is null)
             {
                 schedulerOutput.WriteWarning($"{instanceKey}.queue", "Queue cleanup is enabled but no rules are configured for this instance type — job will not be scheduled.");
-                return;
+                continue;
             }
 
             scheduler
@@ -414,45 +409,28 @@ static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clien
     }
 }
 
-static async Task<bool> ValidateWithBackoffAsync(
+static async Task<bool> ValidateOnceAsync(
     IArrClient client, string instanceName, string instanceUrl,
     OutputService output, CancellationToken ct)
 {
-    var attempt = 0;
-    var maxDelay = TimeSpan.FromSeconds(60);
-    var initialDelay = TimeSpan.FromSeconds(1);
-    var multiplier = 2.0;
-
-    while (!ct.IsCancellationRequested)
+    try
     {
-        attempt++;
-        try
-        {
-            var isValid = await client.ValidateApiKeyAsync(ct);
-            if (isValid) return true;
+        var isValid = await client.ValidateApiKeyAsync(ct);
+        if (isValid) return true;
 
-            output.WriteWarning("warden.config",
-                $"API key validation failed for {instanceName} ({instanceUrl}) — instance not authenticated");
-            return false;
-        }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            var delayMs = Math.Min(
-                initialDelay.TotalMilliseconds * Math.Pow(multiplier, attempt - 1),
-                maxDelay.TotalMilliseconds);
-            var delay = TimeSpan.FromMilliseconds(delayMs);
-
-            output.WriteWarning("warden.config",
-                $"Could not connect to {instanceName} ({instanceUrl}) — retrying in {delay.TotalSeconds:F0}s",
-                $"{ex.GetType().Name}: {ex.Message}");
-
-            await Task.Delay(delay, ct);
-        }
+        output.WriteError("warden.config",
+            $"API key validation failed for {instanceName} ({instanceUrl}) — instance not authenticated");
+        return false;
     }
-
-    return false;
+    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+    {
+        throw;
+    }
+    catch (Exception ex)
+    {
+        output.WriteError("warden.config",
+            $"Could not connect to {instanceName} ({instanceUrl})",
+            ex);
+        return false;
+    }
 }
