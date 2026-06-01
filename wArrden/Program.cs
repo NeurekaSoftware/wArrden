@@ -126,7 +126,7 @@ foreach (var inst in config.Instances)
 await Task.WhenAll(validationTasks);
 
 var schedulerOutput = host.Services.GetRequiredService<OutputService>();
-var clients = new List<IArrClient>(config.Instances.Count);
+var clients = new List<(InstanceConfig Instance, IArrClient Client)>(config.Instances.Count);
 
 host.Services.UseScheduler(scheduler =>
 {
@@ -141,7 +141,7 @@ host.Services.UseScheduler(scheduler =>
             { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
             _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
         };
-        clients.Add(client);
+        clients.Add((inst, client));
 
         var instanceKey = inst.InstanceKey;
         var instanceType = InstanceType(inst);
@@ -199,13 +199,13 @@ host.Services.UseScheduler(scheduler =>
 var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
 lifetime.ApplicationStopping.Register(() =>
 {
-    foreach (var client in clients)
+    foreach (var (_, client) in clients)
         client.Dispose();
 });
 
 OutputService.WriteBanner(config, opts, startupTimeZone);
 
-await RunRetroactiveTagging(config, clients, host);
+await RunRetroactiveTagging(clients, host);
 
 await host.RunAsync();
 
@@ -354,19 +354,13 @@ static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
 
 static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
 
-static async Task RunRetroactiveTagging(AppConfig config, List<IArrClient> clients, IHost host)
+static async Task RunRetroactiveTagging(List<(InstanceConfig Instance, IArrClient Client)> clients, IHost host)
 {
     var tagging = host.Services.GetRequiredService<TaggingService>();
     var output = host.Services.GetRequiredService<OutputService>();
-    var ts = FormatTimestamp(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, output.TimeZone));
 
-    for (var i = 0; i < config.Instances.Count; i++)
+    foreach (var (inst, client) in clients)
     {
-        var inst = config.Instances[i];
-        if (inst.Enabled != true) continue;
-
-        var client = clients[i];
-
         var jobs = new (JobConfig? Job, string JobKey, string TagName)[]
         {
             (inst.MissingSearch, "missing", inst.MissingSearch?.Tagging?.Name ?? ""),
