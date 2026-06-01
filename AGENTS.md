@@ -234,8 +234,9 @@ When writing, modifying, or debugging API calls to any arr instance, verify the 
 | Radarr | v3 | `https://raw.githubusercontent.com/Radarr/Radarr/refs/heads/develop/src/Radarr.Api.V3/openapi.json` |
 | Sonarr | v3 | `https://raw.githubusercontent.com/Sonarr/Sonarr/refs/heads/develop/src/Sonarr.Api.V3/openapi.json` |
 | Lidarr | v1 | `https://raw.githubusercontent.com/Lidarr/Lidarr/refs/heads/develop/src/Lidarr.Api.V1/openapi.json` |
-| Whisparr | v3 | `https://raw.githubusercontent.com/Whisparr/Whisparr/refs/heads/v2-develop/src/Whisparr.Api.V3/openapi.json` |
-| Whisparr | v3-eros | `https://raw.githubusercontent.com/Whisparr/Whisparr/refs/heads/eros/src/Whisparr.Api.V3/openapi.json` |
+| Whisparr | v3 / v3-eros | `https://raw.githubusercontent.com/Whisparr/Whisparr/develop/src/Whisparr.Api.V3/openapi.json` |
+
+Whisparr's hosted v3 API docs state that the v3 API docs apply to both v2 versions of Whisparr, with some functionality only available in v2. Use the `develop` OpenAPI spec above for both `v3` and `v3-eros`; branch-specific specs such as `v2-develop` or `eros` may be incomplete for this project’s supported endpoints.
 
 ### Workflow
 
