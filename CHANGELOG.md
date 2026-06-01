@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.4] - 2026-06-01
+
+### Added
+- Add MIT license information to the project.
+
+### Fixed
+- Prevent failed missing and upgrade searches from being put on cooldown or tagged as searched.
+- Apply retroactive search tags to the correct enabled instance when disabled instances are present.
+- Clear artist upgrade cooldowns when running the `clear-upgrades` command.
+- Show upgrade search debug and warning logs as upgrade messages instead of missing-search messages.
+- Honor configured log filtering and the documented 24-hour timestamp format for clear-cooldown command results.
+
 ## [4.1.3] - 2026-05-30
 
 ### Changed
@@ -159,8 +171,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cooldown system to avoid re-searching the same items too frequently
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
-[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/4.1.3...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/compare/4.1.4...HEAD
 
+[4.1.4]: https://code.neureka.dev/warrden/warrden/compare/4.1.3...4.1.4
 [4.1.3]: https://code.neureka.dev/warrden/warrden/compare/4.1.2...4.1.3
 [4.1.2]: https://code.neureka.dev/warrden/warrden/compare/4.1.1...4.1.2
 [4.1.1]: https://code.neureka.dev/warrden/warrden/compare/4.1.0...4.1.1
