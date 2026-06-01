@@ -336,6 +336,30 @@ public class CooldownServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ClearAllAsync_AlsoClearsArtistVariant()
+    {
+        using var db = CreateContext();
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Music", Category = "Missing", ItemId = 1,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Music", Category = "Missing_Artist", ItemId = 42,
+            SearchedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var service = CreateCooldownService(db);
+        var count = await service.ClearAllAsync("Missing", "Music", CancellationToken.None);
+
+        Assert.Equal(2, count);
+        var remaining = await db.CooldownEntries.ToListAsync();
+        Assert.Empty(remaining);
+    }
+
+    [Fact]
     public async Task ClearAllAsync_RespectsInstanceFilter()
     {
         using var db = CreateContext();
@@ -379,12 +403,17 @@ public class CooldownServiceTests : IDisposable
             Instance = "Anime", Category = "Missing_Season", ItemId = 1001001,
             SearchedAtUtc = DateTime.UtcNow
         });
+        db.CooldownEntries.Add(new CooldownEntry
+        {
+            Instance = "Music", Category = "Missing_Artist", ItemId = 42,
+            SearchedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var service = CreateCooldownService(db);
         var count = await service.ClearAllAsync("Missing", null, CancellationToken.None);
 
-        Assert.Equal(3, count);
+        Assert.Equal(4, count);
         var remaining = await db.CooldownEntries.ToListAsync();
         Assert.Empty(remaining);
     }

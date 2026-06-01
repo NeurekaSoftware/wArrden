@@ -79,7 +79,7 @@ public class CooldownService : ICooldownService
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<WardenDbContext>();
 
-        var categories = new[] { category, $"{category}_Season" };
+        var categories = new[] { category, $"{category}_Season", $"{category}_Artist" };
         var query = db.CooldownEntries.Where(e => categories.Contains(e.Category));
         if (instance is not null)
             query = query.Where(e => e.Instance == instance);
