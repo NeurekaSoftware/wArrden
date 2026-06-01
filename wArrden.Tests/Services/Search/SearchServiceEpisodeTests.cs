@@ -105,6 +105,33 @@ public class SearchServiceEpisodeTests : SearchServiceTestBase
     }
 
     [Fact]
+    public async Task SearchMissingEpisodes_TriggerFailure_DoesNotMarkCooldown()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        ClientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+        ClientMock.Setup(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+        SetupOutputCallback();
+        SetupCleanExpired();
+        SetupCooldownIds(ids: []);
+        SetupHasIndexers();
+
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false, null, null, CancellationToken.None);
+
+        ClientMock.Verify(c => c.TriggerEpisodeSearchAsync(It.IsAny<int[]>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+        CooldownMock.Verify(c => c.MarkSearchedAsync(It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<int[]>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task SearchMissingEpisodes_AllOnCooldown_NoSearchTriggered()
     {
         var episodes = new List<WantedEpisodeResource>

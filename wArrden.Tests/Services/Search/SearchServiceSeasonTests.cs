@@ -62,6 +62,38 @@ public class SearchServiceSeasonTests : SearchServiceTestBase
     }
 
     [Fact]
+    public async Task SearchMissingEpisodes_Season_PartialTriggerFailure_OnlyMarksSuccessfulCooldown()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, SeriesId = 100, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "A Show", Year = 2020 } },
+            new() { Id = 2, SeriesId = 200, Title = "Ep1", SeasonNumber = 2, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "B Show", Year = 2021 } }
+        };
+
+        var successfulSeasonKey = 200 * 1000 + 2;
+
+        ClientMock.Setup(c => c.GetWantedMissingEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+        ClientMock.Setup(c => c.TriggerSeasonSearchAsync(100, 1, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+        ClientMock.Setup(c => c.TriggerSeasonSearchAsync(200, 2, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        SetupOutputCallback();
+        SetupCleanExpired(category: "Missing_Season");
+        SetupCooldownIds(category: "Missing_Season", ids: []);
+        SetupHasIndexers();
+
+        await Service.SearchMissingEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "season", false, null, null, CancellationToken.None);
+
+        CooldownMock.Verify(c => c.MarkSearchedAsync("Sonarr", "Missing_Season",
+            It.Is<int[]>(ids => ids.SequenceEqual(new[] { successfulSeasonKey })),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task SearchMissingEpisodes_Season_DryRun_DoesNotTriggerSearch()
     {
         var episodes = new List<WantedEpisodeResource>

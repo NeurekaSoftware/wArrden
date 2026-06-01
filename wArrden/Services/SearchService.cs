@@ -168,7 +168,12 @@ public class SearchService
         }
 
         var ids = selected.Select(s => s.Id).ToArray();
-        try { await triggerSearch(ids); }
+        var searchSucceeded = false;
+        try
+        {
+            await triggerSearch(ids);
+            searchSucceeded = true;
+        }
         catch (Exception ex)
         {
             var titles = selected.Select(ep =>
@@ -177,6 +182,12 @@ public class SearchService
                     : ep.Title ?? $"Episode {ep.Id}");
             _output.WriteWarning($"{inst}.missing",
                 $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
+        }
+
+        if (!searchSucceeded)
+        {
+            progress.WriteTrailer();
+            return;
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
@@ -258,6 +269,7 @@ public class SearchService
         progress.WriteStats(seasons.Count, onCooldown, eligibleCount, selected.Count, false);
         progress.StartResults();
 
+        var searched = new List<SeasonGroup>(selected.Count);
         foreach (var s in selected)
         {
             var seriesName = s.Series?.Title ?? $"Series {s.SeriesId}";
@@ -267,7 +279,11 @@ public class SearchService
 
             progress.WriteItem(title);
 
-            try { await client.TriggerSeasonSearchAsync(s.SeriesId, s.SeasonNumber, ct); }
+            try
+            {
+                await client.TriggerSeasonSearchAsync(s.SeriesId, s.SeasonNumber, ct);
+                searched.Add(s);
+            }
             catch (Exception ex)
             {
                 _output.WriteWarning($"{inst}.missing",
@@ -275,11 +291,14 @@ public class SearchService
             }
         }
 
-        var seasonKeys = selected.Select(s => s.SeasonKey).ToArray();
-        await _cooldown.MarkSearchedAsync(client.Instance, seasonCategory, seasonKeys, ct);
+        if (searched.Count > 0)
+        {
+            var seasonKeys = searched.Select(s => s.SeasonKey).ToArray();
+            await _cooldown.MarkSearchedAsync(client.Instance, seasonCategory, seasonKeys, ct);
 
-        await TagSearchedItems(tagging, client, tid =>
-            _tagging.TagSeasonSeriesAsync(client, selected.Select(s => s.SeriesId).ToList(), tid, ct));
+            await TagSearchedItems(tagging, client, tid =>
+                _tagging.TagSeasonSeriesAsync(client, searched.Select(s => s.SeriesId).ToList(), tid, ct));
+        }
 
         progress.WriteTrailer();
     }
@@ -354,13 +373,24 @@ public class SearchService
         }
 
         var ids = selected.Select(s => s.Id).ToArray();
-        try { await triggerSearch(ids); }
+        var searchSucceeded = false;
+        try
+        {
+            await triggerSearch(ids);
+            searchSucceeded = true;
+        }
         catch (Exception ex)
         {
             var titles = selected.Select(a =>
                 $"{a.Artist?.ArtistName ?? "Artist Unknown"} - {a.Album?.Title ?? $"Album {a.Id}"}");
             _output.WriteWarning($"{inst}.missing",
                 $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
+        }
+
+        if (!searchSucceeded)
+        {
+            progress.WriteTrailer();
+            return;
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
@@ -440,13 +470,18 @@ public class SearchService
         progress.WriteStats(artists.Count, onCooldown, eligibleCount, selected.Count, false);
         progress.StartResults();
 
+        var searched = new List<ArtistGroup>(selected.Count);
         foreach (var a in selected)
         {
             var title = a.Artist?.ArtistName ?? $"Artist {a.ArtistId}";
 
             progress.WriteItem(title);
 
-            try { await client.TriggerArtistSearchAsync(a.ArtistId, ct); }
+            try
+            {
+                await client.TriggerArtistSearchAsync(a.ArtistId, ct);
+                searched.Add(a);
+            }
             catch (Exception ex)
             {
                 _output.WriteWarning($"{inst}.missing",
@@ -454,11 +489,14 @@ public class SearchService
             }
         }
 
-        var artistIds = selected.Select(s => s.ArtistId).ToArray();
-        await _cooldown.MarkSearchedAsync(client.Instance, artistCategory, artistIds, ct);
+        if (searched.Count > 0)
+        {
+            var artistIds = searched.Select(s => s.ArtistId).ToArray();
+            await _cooldown.MarkSearchedAsync(client.Instance, artistCategory, artistIds, ct);
 
-        await TagSearchedItems(tagging, client, tid =>
-            _tagging.TagArtistsAsync(client, selected.Select(a => a.ArtistId).ToList(), tid, ct));
+            await TagSearchedItems(tagging, client, tid =>
+                _tagging.TagArtistsAsync(client, searched.Select(a => a.ArtistId).ToList(), tid, ct));
+        }
 
         progress.WriteTrailer();
     }
@@ -534,7 +572,12 @@ public class SearchService
         }
 
         var ids = selected.Select(s => s.Id).ToArray();
-        try { await triggerSearch(ids); }
+        var searchSucceeded = false;
+        try
+        {
+            await triggerSearch(ids);
+            searchSucceeded = true;
+        }
         catch (Exception ex)
         {
             var titles = selected.Select(m =>
@@ -543,6 +586,12 @@ public class SearchService
                     : m.Title ?? $"Movie {m.Id}");
             _output.WriteWarning($"{inst}.missing",
                 $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
+        }
+
+        if (!searchSucceeded)
+        {
+            progress.WriteTrailer();
+            return;
         }
 
         await _cooldown.MarkSearchedAsync(client.Instance, category, ids, ct);
