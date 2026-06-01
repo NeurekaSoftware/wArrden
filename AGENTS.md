@@ -19,7 +19,7 @@ Set via `logLevel` in `config.yaml`:
 | `warning` | WARN + ERROR |
 | `error` | ERROR only (least verbose) |
 
-All log messages go through `OutputService` methods (`WriteDebug`, `WriteWarning`, `WriteError`) to `Console.Out`. **`Console.Error` (`stderr`) and direct `Console.WriteLine` calls are forbidden for log output.** Containers (Docker, etc.) read stdout/stderr through separate pipes and merge them without preserving write order, which would cause tree-structured output to interleave. Writing everything to a single stream avoids this.
+All log messages go through `OutputService` methods and info writers to `Console.Out`. **`Console.Error` (`stderr`) and direct `Console.WriteLine` calls are forbidden for log output.** Containers (Docker, etc.) read stdout/stderr through separate pipes and merge them without preserving write order, which would cause tree-structured output to interleave. Writing everything to a single stream avoids this.
 
 ## Log Format Rules
 

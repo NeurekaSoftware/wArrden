@@ -200,7 +200,7 @@ public class OutputService
         return new string(buffer[..pos]);
     }
 
-    private static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
+    private static string FormatTimestamp(DateTime dt) => dt.ToString("HH:mm:ss");
 
     private DateTime GetNow() => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timeZone);
 
@@ -313,6 +313,34 @@ public class OutputService
                 Out.WriteLine($"    • {title}  {rule}");
             if (items.Count < matched)
                 Out.WriteLine($"    +{matched - items.Count} more");
+        }
+
+        Out.WriteLine();
+    }
+
+    public void WriteClearCooldownsResult(string label, string category,
+        IReadOnlyList<(string Instance, int Count)> counts)
+    {
+        if (!ShouldLog(LogLevel.Info)) return;
+
+        var ts = FormatTimestamp(GetNow());
+        Out.WriteLine($"[{ts} INFO] [{label}]");
+
+        var typeLabel = category == "Missing" ? "Missing" : "Upgrade";
+        Out.WriteLine($" ├─ Type:       {typeLabel}");
+
+        if (counts.Count == 1)
+        {
+            var count = counts[0].Count;
+            Out.WriteLine($" └─ Cleared:    {count} entr{(count == 1 ? "y" : "ies")}");
+        }
+        else
+        {
+            foreach (var (instance, count) in counts)
+                Out.WriteLine($" ├─ {instance}:     {count} entr{(count == 1 ? "y" : "ies")}");
+
+            var total = counts.Sum(x => x.Count);
+            Out.WriteLine($" └─ Cleared:    {total} entr{(total == 1 ? "y" : "ies")}");
         }
 
         Out.WriteLine();

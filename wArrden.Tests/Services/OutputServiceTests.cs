@@ -110,6 +110,16 @@ public class OutputServiceTests
     }
 
     [Fact]
+    public void WriteQueueResult_HeaderUsesTimeOnlyTimestamp()
+    {
+        _output.WriteQueueResult("TestSonarr", 150, 0, 0,
+            Array.Empty<(int, string, string, bool)>(), false);
+
+        var header = _writer.ToString().Split(Environment.NewLine)[0];
+        Assert.Matches(@"^\[\d{2}:\d{2}:\d{2} INFO\] \[testsonarr\.queue\]$", header);
+    }
+
+    [Fact]
     public void WriteQueueResult_WithMatches_Live()
     {
         var items = new List<(int, string, string, bool)>
@@ -127,6 +137,33 @@ public class OutputServiceTests
         Assert.Contains("Removed 1", output);
         Assert.Contains("The Boys", output);
         Assert.Contains("NOT_AN_UPGRADE", output);
+    }
+
+    [Fact]
+    public void WriteClearCooldownsResult_SingleInstance()
+    {
+        _output.WriteClearCooldownsResult("cli.series.clear-missing", "Missing",
+            new[] { ("Series", 1) });
+
+        var output = _writer.ToString();
+        var header = output.Split(Environment.NewLine)[0];
+        Assert.Matches(@"^\[\d{2}:\d{2}:\d{2} INFO\] \[cli\.series\.clear-missing\]$", header);
+        Assert.Contains("Type:       Missing", output);
+        Assert.Contains("Cleared:    1 entry", output);
+        Assert.DoesNotContain("/", header);
+    }
+
+    [Fact]
+    public void WriteClearCooldownsResult_MultipleInstances()
+    {
+        _output.WriteClearCooldownsResult("cli.clear-upgrades", "Upgrade",
+            new[] { ("Series", 2), ("Movies", 1) });
+
+        var output = _writer.ToString();
+        Assert.Contains("Type:       Upgrade", output);
+        Assert.Contains("Series:     2 entries", output);
+        Assert.Contains("Movies:     1 entry", output);
+        Assert.Contains("Cleared:    3 entries", output);
     }
 
     [Fact]

@@ -293,39 +293,13 @@ static async Task RunClearCooldownsCommand(string dbPath, string category, List<
         output.WriteDebug($"cli.{targets[0].Name.ToLowerInvariant()}.clear", $"Cleared {count} cooldown entries for {inst.Name}");
     }
 
-    var tz = ResolveTimezone(opts.Timezone, out _);
-    var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
-    var ts = FormatTimestamp(now);
-
     var isSingle = targets.Count == 1;
     var jobKey = category == "Missing" ? "clear-missing" : "clear-upgrades";
     var headerLabel = isSingle
         ? $"cli.{targets[0].Name.ToLowerInvariant()}.{jobKey}"
         : $"cli.{jobKey}";
 
-    Console.WriteLine($"[{ts} INFO] [{headerLabel}]");
-
-    var typeLabel = category == "Missing" ? "Missing" : "Upgrade";
-    var lines = new List<string> { $" ├─ Type:       {typeLabel}" };
-
-    if (isSingle)
-    {
-        var c = counts[0].Count;
-        lines.Add($" └─ Cleared:    {c} entr{(c == 1 ? "y" : "ies")}");
-    }
-    else
-    {
-        foreach (var (inst, count) in counts)
-            lines.Add($" ├─ {inst}:     {count} entr{(count == 1 ? "y" : "ies")}");
-
-        var total = counts.Sum(x => x.Count);
-        lines.Add($" └─ Cleared:    {total} entr{(total == 1 ? "y" : "ies")}");
-    }
-
-    foreach (var line in lines)
-        Console.WriteLine(line);
-
-    Console.WriteLine();
+    output.WriteClearCooldownsResult(headerLabel, category, counts);
 }
 
 static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
@@ -351,8 +325,6 @@ static TimeZoneInfo ResolveTimezone(string? tzId, out string? warning)
     warning = null;
     return TimeZoneInfo.Utc;
 }
-
-static string FormatTimestamp(DateTime dt) => dt.ToString("MM/dd/yyyy hh:mm:ss tt");
 
 static async Task RunRetroactiveTagging(List<(InstanceConfig Instance, IArrClient Client)> clients, IHost host)
 {
