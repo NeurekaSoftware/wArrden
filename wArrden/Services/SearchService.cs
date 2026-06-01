@@ -102,6 +102,7 @@ public class SearchService
         IndexerFilterConfig? indexerFilter, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
+        var context = $"{inst}.{category.ToLowerInvariant()}";
 
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
@@ -109,7 +110,7 @@ public class SearchService
         progress.SetPhase("Fetching wanted episodes");
         var wanted = await getWanted();
 
-        _output.WriteDebug($"{inst}.missing", $"Fetched {wanted.Count} wanted episodes");
+        _output.WriteDebug(context, $"Fetched {wanted.Count} wanted episodes");
 
         if (wanted.Count == 0)
         {
@@ -133,7 +134,7 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
-        _output.WriteDebug($"{inst}.missing",
+        _output.WriteDebug(context,
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         var eligibleCount = eligible.Count;
@@ -149,7 +150,7 @@ public class SearchService
         var (hasMatch, detail) = await CheckIndexerFilterAsync(client, indexerFilter, ct);
         if (!hasMatch)
         {
-            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped", detail);
+            _output.WriteWarning(context, "No enabled indexers — search skipped", detail);
             progress.WriteStats(wanted.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
@@ -180,7 +181,7 @@ public class SearchService
                 ep.Series is not null
                     ? $"{ep.Series.Title} ({ep.Series.Year}) - S{ep.SeasonNumber:D2}E{ep.EpisodeNumber:D2} - {ep.Title ?? $"Episode {ep.Id}"}"
                     : ep.Title ?? $"Episode {ep.Id}");
-            _output.WriteWarning($"{inst}.missing",
+            _output.WriteWarning(context,
                 $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
         }
 
@@ -202,6 +203,7 @@ public class SearchService
         IndexerFilterConfig? indexerFilter, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
+        var context = $"{inst}.{category.ToLowerInvariant()}";
         var seasonCategory = $"{category}_Season";
 
         progress.SetPhase("Cleaning cooldown entries");
@@ -227,7 +229,7 @@ public class SearchService
             ))
             .ToList();
 
-        _output.WriteDebug($"{inst}.missing", $"Grouped {wanted.Count} episodes into {seasons.Count} seasons");
+        _output.WriteDebug(context, $"Grouped {wanted.Count} episodes into {seasons.Count} seasons");
 
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, seasonCategory, ct);
@@ -244,7 +246,7 @@ public class SearchService
             .ToList();
         var onCooldown = seasons.Count - eligible.Count;
 
-        _output.WriteDebug($"{inst}.missing",
+        _output.WriteDebug(context,
             $"Season cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         var eligibleCount = eligible.Count;
@@ -260,7 +262,7 @@ public class SearchService
         var (hasMatch, detail) = await CheckIndexerFilterAsync(client, indexerFilter, ct);
         if (!hasMatch)
         {
-            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped", detail);
+            _output.WriteWarning(context, "No enabled indexers — search skipped", detail);
             progress.WriteStats(seasons.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
@@ -286,7 +288,7 @@ public class SearchService
             }
             catch (Exception ex)
             {
-                _output.WriteWarning($"{inst}.missing",
+                _output.WriteWarning(context,
                     $"Search trigger failed for {title}", ex.Message);
             }
         }
@@ -310,6 +312,7 @@ public class SearchService
         IndexerFilterConfig? indexerFilter, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
+        var context = $"{inst}.{category.ToLowerInvariant()}";
 
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
@@ -317,7 +320,7 @@ public class SearchService
         progress.SetPhase("Fetching wanted albums");
         var wanted = await getWanted();
 
-        _output.WriteDebug($"{inst}.missing", $"Fetched {wanted.Count} wanted albums");
+        _output.WriteDebug(context, $"Fetched {wanted.Count} wanted albums");
 
         if (wanted.Count == 0)
         {
@@ -340,7 +343,7 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
-        _output.WriteDebug($"{inst}.missing",
+        _output.WriteDebug(context,
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         var eligibleCount = eligible.Count;
@@ -356,7 +359,7 @@ public class SearchService
         var (hasMatch, detail) = await CheckIndexerFilterAsync(client, indexerFilter, ct);
         if (!hasMatch)
         {
-            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped", detail);
+            _output.WriteWarning(context, "No enabled indexers — search skipped", detail);
             progress.WriteStats(wanted.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
@@ -383,7 +386,7 @@ public class SearchService
         {
             var titles = selected.Select(a =>
                 $"{a.Artist?.ArtistName ?? "Artist Unknown"} - {a.Album?.Title ?? $"Album {a.Id}"}");
-            _output.WriteWarning($"{inst}.missing",
+            _output.WriteWarning(context,
                 $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
         }
 
@@ -405,6 +408,7 @@ public class SearchService
         IndexerFilterConfig? indexerFilter, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
+        var context = $"{inst}.{category.ToLowerInvariant()}";
         var artistCategory = $"{category}_Artist";
 
         progress.SetPhase("Cleaning cooldown entries");
@@ -429,7 +433,7 @@ public class SearchService
             ))
             .ToList();
 
-        _output.WriteDebug($"{inst}.missing", $"Grouped {wanted.Count} albums into {artists.Count} artists");
+        _output.WriteDebug(context, $"Grouped {wanted.Count} albums into {artists.Count} artists");
 
         progress.SetPhase("Applying cooldown filters");
         var cooldownIds = await _cooldown.GetCooldownIdsAsync(client.Instance, artistCategory, ct);
@@ -445,7 +449,7 @@ public class SearchService
             .ToList();
         var onCooldown = artists.Count - eligible.Count;
 
-        _output.WriteDebug($"{inst}.missing",
+        _output.WriteDebug(context,
             $"Artist cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         var eligibleCount = eligible.Count;
@@ -461,7 +465,7 @@ public class SearchService
         var (hasMatch, detail) = await CheckIndexerFilterAsync(client, indexerFilter, ct);
         if (!hasMatch)
         {
-            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped", detail);
+            _output.WriteWarning(context, "No enabled indexers — search skipped", detail);
             progress.WriteStats(artists.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
@@ -484,7 +488,7 @@ public class SearchService
             }
             catch (Exception ex)
             {
-                _output.WriteWarning($"{inst}.missing",
+                _output.WriteWarning(context,
                     $"Search trigger failed for {title}", ex.Message);
             }
         }
@@ -508,6 +512,7 @@ public class SearchService
         IndexerFilterConfig? indexerFilter, TaggingConfig? tagging, OutputService.SearchOutputWriter progress, CancellationToken ct)
     {
         var inst = client.Instance.ToLowerInvariant();
+        var context = $"{inst}.{category.ToLowerInvariant()}";
 
         progress.SetPhase("Cleaning cooldown entries");
         await _cooldown.CleanExpiredAsync(client.Instance, category, cooldown, ct);
@@ -515,7 +520,7 @@ public class SearchService
         progress.SetPhase("Fetching wanted movies");
         var wanted = await getWanted();
 
-        _output.WriteDebug($"{inst}.missing", $"Fetched {wanted.Count} wanted movies");
+        _output.WriteDebug(context, $"Fetched {wanted.Count} wanted movies");
 
         if (wanted.Count == 0)
         {
@@ -537,7 +542,7 @@ public class SearchService
             .ToList();
         var onCooldown = wanted.Count - eligible.Count;
 
-        _output.WriteDebug($"{inst}.missing",
+        _output.WriteDebug(context,
             $"Cooldown filter: {onCooldown} on cooldown, {eligible.Count} eligible, {selected.Count} selected");
 
         var eligibleCount = eligible.Count;
@@ -553,7 +558,7 @@ public class SearchService
         var (hasMatch, detail) = await CheckIndexerFilterAsync(client, indexerFilter, ct);
         if (!hasMatch)
         {
-            _output.WriteWarning($"{inst}.missing", "No enabled indexers — search skipped", detail);
+            _output.WriteWarning(context, "No enabled indexers — search skipped", detail);
             progress.WriteStats(wanted.Count, onCooldown, eligibleCount, 0, true, "No enabled indexers available");
             return;
         }
@@ -584,7 +589,7 @@ public class SearchService
                 m.Year > 0
                     ? $"{m.Title ?? $"Movie {m.Id}"} ({m.Year})"
                     : m.Title ?? $"Movie {m.Id}");
-            _output.WriteWarning($"{inst}.missing",
+            _output.WriteWarning(context,
                 $"Search trigger failed for {string.Join(", ", titles)}", ex.Message);
         }
 

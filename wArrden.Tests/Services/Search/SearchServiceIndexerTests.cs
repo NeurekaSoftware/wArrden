@@ -462,4 +462,32 @@ public class SearchServiceIndexerTests : SearchServiceTestBase
         Assert.Contains("NZBGeek", warningDetail);
         Assert.Contains("DrunkenSlug", warningDetail);
     }
+
+    [Fact]
+    public async Task SearchUpgradeEpisodes_NoIndexersAvailable_UsesUpgradeWarningContext()
+    {
+        var episodes = new List<WantedEpisodeResource>
+        {
+            new() { Id = 1, Title = "Ep1", SeasonNumber = 1, EpisodeNumber = 1,
+                Series = new WantedEpisodeSeriesResource { Title = "Show", Year = 2020 } }
+        };
+
+        ClientMock.Setup(c => c.GetWantedCutoffEpisodesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(episodes);
+
+        SetupOutputCallback();
+        SetupCleanExpired(category: "Upgrade");
+        SetupCooldownIds(category: "Upgrade", ids: []);
+        SetupHasIndexers(false);
+
+        string? warningContext = null;
+        OutputMock
+            .Setup(o => o.WriteWarning(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<string, string, string>((context, _, _) => warningContext = context);
+
+        await Service.SearchUpgradeEpisodesAsync(ClientMock.Object, 5, DefaultCooldown, "episode", false,
+            null, null, CancellationToken.None);
+
+        Assert.Equal("sonarr.upgrade", warningContext);
+    }
 }
