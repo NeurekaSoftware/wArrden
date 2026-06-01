@@ -184,8 +184,8 @@ With mixed actions:
 ```
 
 **Rules:**
-- `Warnings` is the count of queue items with `TrackedDownloadStatus == "warning"`
-- `Matched` is the subset of Warnings whose error messages matched a configured rule
+- `Warnings` is the count of queue items that present warnings or errors through `TrackedDownloadStatus == "warning"`, `statusMessages`, or `errorMessage`
+- `Matched` is the subset of Warnings whose error messages or status messages matched a configured rule
 - `Result` reflects the actions taken per match: `"Removed N"`, `"Blocklisted N"`, or `"Removed N, Blocklisted M"` for mixed actions
 - Dry-run prefix: `"Would remove N"`, `"Would blocklist N"`, `"Would remove N, Would blocklist M"`
 - With no warnings: `"No warning queue items detected"`

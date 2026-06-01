@@ -36,6 +36,8 @@ public class QueueCleanupService
             return 0;
         }
 
+        // Some arr/download-client errors, including qBittorrent reporting errors,
+        // can arrive only in statusMessages/errorMessage without warning status.
         var blocked = queue.Where(q =>
             string.Equals(q.TrackedDownloadStatus, "warning", StringComparison.OrdinalIgnoreCase)
             || (q.StatusMessages is { Count: > 0 })
