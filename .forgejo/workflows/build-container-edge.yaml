@@ -14,7 +14,6 @@ jobs:
       job-name: "Build: Container"
       context: .
       file: Dockerfile
-      images: code.neureka.dev/org/image
       platforms: linux/amd64,linux/arm64
       tags: |
         type=raw,value=edge
