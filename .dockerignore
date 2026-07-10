@@ -1,6 +1,7 @@
 .git/
 .gitignore
 .gitattributes
+.gitlab-ci.yml
 wArrden.Tests/
 **/bin/
 **/obj/

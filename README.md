@@ -4,8 +4,8 @@
 
 # wArrden
 
-[![Release](https://img.shields.io/badge/dynamic/json.svg?style=flat-square&logo=git&logoColor=F43F5E&label=Release&color=F43F5E&url=https://code.neureka.dev/api/v1/repos/warrden/warrden/releases&query=$[0].tag_name)](https://code.neureka.dev/warrden/warrden/releases)
-[![Actions](https://img.shields.io/badge/dynamic/json?style=flat-square&logo=gitlfs&logoColor=8B5CF6&label=Actions&color=8B5CF6&url=https://code.neureka.dev/api/v1/repos/warrden/warrden/actions/runs&query=workflow_runs[0].status)](https://code.neureka.dev/warrden/warrden/actions)
+[![Release](https://img.shields.io/badge/dynamic/json.svg?style=flat-square&logo=git&logoColor=F43F5E&label=Release&color=F43F5E&url=https://code.neureka.dev/api/v4/projects/warrden%2Fwarrden/releases&query=$[0].tag_name)](https://code.neureka.dev/warrden/warrden/-/releases)
+[![Pipeline](https://img.shields.io/badge/dynamic/json?style=flat-square&logo=gitlab&logoColor=8B5CF6&label=Pipeline&color=8B5CF6&url=https://code.neureka.dev/api/v4/projects/warrden%2Fwarrden/pipelines&query=$[0].status)](https://code.neureka.dev/warrden/warrden/-/pipelines)
 [![License](https://img.shields.io/github/license/NeurekaSoftware/wArrden?style=flat-square&label=License&color=14B8A6&logo=opensourceinitiative&logoColor=14B8A6)](./LICENSE.md)
 [![AI](https://img.shields.io/badge/AI-assisted-5786FE?style=flat-square&logo=deepseek&logoColor=5786FE)](https://code.neureka.dev/warrden/warrden)
 [![Stars](https://img.shields.io/github/stars/NeurekaSoftware/wArrden?style=flat-square&label=Stars&color=EAB308&logo=googlegemini&logoColor=EAB308)](https://code.neureka.dev/warrden/warrden)
@@ -14,8 +14,11 @@ wArrden makes it easy to maintain your media libraries by finding missing or upg
 
 </div>
 
+> [!WARNING]
+> The container registry has changed. Please update your image from `code.neureka.dev/warrden/warrden` to `registry.neureka.dev/warrden/warrden`.
+
 > [!IMPORTANT]  
-> This repository's GitHub mirror is for reference only. Please submit bug reports and feature requests to our [official Forgejo repository](https://code.neureka.dev/warrden/warrden).
+> This repository's GitHub mirror is for reference only. Please submit bug reports and feature requests to our [official GitLab repository](https://code.neureka.dev/warrden/warrden).
 
 ## Quickstart
 
@@ -25,13 +28,13 @@ wArrden makes it easy to maintain your media libraries by finding missing or upg
 1. Download `compose.yaml`:
 
    ```
-   curl -O https://code.neureka.dev/warrden/warrden/raw/branch/main/compose.yaml
+   curl -O https://code.neureka.dev/warrden/warrden/-/raw/main/compose.yaml
    ```
 
 2. Download the example config as `config.yaml`, then edit it with your Sonarr/Radarr URLs and API keys:
 
    ```
-   curl -o config.yaml https://code.neureka.dev/warrden/warrden/raw/branch/main/config.example.yaml
+   curl -o config.yaml https://code.neureka.dev/warrden/warrden/-/raw/main/config.example.yaml
    ```
 
 3. Start the container:
