@@ -4,8 +4,8 @@
 
 # wArrden
 
-[![Release](https://img.shields.io/badge/dynamic/json.svg?style=flat-square&logo=git&logoColor=F43F5E&label=Release&color=F43F5E&url=https://code.neureka.dev/api/v4/projects/warrden%2Fwarrden/releases&query=$[0].tag_name)](https://code.neureka.dev/warrden/warrden/-/releases)
-[![Pipeline](https://img.shields.io/badge/dynamic/json?style=flat-square&logo=gitlab&logoColor=8B5CF6&label=Pipeline&color=8B5CF6&url=https://code.neureka.dev/api/v4/projects/warrden%2Fwarrden/pipelines&query=$[0].status)](https://code.neureka.dev/warrden/warrden/-/pipelines)
+[![Release](https://img.shields.io/badge/dynamic/json?style=flat-square&logo=git&logoColor=F43F5E&label=Release&color=F43F5E&url=https://code.neureka.dev/api/v4/projects/1/releases&query=$[0].tag_name)](https://code.neureka.dev/warrden/warrden/-/releases)
+[![Pipeline](https://img.shields.io/badge/dynamic/json?style=flat-square&logo=gitlab&logoColor=8B5CF6&label=Pipeline&color=8B5CF6&url=https://code.neureka.dev/api/v4/projects/1/pipelines&query=$[0].status)](https://code.neureka.dev/warrden/warrden/-/pipelines)
 [![License](https://img.shields.io/github/license/NeurekaSoftware/wArrden?style=flat-square&label=License&color=14B8A6&logo=opensourceinitiative&logoColor=14B8A6)](./LICENSE.md)
 [![AI](https://img.shields.io/badge/AI-assisted-5786FE?style=flat-square&logo=deepseek&logoColor=5786FE)](https://code.neureka.dev/warrden/warrden)
 [![Stars](https://img.shields.io/github/stars/NeurekaSoftware/wArrden?style=flat-square&label=Stars&color=EAB308&logo=googlegemini&logoColor=EAB308)](https://code.neureka.dev/warrden/warrden)
