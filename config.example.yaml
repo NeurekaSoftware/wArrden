@@ -139,7 +139,7 @@ instances:
       # What unit to search for.
       # Type: required
       # Values: episode | season
-      searchType: episode
+      searchType: season
       # How often the job runs.
       # Type: required
       # Values: 5-field expression (minute hour day-of-month month day-of-week)
