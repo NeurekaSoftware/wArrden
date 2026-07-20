@@ -59,8 +59,9 @@ public class CooldownService : ICooldownService
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<WardenDbContext>();
 
+        var ids = itemIds.Distinct().ToList();
         var now = DateTime.UtcNow;
-        var entries = itemIds.Select(id => new CooldownEntry
+        var entries = ids.Select(id => new CooldownEntry
         {
             Instance = instance,
             Category = category,
@@ -71,7 +72,7 @@ public class CooldownService : ICooldownService
         await db.CooldownEntries.AddRangeAsync(entries, ct);
         await db.SaveChangesAsync(ct);
 
-        _output.WriteDebug($"{instance.ToLowerInvariant()}.cooldown", $"Marked {itemIds.Count} items as searched for {category}");
+        _output.WriteDebug($"{instance.ToLowerInvariant()}.cooldown", $"Marked {ids.Count} items as searched for {category}");
     }
 
     public async Task<int> ClearAllAsync(string category, string? instance, CancellationToken ct)

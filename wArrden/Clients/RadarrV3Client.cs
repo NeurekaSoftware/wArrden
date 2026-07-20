@@ -31,7 +31,7 @@ public class RadarrV3Client : IArrClient
 
     public async Task<IReadOnlyList<QueueResource>> GetQueueAsync(CancellationToken ct)
     {
-        var all = new List<QueueResource>();
+        var byId = new Dictionary<int, QueueResource>();
         var page = 1;
         const int pageSize = 100;
 
@@ -42,16 +42,23 @@ public class RadarrV3Client : IArrClient
             response.EnsureSuccessStatusCode();
 
             var paging = await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.WantedPagingResourceQueueResource, ct);
-            if (paging?.Records is { Count: > 0 })
-                all.AddRange(paging.Records);
+            var records = paging?.Records;
+            if (records is not { Count: > 0 })
+                break;
 
-            if (paging == null || all.Count >= paging.TotalRecords)
+            // Default queue ordering is mutable, so records can repeat across pages;
+            // dedupe by Id to avoid processing the same queue item twice.
+            foreach (var r in records)
+                byId[r.Id] = r;
+
+            // Terminate on a short/empty page, never on a duplicate-inflated count.
+            if (records.Count < pageSize || byId.Count >= paging!.TotalRecords)
                 break;
 
             page++;
         }
 
-        return all;
+        return byId.Values.ToList();
     }
 
     public async Task DeleteQueueItemAsync(int queueId, CancellationToken ct)
@@ -84,7 +91,7 @@ public class RadarrV3Client : IArrClient
 
     private async Task<IReadOnlyList<WantedMovieResource>> FetchAllWantedPagesAsync(string type, CancellationToken ct)
     {
-        var all = new List<WantedMovieResource>(capacity: 100);
+        var byId = new Dictionary<int, WantedMovieResource>(capacity: 100);
         var page = 1;
         const int pageSize = 100;
 
@@ -95,16 +102,23 @@ public class RadarrV3Client : IArrClient
             response.EnsureSuccessStatusCode();
 
             var paging = await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.WantedPagingResourceWantedMovieResource, ct);
-            if (paging?.Records is { Count: > 0 })
-                all.AddRange(paging.Records);
+            var records = paging?.Records;
+            if (records is not { Count: > 0 })
+                break;
 
-            if (paging == null || all.Count >= paging.TotalRecords)
+            // Sort key (lastSearchTime) is non-unique and mutable, so records can repeat
+            // across pages; dedupe by Id to avoid duplicate cooldown inserts.
+            foreach (var r in records)
+                byId[r.Id] = r;
+
+            // Terminate on a short/empty page, never on a duplicate-inflated count.
+            if (records.Count < pageSize || byId.Count >= paging!.TotalRecords)
                 break;
 
             page++;
         }
 
-        return all;
+        return byId.Values.ToList();
     }
 
     public Task TriggerEpisodeSearchAsync(int[] episodeIds, CancellationToken ct)
