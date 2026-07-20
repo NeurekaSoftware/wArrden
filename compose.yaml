@@ -9,13 +9,17 @@ services:
       - PUID=1000
       - PGID=1000
       - DATABASE_PATH=/app/data/warden.db
-      - CONFIG_PATH=/app/data/config.yaml
+      - CONFIG_PATH=/config/config.yaml
     networks:
       - warrden
     volumes:
-      - ./data:/app/data
+      - data:/app/data
+      - ./config.yaml:/config/config.yaml:ro
     restart: unless-stopped
 
 networks:
   warrden:
     name: warrden
+
+volumes:
+  data:
