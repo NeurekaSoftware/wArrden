@@ -220,7 +220,7 @@ Year is only appended when greater than zero.
 
 - Log output: `OutputService`, `SearchOutputWriter` → `wArrden/Services/OutputService.cs`
 - Item title formatting: `SearchService.cs`, `QueueCleanupService.cs`
-- Queue cleanup rules: `wArrden/Services/QueueCleanupRules.cs`
+- Queue cleanup rules: `wArrden/Services/QueueCleanupRuleMatchers.cs`, `wArrden/Services/QueueCleanupRule.cs`
 - API models: `wArrden/Clients/Models/`
 
 ## API Call Verification via OpenAPI Specs

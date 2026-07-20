@@ -648,6 +648,11 @@ queueCleanupRules:
     - match: IMPORT_PATH_INACCESSIBLE
       action: none
 
+    # Download finished but one or more expected movies never imported.
+    # Radarr: "One or more movies expected in this release were not imported or missing"
+    - match: INCOMPLETE_IMPORT
+      action: none
+
   sonarr:
     # The file is a short sample/clip, not the full episode.
     # Sonarr: "Sample"
@@ -761,6 +766,11 @@ queueCleanupRules:
     # Can't access the download folder — check permissions/mounts.
     # Sonarr: "Import failed, path does not exist or is not accessible by Sonarr: {0}."
     - match: IMPORT_PATH_INACCESSIBLE
+      action: none
+
+    # Download finished but one or more expected episodes never imported.
+    # Sonarr: "One or more episodes expected in this release were not imported or missing from the release"
+    - match: INCOMPLETE_IMPORT
       action: none
 
     # Episode aired recently and doesn't have a title yet.
@@ -922,6 +932,11 @@ queueCleanupRules:
     - match: IMPORT_PATH_INACCESSIBLE
       action: none
 
+    # Download finished but one or more expected tracks never imported.
+    # Lidarr: "One or more tracks expected in this release were not imported or missing from the release"
+    - match: INCOMPLETE_IMPORT
+      action: none
+
   whisparr:
     # The file is a short sample/clip, not the full item.
     # Whisparr: "Sample"
@@ -1047,6 +1062,11 @@ queueCleanupRules:
     # Can't access the download folder — check permissions/mounts.
     # Whisparr: "Import failed, path does not exist or is not accessible by Whisparr: {0}."
     - match: IMPORT_PATH_INACCESSIBLE
+      action: none
+
+    # Download finished but one or more expected episodes never imported.
+    # Whisparr: "One or more episodes expected in this release were not imported or missing from the release"
+    - match: INCOMPLETE_IMPORT
       action: none
 
     # Episode aired recently and doesn't have a title yet.

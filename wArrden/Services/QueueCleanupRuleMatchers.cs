@@ -8,6 +8,7 @@ public static class QueueCleanupRuleMatchers
 
         ["SAMPLE"] = Shared("Sample", "Unable to determine if file is a sample"),
         ["NO_FILES_ELIGIBLE"] = Shared("No files found are eligible"),
+        ["INCOMPLETE_IMPORT"] = Shared("expected in this release were not imported"),
         ["NOT_CUSTOM_FORMAT_UPGRADE"] = Shared("Not a Custom Format upgrade"),
         ["NO_AUDIO_TRACKS"] = Shared("No audio tracks detected"),
         ["ARCHIVE_FILE"] = Shared("Found archive file"),

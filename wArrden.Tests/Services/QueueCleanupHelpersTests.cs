@@ -36,6 +36,37 @@ public class QueueCleanupHelpersTests
         Assert.True(result.Value.Blocklist);
     }
 
+    // Message arrives via trackedDownload.Warn(...) → StatusMessages, and the noun (episodes/movies/
+    // tracks) plus the "from the release" suffix differ per arr — so the shared substring must match
+    // all four, including Radarr's variant which lacks the suffix.
+    [Theory]
+    [InlineData("sonarr", "One or more episodes expected in this release were not imported or missing from the release")]
+    [InlineData("radarr", "One or more movies expected in this release were not imported or missing")]
+    [InlineData("lidarr", "One or more tracks expected in this release were not imported or missing from the release")]
+    [InlineData("whisparr", "One or more episodes expected in this release were not imported or missing from the release")]
+    public void MatchRule_IncompleteImport_MatchesAllArrs(string arrType, string warning)
+    {
+        var rules = new List<QueueCleanupRule>
+        {
+            new("INCOMPLETE_IMPORT", false)
+        };
+
+        var result = QueueCleanupService.MatchRule(
+            new QueueResource
+            {
+                TrackedDownloadStatus = "warning",
+                StatusMessages = new List<QueueStatusMessage>
+                {
+                    new() { Title = warning }
+                }
+            },
+            rules, arrType);
+
+        Assert.NotNull(result);
+        Assert.Equal("INCOMPLETE_IMPORT", result.Value.Label);
+        Assert.False(result.Value.Blocklist);
+    }
+
     [Fact]
     public void MatchRule_NoMatch_ReturnsNull()
     {
