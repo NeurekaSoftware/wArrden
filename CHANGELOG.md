@@ -9,9 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.2.0] - 2026-07-20
 
-### Added
-- Queue cleanup matcher for the "one or more items expected in this release were not imported or missing" warning (`INCOMPLETE_IMPORT`), covering Sonarr, Radarr, Lidarr, and Whisparr. Ships disabled (`action: none`) so you opt into removal.
-
 ### Changed
 - Container image registry moved to `registry.neureka.dev` (from `code.neureka.dev`).
 - Default the example Sonarr missing search to season.

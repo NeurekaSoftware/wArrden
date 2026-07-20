@@ -936,10 +936,10 @@ instances:
         Assert.NotNull(config.QueueCleanupRules.Radarr);
         Assert.NotNull(config.QueueCleanupRules.Lidarr);
         Assert.NotNull(config.QueueCleanupRules.Whisparr);
-        Assert.Equal(29, config.QueueCleanupRules.Sonarr!.Count);
-        Assert.Equal(20, config.QueueCleanupRules.Radarr!.Count);
-        Assert.Equal(26, config.QueueCleanupRules.Lidarr!.Count);
-        Assert.Equal(30, config.QueueCleanupRules.Whisparr!.Count);
+        Assert.Equal(28, config.QueueCleanupRules.Sonarr!.Count);
+        Assert.Equal(19, config.QueueCleanupRules.Radarr!.Count);
+        Assert.Equal(25, config.QueueCleanupRules.Lidarr!.Count);
+        Assert.Equal(29, config.QueueCleanupRules.Whisparr!.Count);
     }
 
     [Fact]
