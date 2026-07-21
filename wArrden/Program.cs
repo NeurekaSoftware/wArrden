@@ -212,7 +212,7 @@ host.Services.UseScheduler(scheduler =>
 });
 
 var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
-lifetime.ApplicationStopping.Register(() =>
+lifetime.ApplicationStopped.Register(() =>
 {
     foreach (var (_, client) in clients)
         client.Dispose();

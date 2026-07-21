@@ -8,6 +8,7 @@ public class LidarrV1Client : IArrClient
 {
     private readonly HttpClient _http;
     private readonly string _baseUrl;
+    private bool _disposed;
 
     public string Instance { get; }
 
@@ -26,7 +27,10 @@ public class LidarrV1Client : IArrClient
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _http.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public async Task<IReadOnlyList<QueueResource>> GetQueueAsync(CancellationToken ct)
