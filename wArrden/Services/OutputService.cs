@@ -1,4 +1,5 @@
 using wArrden.Configuration;
+using Sentry;
 
 namespace wArrden.Services;
 
@@ -236,6 +237,19 @@ public class OutputService
 
     public virtual void WriteError(string context, string message, Exception ex)
     {
+        try
+        {
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetTag("context", context);
+                scope.SetExtra("message", message);
+            });
+        }
+        catch
+        {
+            // Never let error reporting interfere with log output.
+        }
+
         if (!ShouldLog(LogLevel.Error)) return;
         WriteLogLine("ERROR", context, message, $"{ex.GetType().Name}: {ex.Message}");
     }

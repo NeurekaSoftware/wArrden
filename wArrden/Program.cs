@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Sentry;
 
 var opts = new WardenOptions
 {
@@ -16,6 +17,20 @@ var opts = new WardenOptions
     AppVersion = GetEnv("APP_VERSION"),
     DatabasePath = GetEnv("DATABASE_PATH") ?? "data/warden.db"
 };
+
+try
+{
+    SentrySdk.Init(o =>
+    {
+        o.Dsn = "https://ca3bcb7569913062d079984cce25219e@beacon.neureka.dev/2";
+        if (!string.IsNullOrWhiteSpace(opts.AppVersion))
+            o.Release = opts.AppVersion;
+    });
+}
+catch
+{
+    // Error reporting must never prevent wArrden from starting.
+}
 
 var configPath = GetEnv("CONFIG_PATH") ?? "data/config.yaml";
 
