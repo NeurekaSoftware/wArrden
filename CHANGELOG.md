@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-07-23
+
+### Added
+- Retry transient arr request failures (gateway errors, timeouts, refused connections) with exponential backoff so brief outages recover on their own, tunable via the optional `HTTP_RETRY_COUNT` and `HTTP_TIMEOUT_SECONDS` environment variables.
+
+### Changed
+- Validate the API key against an authenticated endpoint at startup, and automatically disable an instance whose key is rejected — at startup or if it is rotated while wArrden is running — so its scheduled jobs stop instead of failing every run.
+- Only report unexpected internal errors to Sentry; expected arr conditions (an unreachable instance, gateway errors, timeouts, or a bad API key) are now logged locally without being reported as errors.
+
 ## [4.3.1] - 2026-07-21
 
 ### Fixed
@@ -190,7 +199,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cooldown system to avoid re-searching the same items too frequently
 - Support for both Radarr and Sonarr instances with independent configuration per job type
 - Structured console output with item counts, cooldown status, and result summaries
-[Unreleased]: https://code.neureka.dev/warrden/warrden/-/compare/4.3.1...HEAD
+[Unreleased]: https://code.neureka.dev/warrden/warrden/-/compare/4.4.0...HEAD
+[4.4.0]: https://code.neureka.dev/warrden/warrden/-/compare/4.3.1...4.4.0
 
 [4.3.1]: https://code.neureka.dev/warrden/warrden/-/compare/4.3.0...4.3.1
 [4.3.0]: https://code.neureka.dev/warrden/warrden/-/compare/4.2.0...4.3.0
