@@ -9,6 +9,7 @@ public class QueueJobTests
     private readonly Mock<IArrClient> _clientMock;
     private readonly StringWriter _writer;
     private readonly OutputService _output;
+    private readonly InstanceHealthTracker _health = new();
 
     public QueueJobTests()
     {
@@ -24,7 +25,7 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource>());
 
-        var job = new QueueJob(_output, _clientMock.Object, "sonarr", false);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "sonarr", false));
 
         await job.Invoke();
 
@@ -54,7 +55,7 @@ public class QueueJobTests
         {
             new("NOT_QUALITY_UPGRADE", false)
         };
-        var job = new QueueJob(_output, _clientMock.Object, "sonarr", true, rules);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "sonarr", true, rules));
 
         await job.Invoke();
 
@@ -79,7 +80,7 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
 
-        var job = new QueueJob(_output, _clientMock.Object, "sonarr", true, null);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "sonarr", true, null));
 
         await job.Invoke();
 
@@ -95,7 +96,7 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource>());
 
-        var job = new QueueJob(_output, _clientMock.Object, "radarr", false);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "radarr", false));
 
         await job.Invoke();
 
@@ -109,7 +110,7 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource>());
 
-        var job = new QueueJob(_output, _clientMock.Object, "lidarr", false);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "lidarr", false));
 
         await job.Invoke();
 
@@ -123,7 +124,7 @@ public class QueueJobTests
         _clientMock.Setup(c => c.GetQueueAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Clients.Models.QueueResource>());
 
-        var job = new QueueJob(_output, _clientMock.Object, "whisparr", false);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "whisparr", false));
 
         await job.Invoke();
 
@@ -146,7 +147,7 @@ public class QueueJobTests
             .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
 
         var rules = new List<QueueCleanupRule> { new("NOT_QUALITY_UPGRADE", false) };
-        var job = new QueueJob(_output, _clientMock.Object, "radarr", true, rules);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "radarr", true, rules));
 
         await job.Invoke();
 
@@ -170,7 +171,7 @@ public class QueueJobTests
             .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
 
         var rules = new List<QueueCleanupRule> { new("NOT_QUALITY_UPGRADE", false) };
-        var job = new QueueJob(_output, _clientMock.Object, "lidarr", true, rules);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "lidarr", true, rules));
 
         await job.Invoke();
 
@@ -201,7 +202,7 @@ public class QueueJobTests
             .ReturnsAsync(new List<Clients.Models.QueueResource> { item });
 
         var rules = new List<QueueCleanupRule> { new("NOT_QUALITY_UPGRADE", false) };
-        var job = new QueueJob(_output, _clientMock.Object, "whisparr", true, rules);
+        var job = new QueueJob(_output, _health, new QueueJobParams(_clientMock.Object, "whisparr", true, rules));
 
         await job.Invoke();
 

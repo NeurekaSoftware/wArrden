@@ -7,22 +7,28 @@ namespace wArrden.Clients;
 public class WhisparrV3ErosClient : IArrClient
 {
     private readonly HttpClient _http;
-    private readonly string _baseUrl;
     private bool _disposed;
 
     public string Instance { get; }
 
-    public WhisparrV3ErosClient(string url, string apiKey, string instanceName)
-        : this(url, apiKey, instanceName, new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(15) })
+    public WhisparrV3ErosClient(HttpClient http, string instanceName)
+    {
+        Instance = instanceName;
+        _http = http;
+    }
+
+    // Test seam: wraps the supplied handler in an HttpClient carrying the same base address
+    // and API-key header that the factory-configured client uses in production.
+    internal WhisparrV3ErosClient(string url, string apiKey, string instanceName, HttpMessageHandler handler)
+        : this(BuildTestHttpClient(url, apiKey, handler), instanceName)
     {
     }
 
-    internal WhisparrV3ErosClient(string url, string apiKey, string instanceName, HttpMessageHandler handler)
+    private static HttpClient BuildTestHttpClient(string url, string apiKey, HttpMessageHandler handler)
     {
-        Instance = instanceName;
-        _baseUrl = url.TrimEnd('/');
-        _http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
-        _http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
+        var http = new HttpClient(handler) { BaseAddress = new Uri(url.TrimEnd('/') + "/") };
+        http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
+        return http;
     }
 
     public void Dispose()
@@ -41,7 +47,7 @@ public class WhisparrV3ErosClient : IArrClient
 
         while (true)
         {
-            var url = $"{_baseUrl}/api/v3/queue?includeUnknownMovieItems=true&includeMovie=true&page={page}&pageSize={pageSize}";
+            var url = $"api/v3/queue?includeUnknownMovieItems=true&includeMovie=true&page={page}&pageSize={pageSize}";
             using var response = await _http.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
@@ -68,14 +74,14 @@ public class WhisparrV3ErosClient : IArrClient
     public async Task DeleteQueueItemAsync(int queueId, CancellationToken ct)
     {
         using var response = await _http.DeleteAsync(
-            $"{_baseUrl}/api/v3/queue/{queueId}?removeFromClient=true&blocklist=true&skipRedownload=false", ct);
+            $"api/v3/queue/{queueId}?removeFromClient=true&blocklist=true&skipRedownload=false", ct);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task DeleteQueueItemWithoutBlocklistAsync(int queueId, CancellationToken ct)
     {
         using var response = await _http.DeleteAsync(
-            $"{_baseUrl}/api/v3/queue/{queueId}?removeFromClient=true&blocklist=false&skipRedownload=false", ct);
+            $"api/v3/queue/{queueId}?removeFromClient=true&blocklist=false&skipRedownload=false", ct);
         response.EnsureSuccessStatusCode();
     }
 
@@ -97,7 +103,7 @@ public class WhisparrV3ErosClient : IArrClient
 
         while (true)
         {
-            var url = $"{_baseUrl}/api/v3/wanted/{type}?monitored=true&page={page}&pageSize={pageSize}&sortKey=movies.lastSearchTime&sortDirection=ascending";
+            var url = $"api/v3/wanted/{type}?monitored=true&page={page}&pageSize={pageSize}&sortKey=movies.lastSearchTime&sortDirection=ascending";
             using var response = await _http.GetAsync(url, ct);
             response.EnsureSuccessStatusCode();
 
@@ -124,13 +130,13 @@ public class WhisparrV3ErosClient : IArrClient
     public async Task TriggerMoviesSearchAsync(int[] movieIds, CancellationToken ct)
     {
         var body = new { name = "MoviesSearch", movieIds };
-        using var response = await _http.PostAsJsonAsync($"{_baseUrl}/api/v3/command", body, cancellationToken: ct);
+        using var response = await _http.PostAsJsonAsync($"api/v3/command", body, cancellationToken: ct);
         response.EnsureSuccessStatusCode();
     }
 
     public async Task<IReadOnlyList<IndexerResource>> GetIndexersAsync(CancellationToken ct)
     {
-        using var response = await _http.GetAsync($"{_baseUrl}/api/v3/indexer", ct);
+        using var response = await _http.GetAsync($"api/v3/indexer", ct);
         response.EnsureSuccessStatusCode();
         return (IReadOnlyList<IndexerResource>?)await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.IndexerResourceArray, ct) ?? Array.Empty<IndexerResource>();
     }
@@ -167,7 +173,7 @@ public class WhisparrV3ErosClient : IArrClient
 
     public async Task<IReadOnlyList<TagResource>> GetTagsAsync(CancellationToken ct)
     {
-        using var response = await _http.GetAsync($"{_baseUrl}/api/v3/tag", ct);
+        using var response = await _http.GetAsync($"api/v3/tag", ct);
         response.EnsureSuccessStatusCode();
         return (IReadOnlyList<TagResource>?)await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.ListTagResource, ct) ?? Array.Empty<TagResource>();
     }
@@ -175,7 +181,7 @@ public class WhisparrV3ErosClient : IArrClient
     public async Task<TagResource> CreateTagAsync(string label, CancellationToken ct)
     {
         var body = JsonContent.Create(new { label });
-        using var response = await _http.PostAsync($"{_baseUrl}/api/v3/tag", body, ct);
+        using var response = await _http.PostAsync($"api/v3/tag", body, ct);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync(ArrJsonContext.Default.TagResource, ct))!;
     }
@@ -199,7 +205,7 @@ public class WhisparrV3ErosClient : IArrClient
 
     private async Task<bool> EnsureTagOnResourceAsync(string resourceType, int resourceId, int tagId, CancellationToken ct)
     {
-        var url = $"{_baseUrl}/api/v3/{resourceType}/{resourceId}";
+        var url = $"api/v3/{resourceType}/{resourceId}";
 
         using var getResponse = await _http.GetAsync(url, ct);
         getResponse.EnsureSuccessStatusCode();
@@ -226,7 +232,9 @@ public class WhisparrV3ErosClient : IArrClient
 
     public async Task<bool> ValidateApiKeyAsync(CancellationToken ct)
     {
-        using var response = await _http.GetAsync($"{_baseUrl}/api", ct);
+        // Authenticated endpoint: requires X-Api-Key, so a bad/stale key returns 401 here
+        // (unlike the unauthenticated /api root, which accepts any key).
+        using var response = await _http.GetAsync("api/v3/system/status", ct);
         return response.IsSuccessStatusCode;
     }
 }

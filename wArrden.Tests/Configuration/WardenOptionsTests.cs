@@ -45,4 +45,59 @@ public class WardenOptionsTests
         var opts = new WardenOptions();
         Assert.Null(opts.Timezone);
     }
+
+    [Fact]
+    public void HttpRetryCountValue_WhenUnset_ReturnsDefault()
+    {
+        var opts = new WardenOptions();
+        Assert.Equal(WardenOptions.DefaultHttpRetryCount, opts.HttpRetryCountValue);
+    }
+
+    [Fact]
+    public void HttpRetryCountValue_WhenSet_IsParsed()
+    {
+        var opts = new WardenOptions { HttpRetryCount = "5" };
+        Assert.Equal(5, opts.HttpRetryCountValue);
+    }
+
+    [Fact]
+    public void HttpRetryCountValue_AllowsZero()
+    {
+        var opts = new WardenOptions { HttpRetryCount = "0" };
+        Assert.Equal(0, opts.HttpRetryCountValue);
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("abc")]
+    [InlineData("")]
+    public void HttpRetryCountValue_WhenInvalid_ReturnsDefault(string raw)
+    {
+        var opts = new WardenOptions { HttpRetryCount = raw };
+        Assert.Equal(WardenOptions.DefaultHttpRetryCount, opts.HttpRetryCountValue);
+    }
+
+    [Fact]
+    public void HttpTimeoutSecondsValue_WhenUnset_ReturnsDefault()
+    {
+        var opts = new WardenOptions();
+        Assert.Equal(WardenOptions.DefaultHttpTimeoutSeconds, opts.HttpTimeoutSecondsValue);
+    }
+
+    [Fact]
+    public void HttpTimeoutSecondsValue_WhenSet_IsParsed()
+    {
+        var opts = new WardenOptions { HttpTimeoutSeconds = "45" };
+        Assert.Equal(45, opts.HttpTimeoutSecondsValue);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-5")]
+    [InlineData("nope")]
+    public void HttpTimeoutSecondsValue_WhenInvalidOrNonPositive_ReturnsDefault(string raw)
+    {
+        var opts = new WardenOptions { HttpTimeoutSeconds = raw };
+        Assert.Equal(WardenOptions.DefaultHttpTimeoutSeconds, opts.HttpTimeoutSecondsValue);
+    }
 }

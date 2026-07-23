@@ -89,7 +89,7 @@ public class RadarrV3ClientTests
 
         Assert.True(result);
         Assert.NotNull(handler.LastRequestUri);
-        Assert.Contains("/api", handler.LastRequestUri);
+        Assert.Contains("api/v3/system/status", handler.LastRequestUri);
     }
 
     [Fact]

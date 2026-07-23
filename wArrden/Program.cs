@@ -1,4 +1,5 @@
 using wArrden.Clients;
+using wArrden.Clients.Http;
 using wArrden.Configuration;
 using wArrden.Data;
 using wArrden.Invocables;
@@ -15,7 +16,9 @@ var opts = new WardenOptions
     DryRun = GetEnv("DRY_RUN"),
     Timezone = GetEnv("TZ"),
     AppVersion = GetEnv("APP_VERSION"),
-    DatabasePath = GetEnv("DATABASE_PATH") ?? "data/warden.db"
+    DatabasePath = GetEnv("DATABASE_PATH") ?? "data/warden.db",
+    HttpRetryCount = GetEnv("HTTP_RETRY_COUNT"),
+    HttpTimeoutSeconds = GetEnv("HTTP_TIMEOUT_SECONDS")
 };
 
 try
@@ -106,8 +109,46 @@ builder.Services.AddSingleton<ICooldownService, CooldownService>();
 builder.Services.AddSingleton(new OutputService { MinimumLevel = ParseLogLevel(config.LogLevel), TimeZone = startupTimeZone });
 builder.Services.AddSingleton<SearchService>();
 builder.Services.AddSingleton<TaggingService>();
+builder.Services.AddSingleton<InstanceHealthTracker>();
+
+// One resilient HttpClient per enabled instance, keyed by InstanceKey. Each carries the
+// instance's base address + API key, an infinite HttpClient.Timeout (the resilience pipeline
+// owns per-attempt timeouts), and shared retry/backoff for transient arr failures.
+foreach (var inst in config.Instances)
+{
+    if (inst.Enabled != true) continue;
+
+    var apiKey = inst.ApiKey;
+    var baseAddress = new Uri(inst.Url.TrimEnd('/') + "/");
+
+    builder.Services.AddHttpClient(inst.InstanceKey, http =>
+        {
+            http.BaseAddress = baseAddress;
+            http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
+            http.Timeout = Timeout.InfiniteTimeSpan;
+        })
+        .ConfigurePrimaryHttpMessageHandler(() =>
+            new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(15) })
+        .AddArrResilience(opts.HttpRetryCountValue, TimeSpan.FromSeconds(opts.HttpTimeoutSecondsValue));
+}
 
 var host = builder.Build();
+
+var httpClientFactory = host.Services.GetRequiredService<IHttpClientFactory>();
+var healthTracker = host.Services.GetRequiredService<InstanceHealthTracker>();
+
+IArrClient CreateArrClient(InstanceConfig inst)
+{
+    var http = httpClientFactory.CreateClient(inst.InstanceKey);
+    return inst switch
+    {
+        { IsSonarr: true } => ArrClientFactory.CreateSonarr(http, inst.ApiVersion!, inst.Name),
+        { IsRadarr: true } => ArrClientFactory.CreateRadarr(http, inst.ApiVersion!, inst.Name),
+        { IsLidarr: true } => ArrClientFactory.CreateLidarr(http, inst.ApiVersion!, inst.Name),
+        { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(http, inst.ApiVersion!, inst.Name),
+        _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
+    };
+}
 
 using (var scope = host.Services.CreateScope())
 {
@@ -118,16 +159,15 @@ using (var scope = host.Services.CreateScope())
 
 async Task ValidateInstanceAsync(InstanceConfig inst)
 {
-    using var client = inst switch
-    {
-        { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-        { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-        { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-        { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-        _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
-    };
+    using var client = CreateArrClient(inst);
 
-    var (msg, detail) = await ValidateOnceAsync(client, inst.Name, inst.Url, CancellationToken.None);
+    var (status, msg, detail) = await ValidateOnceAsync(client, inst.Name, inst.Url, CancellationToken.None);
+
+    // A rejected API key is a misconfiguration, not a transient outage: disable the instance so
+    // its scheduled jobs never run (and never flood) until the operator fixes the key and restarts.
+    if (status == ValidationStatus.AuthFailed)
+        healthTracker.Disable(inst.InstanceKey, "authentication failed at startup");
+
     if (msg is not null)
         config.AddValidationError(msg, detail);
 }
@@ -148,17 +188,13 @@ host.Services.UseScheduler(scheduler =>
     foreach (var inst in config.Instances)
     {
         if (inst.Enabled != true) continue;
-        var client = inst switch
-        {
-            { IsSonarr: true } => ArrClientFactory.CreateSonarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-            { IsRadarr: true } => ArrClientFactory.CreateRadarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-            { IsLidarr: true } => ArrClientFactory.CreateLidarr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-            { IsWhisparr: true } => ArrClientFactory.CreateWhisparr(inst.Url, inst.ApiKey, inst.ApiVersion!, inst.Name),
-            _ => throw new InvalidOperationException($"Unknown instance type: {inst.Type}")
-        };
+        var client = CreateArrClient(inst);
         clients.Add((inst, client));
 
         var instanceKey = inst.InstanceKey;
+        // Every scheduled job for this instance is gated on its health: once an instance is
+        // disabled (bad API key at startup or a 401 mid-run), its jobs stop running.
+        Func<Task<bool>> isInstanceEnabled = () => Task.FromResult(healthTracker.IsEnabled(instanceKey));
         var instanceType = InstanceType(inst);
         var searchInstanceType = SearchInstanceType(inst);
 
@@ -171,10 +207,11 @@ host.Services.UseScheduler(scheduler =>
                     client, "missing", searchInstanceType,
                     inst.MissingSearch.MaxResults!.Value, inst.MissingSearch.Cooldown!,
                     inst.MissingSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerFilter,
-                    inst.MissingSearch.Tagging
+                    inst.MissingSearch.Tagging, instanceKey
                 ))
                 .Cron(inst.MissingSearch.Cron!)
-                .PreventOverlapping($"{instanceKey}_missing");
+                .PreventOverlapping($"{instanceKey}_missing")
+                .When(isInstanceEnabled);
         }
 
         if (inst.UpgradeSearch?.Enabled == true)
@@ -184,10 +221,11 @@ host.Services.UseScheduler(scheduler =>
                     client, "upgrade", searchInstanceType,
                     inst.UpgradeSearch.MaxResults!.Value, inst.UpgradeSearch.Cooldown!,
                     inst.UpgradeSearch.SearchType ?? "", opts.IsDryRun, inst.IndexerFilter,
-                    inst.UpgradeSearch.Tagging
+                    inst.UpgradeSearch.Tagging, instanceKey
                 ))
                 .Cron(inst.UpgradeSearch.Cron!)
-                .PreventOverlapping($"{instanceKey}_upgrade");
+                .PreventOverlapping($"{instanceKey}_upgrade")
+                .When(isInstanceEnabled);
         }
 
         if (inst.QueueCleanup?.Enabled == true)
@@ -200,9 +238,10 @@ host.Services.UseScheduler(scheduler =>
             }
 
             scheduler
-                .ScheduleWithParams<QueueJob>(client, instanceType, opts.IsDryRun, rules)
+                .ScheduleWithParams<QueueJob>(new QueueJobParams(client, instanceType, opts.IsDryRun, rules, instanceKey))
                 .Cron(inst.QueueCleanup.Cron!)
-                .PreventOverlapping($"{instanceKey}_queue");
+                .PreventOverlapping($"{instanceKey}_queue")
+                .When(isInstanceEnabled);
         }
     }
 })
@@ -220,7 +259,8 @@ lifetime.ApplicationStopped.Register(() =>
 
 OutputService.WriteBanner(config, opts, startupTimeZone);
 
-await RunRetroactiveTagging(clients, host);
+await RunRetroactiveTagging(
+    clients.Where(c => healthTracker.IsEnabled(c.Instance.InstanceKey)).ToList(), host);
 
 await host.RunAsync();
 
@@ -392,16 +432,17 @@ static async Task RunRetroactiveTagging(List<(InstanceConfig Instance, IArrClien
     }
 }
 
-static async Task<(string? Message, string? Detail)> ValidateOnceAsync(
+static async Task<(ValidationStatus Status, string? Message, string? Detail)> ValidateOnceAsync(
     IArrClient client, string instanceName, string instanceUrl,
     CancellationToken ct)
 {
     try
     {
         var isValid = await client.ValidateApiKeyAsync(ct);
-        if (isValid) return (null, null);
+        if (isValid) return (ValidationStatus.Ok, null, null);
 
-        return ($"API key validation failed for {instanceName} ({instanceUrl}) — instance not authenticated", null);
+        return (ValidationStatus.AuthFailed,
+            $"API key validation failed for {instanceName} ({instanceUrl}) — instance not authenticated", null);
     }
     catch (OperationCanceledException) when (ct.IsCancellationRequested)
     {
@@ -409,7 +450,8 @@ static async Task<(string? Message, string? Detail)> ValidateOnceAsync(
     }
     catch (Exception ex)
     {
-        return ($"Could not connect to {instanceName} ({instanceUrl})",
+        return (ValidationStatus.Unreachable,
+            $"Could not connect to {instanceName} ({instanceUrl})",
             $"{ex.GetType().Name}: {ex.Message}");
     }
 }

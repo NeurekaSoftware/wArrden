@@ -93,7 +93,7 @@ public class LidarrV1ClientTests
 
         Assert.True(result);
         Assert.NotNull(handler.LastRequestUri);
-        Assert.Contains("/api", handler.LastRequestUri);
+        Assert.Contains("api/v1/system/status", handler.LastRequestUri);
     }
 
     [Fact]

@@ -14,16 +14,19 @@ public sealed record SearchJobParams(
     string SearchType,
     bool IsDryRun,
     IndexerFilterConfig? IndexerFilter,
-    TaggingConfig? Tagging
+    TaggingConfig? Tagging,
+    string InstanceKey = ""
 );
 
 public class SearchJob : IInvocable
 {
     private readonly SearchService _search;
     private readonly OutputService _output;
+    private readonly InstanceHealthTracker _health;
     private readonly IArrClient _client;
     private readonly string _searchKind;
     private readonly string _instanceType;
+    private readonly string _instanceKey;
     private readonly int _maxResults;
     private readonly TimeSpan _cooldown;
     private readonly string _searchType;
@@ -31,13 +34,15 @@ public class SearchJob : IInvocable
     private readonly IndexerFilterConfig? _indexerFilter;
     private readonly TaggingConfig? _tagging;
 
-    public SearchJob(SearchService search, OutputService output, SearchJobParams p)
+    public SearchJob(SearchService search, OutputService output, InstanceHealthTracker health, SearchJobParams p)
     {
         _search = search;
         _output = output;
+        _health = health;
         _client = p.Client;
         _searchKind = p.SearchKind;
         _instanceType = p.InstanceType;
+        _instanceKey = p.InstanceKey;
         _maxResults = p.MaxResults;
         _cooldown = DurationParser.Parse(p.Cooldown);
         _searchType = p.SearchType;
@@ -73,7 +78,8 @@ public class SearchJob : IInvocable
         }
         catch (Exception ex) when (ex is not InvalidOperationException)
         {
-            _output.WriteError(context, $"{_searchKind} search job failed", ex);
+            JobFailure.Report(_output, _health, _instanceKey, _client.Instance, context,
+                $"{_searchKind} search job failed", ex);
         }
     }
 }

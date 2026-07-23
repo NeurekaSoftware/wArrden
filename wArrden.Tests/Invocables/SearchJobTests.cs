@@ -10,6 +10,7 @@ public class SearchJobTests
     private readonly Mock<SearchService> _searchMock;
     private readonly Mock<IArrClient> _clientMock;
     private readonly OutputService _output;
+    private readonly InstanceHealthTracker _health = new();
 
     public SearchJobTests()
     {
@@ -24,7 +25,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_MissingSonarr_CallsSearchMissingEpisodes()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "sonarr", 10, "30d", "episode", false, null, null));
 
         job.Invoke();
@@ -36,7 +37,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_UpgradeSonarr_CallsSearchUpgradeEpisodes()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "upgrade", "sonarr", 5, "7d", "episode", true, null, null));
 
         job.Invoke();
@@ -48,7 +49,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_MissingRadarr_CallsSearchMissingMovies()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "radarr", 20, "12h", "episode", false, null, null));
 
         job.Invoke();
@@ -60,7 +61,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_UpgradeRadarr_CallsSearchUpgradeMovies()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "upgrade", "radarr", 3, "90m", "episode", true, null, null));
 
         job.Invoke();
@@ -72,7 +73,7 @@ public class SearchJobTests
     [Fact]
     public async Task Invoke_UnknownCombo_ThrowsInvalidOperationException()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "unknown", "sonarr", 10, "30d", "episode", false, null, null));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => job.Invoke());
@@ -81,7 +82,7 @@ public class SearchJobTests
     [Fact]
     public void Constructor_ValidCooldown_ParsesCorrectly()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "sonarr", 10, "7d", "episode", false, null, null));
 
         var task = job.Invoke();
@@ -92,14 +93,14 @@ public class SearchJobTests
     public void Constructor_InvalidCooldown_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
-            new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+            new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
                 "missing", "sonarr", 10, "invalid", "episode", false, null, null)));
     }
 
     [Fact]
     public void Invoke_MissingSonarr_SeasonSearchType_CallsWithSeason()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "sonarr", 10, "30d", "season", false, null, null));
 
         job.Invoke();
@@ -111,7 +112,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_UpgradeSonarr_SeasonSearchType_CallsWithSeason()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "upgrade", "sonarr", 5, "7d", "season", true, null, null));
 
         job.Invoke();
@@ -124,7 +125,7 @@ public class SearchJobTests
     public void Invoke_IndexerFilter_PassedToService()
     {
         var indexerFilter = new IndexerFilterConfig { Enabled = true, Include = new List<string> { "NZBGeek", "Rarbg" } };
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "sonarr", 10, "30d", "episode", false, indexerFilter, null));
 
         job.Invoke();
@@ -136,7 +137,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_MissingWhisparr_CallsSearchMissingEpisodes()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "whisparr", 10, "30d", "episode", false, null, null));
 
         job.Invoke();
@@ -148,7 +149,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_UpgradeWhisparr_CallsSearchUpgradeEpisodes()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "upgrade", "whisparr", 5, "7d", "season", true, null, null));
 
         job.Invoke();
@@ -160,7 +161,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_MissingWhisparrEros_CallsSearchMissingMovies()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "whisparr-eros", 10, "30d", "", false, null, null));
 
         job.Invoke();
@@ -172,7 +173,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_UpgradeWhisparrEros_CallsSearchUpgradeMovies()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "upgrade", "whisparr-eros", 5, "7d", "", true, null, null));
 
         job.Invoke();
@@ -184,7 +185,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_MissingLidarr_Album_CallsSearchMissingAlbums()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "lidarr", 10, "30d", "album", false, null, null));
 
         job.Invoke();
@@ -196,7 +197,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_MissingLidarr_Artist_CallsSearchMissingAlbums()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "missing", "lidarr", 15, "7d", "artist", true, null, null));
 
         job.Invoke();
@@ -208,7 +209,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_UpgradeLidarr_Album_CallsSearchUpgradeAlbums()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "upgrade", "lidarr", 5, "90m", "album", false, null, null));
 
         job.Invoke();
@@ -220,7 +221,7 @@ public class SearchJobTests
     [Fact]
     public void Invoke_UpgradeLidarr_Artist_CallsSearchUpgradeAlbums()
     {
-        var job = new SearchJob(_searchMock.Object, _output, new SearchJobParams(_clientMock.Object,
+        var job = new SearchJob(_searchMock.Object, _output, _health, new SearchJobParams(_clientMock.Object,
             "upgrade", "lidarr", 3, "12h", "artist", true, null, null));
 
         job.Invoke();

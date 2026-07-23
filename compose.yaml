@@ -10,6 +10,9 @@ services:
       - PGID=1000
       - DATABASE_PATH=/app/data/warden.db
       - CONFIG_PATH=/config/config.yaml
+      # Optional HTTP resilience tuning (defaults shown; safe to omit entirely):
+      # - HTTP_RETRY_COUNT=3       # retry attempts for transient arr failures (5xx/timeout/refused)
+      # - HTTP_TIMEOUT_SECONDS=30  # per-attempt HTTP timeout
     networks:
       - warrden
     volumes:
