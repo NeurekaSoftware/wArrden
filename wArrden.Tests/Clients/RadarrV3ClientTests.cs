@@ -80,27 +80,27 @@ public class RadarrV3ClientTests
     }
 
     [Fact]
-    public async Task ValidateApiKeyAsync_ReturnsTrue_WhenApiReturns200()
+    public async Task ValidateApiKeyAsync_ReturnsOk_WhenApiReturns200()
     {
         var handler = new FakeHttpMessageHandler(HttpStatusCode.OK);
         var client = new RadarrV3Client("http://localhost", "key", "Radarr", handler);
 
         var result = await client.ValidateApiKeyAsync(CancellationToken.None);
 
-        Assert.True(result);
+        Assert.Equal(HttpStatusCode.OK, result);
         Assert.NotNull(handler.LastRequestUri);
         Assert.Contains("api/v3/system/status", handler.LastRequestUri);
     }
 
     [Fact]
-    public async Task ValidateApiKeyAsync_ReturnsFalse_WhenApiReturns401()
+    public async Task ValidateApiKeyAsync_ReturnsUnauthorized_WhenApiReturns401()
     {
         var handler = new FakeHttpMessageHandler(HttpStatusCode.Unauthorized);
         var client = new RadarrV3Client("http://localhost", "key", "Radarr", handler);
 
         var result = await client.ValidateApiKeyAsync(CancellationToken.None);
 
-        Assert.False(result);
+        Assert.Equal(HttpStatusCode.Unauthorized, result);
     }
 
     [Fact]

@@ -44,4 +44,27 @@ public class InstanceHealthTrackerTests
         Assert.True(tracker.IsEnabled("series"));
         Assert.True(tracker.IsEnabled("movies"));
     }
+
+    [Fact]
+    public void GetDisableReason_ReturnsReason_WhenDisabled()
+    {
+        var tracker = new InstanceHealthTracker();
+        tracker.Disable("music", "API key rejected (401 Unauthorized)");
+        Assert.Equal("API key rejected (401 Unauthorized)", tracker.GetDisableReason("music"));
+    }
+
+    [Fact]
+    public void GetDisableReason_IsCaseInsensitive()
+    {
+        var tracker = new InstanceHealthTracker();
+        tracker.Disable("Music", "auth");
+        Assert.Equal("auth", tracker.GetDisableReason("music"));
+    }
+
+    [Fact]
+    public void GetDisableReason_ReturnsNull_WhenEnabled()
+    {
+        var tracker = new InstanceHealthTracker();
+        Assert.Null(tracker.GetDisableReason("music"));
+    }
 }

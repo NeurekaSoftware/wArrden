@@ -1,3 +1,4 @@
+using System.Net;
 using wArrden.Clients;
 using wArrden.Clients.Http;
 using wArrden.Configuration;
@@ -165,11 +166,12 @@ async Task ValidateInstanceAsync(InstanceConfig inst)
 
     // A rejected API key is a misconfiguration, not a transient outage: disable the instance so
     // its scheduled jobs never run (and never flood) until the operator fixes the key and restarts.
+    // The reason is stored on the tracker and surfaced inline in the startup banner.
     if (status == ValidationStatus.AuthFailed)
-        healthTracker.Disable(inst.InstanceKey, "authentication failed at startup");
-
-    if (msg is not null)
-        config.AddValidationError(msg, detail);
+        healthTracker.Disable(inst.InstanceKey, msg ?? "API key rejected");
+    else if (status == ValidationStatus.Unreachable && msg is not null)
+        // Not an auth failure — the instance stays enabled and retries; report it as a warning.
+        config.AddValidationWarning(msg, detail);
 }
 
 var validationTasks = new List<Task>();
@@ -257,7 +259,7 @@ lifetime.ApplicationStopped.Register(() =>
         client.Dispose();
 });
 
-OutputService.WriteBanner(config, opts, startupTimeZone);
+OutputService.WriteBanner(config, opts, startupTimeZone, disableReason: healthTracker.GetDisableReason);
 
 await RunRetroactiveTagging(
     clients.Where(c => healthTracker.IsEnabled(c.Instance.InstanceKey)).ToList(), host);
@@ -438,11 +440,19 @@ static async Task<(ValidationStatus Status, string? Message, string? Detail)> Va
 {
     try
     {
-        var isValid = await client.ValidateApiKeyAsync(ct);
-        if (isValid) return (ValidationStatus.Ok, null, null);
+        var code = await client.ValidateApiKeyAsync(ct);
 
-        return (ValidationStatus.AuthFailed,
-            $"API key validation failed for {instanceName} ({instanceUrl}) — instance not authenticated", null);
+        if ((int)code is >= 200 and < 300)
+            return (ValidationStatus.Ok, null, null);
+
+        // A rejected key is a misconfiguration — disable the instance and surface the exact cause.
+        if (code is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            return (ValidationStatus.AuthFailed, $"API key rejected ({(int)code} {code})", null);
+
+        // Any other non-2xx isn't an auth problem: leave the instance enabled to retry, but warn.
+        return (ValidationStatus.Unreachable,
+            $"Unexpected response from {instanceName} ({instanceUrl}): {(int)code} {code} — jobs will retry each cycle",
+            null);
     }
     catch (OperationCanceledException) when (ct.IsCancellationRequested)
     {
@@ -451,7 +461,7 @@ static async Task<(ValidationStatus Status, string? Message, string? Detail)> Va
     catch (Exception ex)
     {
         return (ValidationStatus.Unreachable,
-            $"Could not connect to {instanceName} ({instanceUrl})",
+            $"Could not connect to {instanceName} ({instanceUrl}) — jobs will retry each cycle",
             $"{ex.GetType().Name}: {ex.Message}");
     }
 }

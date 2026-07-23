@@ -1,3 +1,4 @@
+using System.Net;
 using wArrden.Clients.Models;
 
 namespace wArrden.Clients;
@@ -22,7 +23,7 @@ public interface IArrClient : IDisposable
     Task TriggerArtistSearchAsync(int artistId, CancellationToken ct);
     Task<bool> HasAnyEnabledIndexerAsync(CancellationToken ct);
     Task<IReadOnlyList<IndexerResource>> GetIndexersAsync(CancellationToken ct);
-    Task<bool> ValidateApiKeyAsync(CancellationToken ct);
+    Task<HttpStatusCode> ValidateApiKeyAsync(CancellationToken ct);
 
     Task<IReadOnlyList<TagResource>> GetTagsAsync(CancellationToken ct);
     Task<TagResource> CreateTagAsync(string label, CancellationToken ct);

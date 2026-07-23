@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using wArrden.Clients.Models;
@@ -228,11 +229,11 @@ public class RadarrV3Client : IArrClient
         return true;
     }
 
-    public async Task<bool> ValidateApiKeyAsync(CancellationToken ct)
+    public async Task<HttpStatusCode> ValidateApiKeyAsync(CancellationToken ct)
     {
         // Authenticated endpoint: requires X-Api-Key, so a bad/stale key returns 401 here
         // (unlike the unauthenticated /api root, which accepts any key).
         using var response = await _http.GetAsync("api/v3/system/status", ct);
-        return response.IsSuccessStatusCode;
+        return response.StatusCode;
     }
 }

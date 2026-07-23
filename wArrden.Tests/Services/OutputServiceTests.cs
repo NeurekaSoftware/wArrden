@@ -357,6 +357,57 @@ public class OutputServiceTests
     }
 
     [Fact]
+    public void WriteBanner_DisabledInstance_ShowsStatusAndAction_KeepsCrons()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "key", Enabled = true,
+                    MissingSearch = new JobConfig { Enabled = true, Cron = "*/5 * * * *" }
+                }
+            }
+        };
+        var opts = new WardenOptions();
+
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer,
+            disableReason: key => key == "series" ? "API key rejected (401 Unauthorized)" : null);
+
+        var output = _writer.ToString();
+        Assert.Contains("DISABLED — API key rejected (401 Unauthorized)", output);
+        Assert.Contains("Fix the API key and restart wArrden", output);
+        // Crons are kept, not hidden.
+        Assert.Contains("*/5 * * * *", output);
+    }
+
+    [Fact]
+    public void WriteBanner_EnabledInstance_ShowsNoDisabledStatus()
+    {
+        var config = new AppConfig
+        {
+            Instances = new List<InstanceConfig>
+            {
+                new()
+                {
+                    Type = "sonarr", Name = "Series", Url = "http://localhost:8989",
+                    ApiKey = "key", Enabled = true
+                }
+            }
+        };
+        var opts = new WardenOptions();
+
+        OutputService.WriteBanner(config, opts, TimeZoneInfo.Utc, _writer,
+            disableReason: _ => null);
+
+        var output = _writer.ToString();
+        Assert.DoesNotContain("DISABLED", output);
+        Assert.DoesNotContain("Fix the API key and restart", output);
+    }
+
+    [Fact]
     public void SearchOutputWriter_SetPhase_WritesPhaseLine()
     {
         var writer = new OutputService.SearchOutputWriter(

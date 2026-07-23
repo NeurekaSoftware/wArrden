@@ -28,10 +28,12 @@ internal static class JobFailure
         if (ArrFailure.IsAuthFailure(ex))
         {
             // Disable so scheduled jobs stop running; log once (Disable is first-write-wins).
-            if (health.Disable(instanceKey, "authentication failed"))
+            var code = (ex as HttpRequestException)?.StatusCode;
+            var reason = code is not null ? $"API key rejected ({(int)code} {code})" : "API key rejected";
+            if (health.Disable(instanceKey, reason))
             {
                 output.WriteWarning(context,
-                    $"Instance {instanceName} disabled after authentication failure — fix the API key and restart wArrden",
+                    $"Instance {instanceName} disabled — {reason}; fix the API key and restart wArrden",
                     detail);
             }
             return;

@@ -30,6 +30,10 @@ public sealed class InstanceHealthTracker
     /// <summary>Whether the instance's scheduled jobs may run.</summary>
     public bool IsEnabled(string instanceKey) => !_disabled.ContainsKey(instanceKey);
 
+    /// <summary>The reason an instance was disabled, or <c>null</c> if it is still enabled.</summary>
+    public string? GetDisableReason(string instanceKey) =>
+        _disabled.TryGetValue(instanceKey, out var reason) ? reason : null;
+
     /// <summary>
     /// Disables the instance. Returns <c>true</c> only the first time an instance is disabled,
     /// so callers can log/report exactly once and avoid flooding on repeated failures.

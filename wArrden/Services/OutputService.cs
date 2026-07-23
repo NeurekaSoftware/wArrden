@@ -23,7 +23,8 @@ public class OutputService
     public LogLevel MinimumLevel { get; set; } = LogLevel.Info;
     public TimeZoneInfo TimeZone { get => _timeZone; set => _timeZone = value; }
 
-    public static void WriteBanner(AppConfig config, WardenOptions opts, TimeZoneInfo timeZone, TextWriter? writer = null)
+    public static void WriteBanner(AppConfig config, WardenOptions opts, TimeZoneInfo timeZone,
+        TextWriter? writer = null, Func<string, string?>? disableReason = null)
     {
         var w = writer ?? Console.Out;
         var bar = new string('━', BoxWidth);
@@ -44,7 +45,7 @@ public class OutputService
 
         WriteSection(w, opts, tz, now, config, enabledInstances, totalSections, ref sectionIndex, isRuntime: true);
         for (int i = 0; i < enabledInstances.Count; i++)
-            WriteSection(w, opts, tz, now, config, enabledInstances, totalSections, ref sectionIndex, isRuntime: false, instanceIndex: i);
+            WriteSection(w, opts, tz, now, config, enabledInstances, totalSections, ref sectionIndex, isRuntime: false, instanceIndex: i, disableReason: disableReason);
         WriteSection(w, opts, tz, now, config, enabledInstances, totalSections, ref sectionIndex, isRuntime: false, isQueueRules: true);
 
         if (config.Warnings.Count > 0)
@@ -78,7 +79,8 @@ public class OutputService
 
     private static void WriteSection(TextWriter w, WardenOptions opts, TimeZoneInfo tz, DateTime now, AppConfig config,
         List<InstanceConfig> enabledInstances, int totalSections, ref int sectionIndex,
-        bool isRuntime = false, int instanceIndex = -1, bool isQueueRules = false)
+        bool isRuntime = false, int instanceIndex = -1, bool isQueueRules = false,
+        Func<string, string?>? disableReason = null)
     {
         var isLast = sectionIndex == totalSections - 1;
         var rootPrefix = isLast ? " └─" : " ├─";
@@ -89,7 +91,7 @@ public class OutputService
         else if (isQueueRules)
             WriteQueueCleanupRulesSection(w, rootPrefix, childPrefix, config);
         else
-            WriteInstanceSection(w, rootPrefix, childPrefix, enabledInstances[instanceIndex]);
+            WriteInstanceSection(w, rootPrefix, childPrefix, enabledInstances[instanceIndex], disableReason);
 
         if (!isLast)
             w.WriteLine(" │");
@@ -97,7 +99,8 @@ public class OutputService
         sectionIndex++;
     }
 
-    private static void WriteInstanceSection(TextWriter w, string rootPrefix, string childPrefix, InstanceConfig inst)
+    private static void WriteInstanceSection(TextWriter w, string rootPrefix, string childPrefix, InstanceConfig inst,
+        Func<string, string?>? disableReason = null)
     {
         w.WriteLine($"{rootPrefix} {inst.Name} ({inst.InstanceKey})");
 
@@ -124,6 +127,15 @@ public class OutputService
                 children.Add($"Upgrade Search".PadRight(LabelPad) + inst.UpgradeSearch.Cron! + SearchTypeLabel(inst, inst.UpgradeSearch));
             else
                 children.Add($"Upgrade Search".PadRight(LabelPad) + "(disabled)");
+        }
+
+        // A runtime-disabled instance (bad API key) keeps its config above but its scheduled jobs
+        // never run — call that out inline with the exact cause and the operator's next step.
+        var reason = disableReason?.Invoke(inst.InstanceKey);
+        if (reason is not null)
+        {
+            children.Add($"Status".PadRight(LabelPad) + $"\x1b[33mDISABLED — {reason}\x1b[0m");
+            children.Add($"Action".PadRight(LabelPad) + "Fix the API key and restart wArrden");
         }
 
         for (int i = 0; i < children.Count; i++)

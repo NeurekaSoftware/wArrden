@@ -23,6 +23,16 @@ public class AppConfig
                 Errors.Add(detail);
         }
     }
+
+    public void AddValidationWarning(string message, string? detail = null)
+    {
+        lock (Warnings)
+        {
+            Warnings.Add(message);
+            if (detail is not null)
+                Warnings.Add(detail);
+        }
+    }
 }
 
 public class QueueCleanupRulesConfig

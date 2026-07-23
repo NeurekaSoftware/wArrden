@@ -35,7 +35,7 @@ public class JobFailureTests
 
         Assert.False(health.IsEnabled("music"));
         var log = writer.ToString();
-        Assert.Contains("disabled after authentication failure", log);
+        Assert.Contains("disabled — API key rejected (401 Unauthorized)", log);
         Assert.Contains("WARN", log);
         Assert.DoesNotContain("ERROR", log);
     }
@@ -74,7 +74,7 @@ public class JobFailureTests
         await job.Invoke();
         await job.Invoke(); // instance already disabled — must not log again
 
-        var occurrences = writer.ToString().Split("disabled after authentication failure").Length - 1;
+        var occurrences = writer.ToString().Split("disabled — API key rejected").Length - 1;
         Assert.Equal(1, occurrences);
     }
 }
